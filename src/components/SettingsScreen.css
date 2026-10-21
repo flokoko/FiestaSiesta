@@ -1,0 +1,534 @@
+.settings-screen {
+  padding: 0.75rem 0;
+}
+
+.settings-section {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 1.25rem 1.1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-section:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.settings-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+}
+
+/* ── SettingsItem: icon + label + control ─────────────────────────── */
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  margin: 0 -0.3rem;
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+}
+
+.settings-item:hover {
+  background: var(--accent-light);
+}
+
+.settings-item + .settings-item {
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-item-icon {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.settings-item-label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settings-item-control {
+  flex-shrink: 0;
+}
+
+/* ── Theme toggle group ──────────────────────────────────────────── */
+.theme-toggle-group {
+  display: flex;
+  gap: 0;
+  background: var(--button-bg);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.theme-toggle-btn {
+  border: none;
+  background: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--button-text);
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.35s;
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Account info display ────────────────────────────────────────── */
+.settings-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+}
+
+.settings-info-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.settings-info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-join-code-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.settings-copy-btn {
+  border: 2px solid var(--input-border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.settings-copy-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Inline edit form ────────────────────────────────────────────── */
+.settings-inline-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.settings-inline-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  outline: none;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  transition: all 0.35s;
+}
+
+.settings-inline-input:focus {
+  box-shadow: 0 0 0 4px var(--accent-light);
+  border-color: var(--accent);
+}
+
+.settings-btn {
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-btn:active {
+  transform: scale(0.97);
+}
+
+.settings-btn-primary {
+  background: var(--accent-gradient);
+  color: white;
+}
+
+.settings-btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(170, 21, 27, 0.25);
+  background-size: 200% 200%;
+  animation: gradientShift 2s ease infinite;
+}
+
+.settings-btn-secondary {
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+.settings-btn-secondary:hover {
+  background: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.settings-btn-danger {
+  background: none;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.55rem;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.settings-btn-danger:hover {
+  background: var(--danger);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(170, 21, 27, 0.25);
+}
+
+.settings-btn-danger:active {
+  transform: scale(0.97);
+}
+
+/* ── Category editor ──────────────────────────────────────────────── */
+.settings-cat-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.settings-cat-subsection {
+  margin-bottom: 1rem;
+}
+
+.settings-cat-subsection:last-child {
+  margin-bottom: 0;
+}
+
+.settings-cat-subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.settings-cat-subsection-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-cat-add-btn {
+  border: 1px solid var(--border-color);
+  background: var(--button-bg);
+  color: var(--button-text);
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.35s;
+}
+
+.settings-cat-add-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.settings-cat-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+}
+
+.settings-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+}
+
+.settings-cat-item + .settings-cat-item {
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-participant-name {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.settings-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--accent);
+  color: white;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.settings-participant-admin {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 0.2rem;
+  color: var(--accent);
+}
+
+.settings-admin-error {
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin: 0;
+}
+
+.settings-cat-icon-input {
+  width: 42px;
+  text-align: center;
+  font-size: 1.1rem;
+  padding: 0.3rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  outline: none;
+  flex-shrink: 0;
+  transition: all 0.35s;
+}
+
+.settings-cat-icon-input:focus {
+  box-shadow: 0 0 0 4px var(--accent-light);
+  border-color: var(--accent);
+}
+
+.settings-cat-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.35s;
+}
+
+.settings-cat-name-input:focus {
+  box-shadow: 0 0 0 4px var(--accent-light);
+  border-color: var(--accent);
+}
+
+.settings-cat-delete-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0.3rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: all 0.35s;
+}
+
+.settings-cat-delete-btn:hover {
+  opacity: 1;
+  background: var(--danger);
+  transform: scale(1.1);
+  color: white;
+}
+
+/* ── Push notification toggle ────────────────────────────────────── */
+.settings-push-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.settings-push-status.on {
+  color: #AA151B;
+}
+
+.settings-push-status.off {
+  color: var(--text-muted);
+}
+
+.settings-push-toggle {
+  width: 38px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--input-border);
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.settings-push-toggle.on {
+  background: #AA151B;
+}
+
+.settings-push-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-push-toggle.on .settings-push-toggle-knob {
+  transform: translateX(16px);
+}
+
+/* ── Info section ────────────────────────────────────────────────── */
+.settings-info-block {
+  text-align: center;
+}
+
+.settings-app-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.settings-flag-bar {
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.settings-flag-bar.green { background: #AA151B; }
+.settings-flag-bar.white { background: #f0f0f0; border: 1px solid rgba(0,0,0,0.08); }
+.settings-flag-bar.red { background: #AA151B; margin-right: 0.4rem; }
+
+.settings-app-version {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.settings-app-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.settings-app-motto {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--spanish-orange);
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+.settings-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.settings-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Push loading spinner ────────────────────────────────────────── */
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Push hint text ───────────────────────────────────────────────── */
+.settings-push-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.6rem;
+  margin-bottom: 0;
+  line-height: 1.4;
+}

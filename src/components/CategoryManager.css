@@ -1,0 +1,227 @@
+.cat-manager {
+  margin-bottom: 0.75rem;
+}
+
+.cat-manager-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.cat-manager-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-light);
+}
+
+.cat-manager-toggle:active {
+  transform: scale(0.97);
+}
+
+.cat-manager-toggle-icon {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+}
+
+.cat-manager-toggle-text {
+  flex: 1;
+  text-align: left;
+}
+
+.cat-manager-toggle-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--button-text);
+  background: var(--button-bg);
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+}
+
+.cat-manager-chevron {
+  font-size: 0.7rem;
+  transition: transform 0.4s ease;
+  color: var(--text-muted);
+}
+
+.cat-manager-chevron.open {
+  transform: rotate(180deg);
+}
+
+.cat-manager-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cat-manager-panel.expanded {
+  max-height: 500px;
+}
+
+.cat-manager-panel-inner {
+  padding: 0.6rem 0.85rem 0.85rem;
+  margin-top: 0.4rem;
+  border-radius: 14px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.5s ease;
+}
+
+.cat-manager-empty {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.cat-manager-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0;
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 10px;
+}
+
+.cat-manager-row.dragging {
+  opacity: 0.5;
+  transform: scale(0.97);
+}
+
+.cat-manager-row.drag-over {
+  box-shadow: 0 2px 0 var(--accent);
+}
+
+.cat-manager-row + .cat-manager-row {
+  border-top: 1px solid var(--border-color);
+}
+
+.cat-manager-drag-handle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.3rem;
+  cursor: grab;
+  color: var(--text-muted);
+  opacity: 0.4;
+  border-radius: 8px;
+  transition: opacity 0.35s, color 0.35s, background 0.35s;
+  touch-action: none;
+}
+
+.cat-manager-drag-handle:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.cat-manager-drag-handle:active {
+  cursor: grabbing;
+}
+
+.cat-manager-icon-input {
+  width: 42px;
+  text-align: center;
+  font-size: 1.1rem;
+  padding: 0.3rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  outline: none;
+  flex-shrink: 0;
+  transition: all 0.35s;
+}
+
+.cat-manager-icon-input:focus {
+  box-shadow: 0 0 0 4px var(--accent-light);
+  border-color: var(--accent);
+}
+
+.cat-manager-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.35s;
+}
+
+.cat-manager-name-input:focus {
+  box-shadow: 0 0 0 4px var(--accent-light);
+  border-color: var(--accent);
+}
+
+.cat-manager-delete-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0.3rem;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cat-manager-delete-btn:hover {
+  opacity: 1;
+  background: var(--danger);
+  transform: scale(1.15);
+  color: white;
+}
+
+.cat-manager-delete-btn:active {
+  transform: scale(0.9);
+}
+
+.cat-manager-add-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px dashed var(--dashed-border);
+  border-radius: 10px;
+  background: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cat-manager-add-btn:hover {
+  transform: translateY(-2px);
+  background: var(--accent-light);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.cat-manager-add-btn:active {
+  transform: scale(0.96);
+}

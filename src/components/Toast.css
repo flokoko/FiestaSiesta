@@ -1,0 +1,153 @@
+.toast-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  border-left: 4px solid var(--text-muted, #888);
+  animation: toast-slide-in 0.5s ease-out;
+  cursor: pointer;
+  transition: opacity 0.5s, transform 0.5s;
+}
+
+.toast.toast-success {
+  border-left-color: var(--accent, #AA151B);
+}
+
+.toast.toast-error {
+  border-left-color: var(--danger, #AA151B);
+}
+
+.toast.toast-info {
+  border-left-color: var(--text-secondary, #6b806b);
+}
+
+.toast.toast-confirm {
+  border-left-color: #f59e0b;
+  cursor: default;
+}
+
+.toast.toast-dismissing {
+  animation: toast-slide-out 0.5s ease-in forwards;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-success .toast-icon { color: var(--accent, #AA151B); }
+.toast-error .toast-icon { color: var(--danger, #AA151B); }
+.toast-info .toast-icon { color: var(--text-secondary, #6b806b); }
+.toast-confirm .toast-icon { color: #f59e0b; }
+
+.toast-message {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--text-primary, #1a2e1a);
+  word-break: break-word;
+}
+
+.toast-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.toast-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.25s;
+}
+
+.toast-btn:hover {
+  filter: brightness(0.92);
+}
+
+.toast-btn-action {
+  background: var(--accent, #AA151B);
+  color: #fff;
+}
+
+.toast-btn-confirm {
+  background: var(--danger, #AA151B);
+  color: #fff;
+}
+
+.toast-btn-cancel {
+  background: var(--button-bg, rgba(0,0,0,0.06));
+  color: var(--text-secondary, #6b806b);
+}
+
+.toast-btn-undo {
+  background: var(--accent, #AA151B);
+  color: #fff;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted, #9aae9a);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.toast-close:hover {
+  color: var(--text-primary, #1a2e1a);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}

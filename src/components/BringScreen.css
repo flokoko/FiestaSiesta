@@ -1,0 +1,609 @@
+.bring-screen {
+  padding: 0.75rem 0;
+}
+
+.bring-filters {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.bring-filter-btn {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  border: 2px solid var(--input-border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--button-text);
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bring-filter-btn:hover {
+  border-color: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.bring-filter-btn.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 12px rgba(170, 21, 27, 0.25);
+  transform: translateY(-1px);
+}
+
+.bring-filter-btn:active {
+  transform: scale(0.96);
+}
+
+.bring-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.bring-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.bring-export-btn {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  transition: all 0.3s;
+}
+
+.bring-export-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.bring-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2.5rem 1rem;
+  font-size: 1.05rem;
+  border: 1px dashed var(--dashed-border);
+  border-radius: 20px;
+  margin: 0.5rem 0;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bring-empty svg {
+  color: #AA151B;
+  opacity: 0.6;
+}
+
+.bring-group {
+  margin-bottom: 1rem;
+}
+
+.bring-group-header {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 14px;
+  background: var(--cat-header-bg);
+  margin-bottom: 0.35rem;
+  transition: background-color 0.3s ease;
+}
+
+.bring-person {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bring-me-badge {
+  background: var(--accent-gradient);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.bring-group-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.bring-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  margin-bottom: 0.3rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bring-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.bring-item:active {
+  transform: scale(0.98);
+}
+
+.bring-item.brought .bring-item-name,
+.bring-item.brought .bring-item-qty {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.bring-checkbox-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bring-checkbox-wrap input {
+  opacity: 0;
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.bring-checkmark {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--checkbox-border);
+  border-radius: 7px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bring-checkbox-wrap input:checked + .bring-checkmark {
+  background: var(--flag-gradient);
+  border-color: transparent;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bring-checkbox-wrap input:checked + .bring-checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+}
+
+.bring-item-name {
+  flex: 1;
+  font-size: 0.92rem;
+  word-break: break-word;
+  color: var(--text-primary);
+}
+
+.bring-item-qty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.bring-item-delete {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  opacity: 0.25;
+  flex-shrink: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bring-item-delete:hover {
+  opacity: 1;
+  background: var(--accent-light);
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.bring-item-delete:active {
+  transform: scale(0.9);
+}
+
+.bring-drag-handle {
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  opacity: 0.25;
+  padding: 4px 2px;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.bring-drag-handle:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.bring-item.dragging {
+  opacity: 0.5;
+  box-shadow: var(--shadow-lg);
+}
+
+.bring-item.drag-over {
+  border-top: 3px solid var(--accent);
+  padding-top: calc(0.55rem - 3px);
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Sub-tab toggle: Mitbringen vs Meine Packliste                       */
+/* ══════════════════════════════════════════════════════════════════ */
+.bring-subtabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.bring-subtab {
+  flex: 1;
+  padding: 0.55rem 0.8rem;
+  border: 2px solid var(--input-border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--button-text);
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bring-subtab:hover {
+  border-color: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+/* "Mitbringen" active = Spanien-Rot (#AA151B) */
+.bring-subtab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 12px rgba(170, 21, 27, 0.25);
+  transform: translateY(-1px);
+}
+
+/* "Meine Packliste" active = Spanien-Rot (#AA151B) — overrides .active */
+.bring-subtab.active:nth-child(2) {
+  border-color: #AA151B;
+  background: #AA151B;
+  box-shadow: 0 2px 12px rgba(170, 21, 27, 0.25);
+}
+
+.bring-subtab:active {
+  transform: scale(0.96);
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Packliste — add form                                               */
+/* ══════════════════════════════════════════════════════════════════ */
+.packlist-section {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.packlist-add-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.packlist-input-name {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.packlist-input-name:focus {
+  border-color: #AA151B;
+  box-shadow: 0 0 0 3px rgba(170, 21, 27, 0.15);
+}
+
+.packlist-input-qty {
+  width: 5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.packlist-input-qty:focus {
+  border-color: #AA151B;
+  box-shadow: 0 0 0 3px rgba(170, 21, 27, 0.15);
+}
+
+.packlist-add-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 12px;
+  background: #AA151B;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s, background-color 0.3s;
+}
+
+.packlist-add-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 2px 12px rgba(170, 21, 27, 0.3);
+}
+
+.packlist-add-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.packlist-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Packliste — copy-from-bring button                                 */
+/* ══════════════════════════════════════════════════════════════════ */
+.packlist-copy-btn {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px dashed #AA151B;
+  border-radius: 12px;
+  background: transparent;
+  color: #AA151B;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.packlist-copy-btn:hover {
+  background: rgba(170, 21, 27, 0.08);
+  transform: translateY(-1px);
+}
+
+.packlist-copy-btn:active {
+  transform: scale(0.97);
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Packliste — progress bar                                           */
+/* ══════════════════════════════════════════════════════════════════ */
+.packlist-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.packlist-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--glass-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.packlist-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #AA151B, #d64a52);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.packlist-progress-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Packliste — empty state                                            */
+/* ══════════════════════════════════════════════════════════════════ */
+.packlist-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2.5rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border: 1px dashed var(--dashed-border);
+  border-radius: 20px;
+  margin: 0.5rem 0;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* Packliste — item list                                              */
+/* ══════════════════════════════════════════════════════════════════ */
+.packlist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.packlist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s;
+  animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.packlist-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.packlist-item:active {
+  transform: scale(0.98);
+}
+
+.packlist-item.checked .packlist-item-name,
+.packlist-item.checked .packlist-item-qty {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Packlist checkbox — red (#AA151B) accent */
+.packlist-checkbox-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.packlist-checkbox-wrap input {
+  opacity: 0;
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.packlist-checkmark {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--checkbox-border);
+  border-radius: 7px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.packlist-checkbox-wrap input:checked + .packlist-checkmark {
+  background: #AA151B;
+  border-color: transparent;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.packlist-checkbox-wrap input:checked + .packlist-checkmark::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+}
+
+.packlist-item-name {
+  flex: 1;
+  font-size: 0.92rem;
+  word-break: break-word;
+  color: var(--text-primary);
+}
+
+.packlist-item-qty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.packlist-item-delete {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  opacity: 0.25;
+  flex-shrink: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.packlist-item-delete:hover {
+  opacity: 1;
+  background: rgba(170, 21, 27, 0.12);
+  color: #AA151B;
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.packlist-item-delete:active {
+  transform: scale(0.9);
+}

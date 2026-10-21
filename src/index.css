@@ -1,0 +1,255 @@
+/* ── CSS Variables: Light mode (default) ──────────────────────────── */
+:root {
+  --bg-gradient: linear-gradient(160deg, #d4edda 0%, #f0e6c8 25%, #ffe8e8 50%, #d4edda 75%, #c8e6c9 100%);
+  --header-bg: rgba(255, 255, 255, 0.50);
+  --card-bg: rgba(255, 255, 255, 0.60);
+  --card-bg-solid: #ffffff;
+  --text-primary: #1a2e1a;
+  --text-secondary: #6b806b;
+  --text-muted: #9aae9a;
+  --border-color: rgba(0, 0, 0, 0.05);
+  --input-border: rgba(0, 0, 0, 0.06);
+  --accent: #AA151B;
+  --accent-light: rgba(170, 21, 27, 0.12);
+  --accent-gradient: linear-gradient(135deg, #AA151B 0%, #d64a52 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #8c1218 0%, #c43d46 100%);
+  --button-bg: rgba(0, 0, 0, 0.03);
+  --button-text: #6b806b;
+  --shadow: rgba(170, 21, 27, 0.06);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.18);
+  --checkbox-border: #d0e0d0;
+  --input-bg: rgba(255, 255, 255, 0.85);
+  --select-bg: rgba(255, 255, 255, 0.85);
+  --cat-header-bg: #f0fff4;
+  --danger: #AA151B;
+  --danger-hover: #AA151B;
+  --flag-gradient: linear-gradient(135deg, #AA151B, #d64a52);
+  --error-color: #AA151B;
+  --dashed-border: rgba(170, 21, 27, 0.2);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: 24px;
+  --glass-saturate: 200%;
+  --spanish-red: #AA151B;
+  --spanish-red: #AA151B;
+  --spanish-gold: #d4a017;
+  --spanish-cream: #f5f0e0;
+}
+
+/* ── CSS Variables: Dark mode ─────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-gradient: linear-gradient(160deg, #0a1a0a 0%, #1a2e1a 25%, #2a1a1a 50%, #0f1e0f 75%, #0a1a0a 100%);
+  --header-bg: rgba(15, 30, 15, 0.35);
+  --card-bg: rgba(20, 40, 20, 0.35);
+  --card-bg-solid: #254025;
+  --text-primary: #f0faf0;
+  --text-secondary: #99b899;
+  --text-muted: #668066;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.06);
+  --accent: #d64a52;
+  --accent-light: rgba(214, 74, 82, 0.12);
+  --accent-gradient: linear-gradient(135deg, #AA151B 0%, #d64a52 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #8c1218 0%, #c43d46 100%);
+  --button-bg: rgba(255, 255, 255, 0.04);
+  --button-text: #99b899;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.4);
+  --checkbox-border: #446644;
+  --input-bg: rgba(30, 50, 30, 0.75);
+  --select-bg: rgba(30, 50, 30, 0.75);
+  --cat-header-bg: rgba(214, 74, 82, 0.12);
+  --danger: #ff6b6b;
+  --danger-hover: #ff6b6b;
+  --flag-gradient: linear-gradient(135deg, #AA151B, #d64a52);
+  --error-color: #ff6b6b;
+  --dashed-border: rgba(214, 74, 82, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --spanish-red: #d64a52;
+  --spanish-red: #ff6b6b;
+  --spanish-gold: #eab308;
+  --spanish-cream: #2a2a1a;
+}
+
+/* ── Reset + base ─────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 15% 25%, rgba(170, 21, 27, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(170, 21, 27, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 75%, rgba(212, 160, 23, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 30% 60%, rgba(170, 21, 27, 0.05) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(2px 2px at 10% 20%, rgba(170, 21, 27, 0.15) 0%, transparent 100%),
+    radial-gradient(2px 2px at 30% 60%, rgba(170, 21, 27, 0.12) 0%, transparent 100%),
+    radial-gradient(3px 3px at 50% 10%, rgba(170, 21, 27, 0.1) 0%, transparent 100%),
+    radial-gradient(2px 2px at 70% 40%, rgba(212, 160, 23, 0.1) 0%, transparent 100%),
+    radial-gradient(2px 2px at 90% 70%, rgba(170, 21, 27, 0.12) 0%, transparent 100%),
+    radial-gradient(3px 3px at 20% 80%, rgba(170, 21, 27, 0.1) 0%, transparent 100%),
+    radial-gradient(2px 2px at 60% 90%, rgba(212, 160, 23, 0.08) 0%, transparent 100%),
+    radial-gradient(2px 2px at 80% 15%, rgba(170, 21, 27, 0.1) 0%, transparent 100%);
+  animation: particleFloat 8s ease-in-out infinite alternate;
+}
+
+/* ── Keyframe Animations ──────────────────────────────────────────── */
+@keyframes particleFloat {
+  0% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 0.6; }
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(170, 21, 27, 0.2);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(170, 21, 27, 0.4);
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(170, 21, 27, 0.2) transparent;
+}
+
+/* ── Inline Siestarella Icon ──────────────────────────────────────── */
+.inline-siestarella {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* ── Keyframe Animations ──────────────────────────────────────────── */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkmarkBounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Glassmorphism Utility ─────────────────────────────────────────── */
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* ── Reduced Motion ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

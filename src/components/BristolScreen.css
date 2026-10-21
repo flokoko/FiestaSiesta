@@ -1,0 +1,1105 @@
+/* ── Bristol Screen ─────────────────────────────────────────────────── */
+
+.bristol-screen {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Hero (Today's Entry) ── */
+.bristol-hero {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.bristol-hero-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.bristol-hero-value-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bristol-hero-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  animation: bristol-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.bristol-hero-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin-bottom: -2px;
+}
+
+.bristol-hero-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bristol-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.bristol-hero-adjective {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bristol-hero-change-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.bristol-hero-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.bristol-hero-question {
+  font-size: 2rem;
+}
+
+/* ── Hero: Date Picker ── */
+.bristol-hero-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.bristol-hero-date-input {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 8px)) saturate(var(--glass-saturate));
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.bristol-hero-date-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.bristol-hero-today-btn {
+  padding: 0.35rem 0.7rem;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bristol-hero-today-btn:hover {
+  background: var(--accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.bristol-hero-today-btn:active {
+  transform: scale(0.95);
+}
+
+@keyframes bristol-pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Value Picker (Grid) ── */
+.bristol-picker {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 1.25rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.bristol-picker-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.bristol-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.bristol-picker-btn {
+  border: 2px solid var(--border-color);
+  background: var(--card-bg-solid);
+  border-radius: 16px;
+  padding: 0.6rem 0.2rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 0;
+}
+
+.bristol-picker-btn:hover {
+  border-color: var(--bristol-color, var(--accent));
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.bristol-picker-btn:active {
+  transform: scale(0.92);
+}
+
+.bristol-picker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.bristol-picker-btn.selected {
+  border-color: var(--bristol-color, var(--accent));
+  background: var(--bristol-color, var(--accent));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+.bristol-picker-btn.selected .bristol-picker-num,
+.bristol-picker-btn.selected .bristol-picker-adj {
+  color: white;
+}
+
+/* ── Bonus-Wert 13 (Plasma) ── */
+.bristol-picker-btn-bonus {
+  border-style: dashed;
+  border-color: #8B4513;
+  background: linear-gradient(135deg, var(--card-bg-solid) 0%, rgba(139, 69, 19, 0.08) 100%);
+  position: relative;
+}
+
+.bristol-picker-btn-bonus::after {
+  content: '💩';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.bristol-picker-btn-bonus:hover {
+  border-color: #8B4513;
+  box-shadow: 0 0 20px rgba(139, 69, 19, 0.4);
+  transform: translateY(-3px);
+}
+
+.bristol-picker-btn-bonus.selected {
+  border-style: solid;
+  background: #8B4513;
+  box-shadow: 0 0 30px rgba(139, 69, 19, 0.6);
+  transform: translateY(-3px) scale(1.05);
+}
+
+.bristol-picker-btn-bonus.selected .bristol-picker-num,
+.bristol-picker-btn-bonus.selected .bristol-picker-adj {
+  color: white;
+}
+
+/* ── Mega-Plasma-Wert 14 (freigeschaltet) ── */
+.bristol-picker-btn-mega {
+  border-color: #5C1A0E;
+  background: linear-gradient(135deg, var(--card-bg-solid) 0%, rgba(92, 26, 14, 0.15) 100%);
+  animation: bristol-mega-pulse 2s ease-in-out infinite;
+}
+
+.bristol-picker-btn-mega::after {
+  content: '💥';
+  top: -6px;
+  right: -6px;
+  font-size: 0.8rem;
+}
+
+.bristol-picker-btn-mega:hover {
+  border-color: #5C1A0E;
+  box-shadow: 0 0 25px rgba(92, 26, 14, 0.5);
+}
+
+.bristol-picker-btn-mega.selected {
+  border-style: solid;
+  background: #5C1A0E;
+  box-shadow: 0 0 35px rgba(92, 26, 14, 0.7);
+}
+
+@keyframes bristol-mega-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(92, 26, 14, 0); }
+  50% { box-shadow: 0 0 18px rgba(92, 26, 14, 0.45); }
+}
+
+.bristol-picker-unlocked-hint {
+  color: #5C1A0E;
+  font-weight: 800;
+}
+
+.bristol-picker-lock-hint {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── Plasma-Glow im Hero ── */
+.bristol-hero-plasma {
+  box-shadow: 0 0 40px rgba(139, 69, 19, 0.6), 0 0 80px rgba(160, 82, 45, 0.3);
+  animation: bristol-plasma-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bristol-plasma-pulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(139, 69, 19, 0.6), 0 0 80px rgba(160, 82, 45, 0.3); }
+  50% { box-shadow: 0 0 60px rgba(139, 69, 19, 0.8), 0 0 120px rgba(160, 82, 45, 0.4); }
+}
+
+.bristol-picker-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.bristol-picker-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--bristol-color, var(--accent));
+  line-height: 1.1;
+}
+
+.bristol-picker-adj {
+  font-size: 0.55rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  line-height: 1;
+  text-align: center;
+  word-break: break-word;
+}
+
+/* ── Cards ── */
+.bristol-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 1.25rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.bristol-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.bristol-card-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* ℹ️ Info-Button im Statistik-Header */
+.bristol-stats-info-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.bristol-stats-info-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* ── Statistik-Erklärung (Modal) ── */
+.bristol-stats-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: fadeIn 0.2s ease;
+}
+.bristol-stats-modal {
+  background: var(--card-bg-solid);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.1rem 1.2rem;
+  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bristol-stats-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+.bristol-stats-modal-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.bristol-stats-modal-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.2rem;
+  line-height: 1;
+}
+.bristol-stats-modal-close:hover {
+  color: var(--text-primary);
+}
+.bristol-stats-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.bristol-stats-modal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.bristol-stats-modal-emoji {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.bristol-card-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+}
+
+.bristol-empty-state {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.75rem 0;
+  line-height: 1.5;
+}
+
+/* ── Today's Overview (chips) ── */
+.bristol-today-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bristol-today-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--button-bg);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.bristol-today-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bristol-today-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.bristol-today-me {
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+
+.bristol-today-val {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.bristol-today-adj {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+/* ── Stats Row ── */
+.bristol-stats-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.bristol-stat-item {
+  flex: 1;
+  background: var(--button-bg);
+  border-radius: 14px;
+  padding: 0.6rem 0.2rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.bristol-stat-num {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.bristol-stat-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.15rem;
+}
+
+/* ── Charts ── */
+.bristol-chart-box {
+  margin-top: 0.75rem;
+  background: var(--card-bg-solid);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 0.75rem 0.4rem;
+}
+
+.bristol-chart-box + .bristol-chart-box {
+  margin-top: 0.6rem;
+}
+
+.bristol-chart-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+  padding-left: 0.3rem;
+}
+
+/* ── History List ── */
+.bristol-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bristol-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--button-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.bristol-history-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  min-width: 3.2rem;
+  font-weight: 500;
+}
+
+.bristol-history-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bristol-history-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.bristol-history-adj {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  min-width: 2.5rem;
+}
+
+/* ── History: own entry highlight + edit ── */
+.bristol-history-own {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.bristol-history-edit-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  margin-left: 0.2rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.35s, transform 0.35s, color 0.35s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bristol-history-edit-trigger:hover {
+  opacity: 1;
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.bristol-history-edit-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+  flex: 1 1 100%;
+  justify-content: flex-start;
+  padding: 0.15rem 0;
+  margin-top: 0.15rem;
+}
+
+.bristol-history-edit-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg-solid);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--bristol-color, var(--accent));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.bristol-history-edit-btn:hover {
+  border-color: var(--bristol-color, var(--accent));
+  transform: scale(1.15);
+}
+
+.bristol-history-edit-btn.selected {
+  background: var(--bristol-color, var(--accent));
+  color: white;
+  border-color: var(--bristol-color, var(--accent));
+}
+
+.bristol-history-edit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ── History-Edit: Plasma-Bonus ── */
+.bristol-history-edit-btn-bonus {
+  border-color: #8B4513;
+  color: #8B4513;
+  font-weight: 800;
+}
+
+.bristol-history-edit-btn-bonus.selected {
+  background: #8B4513;
+  color: white;
+  border-color: #8B4513;
+  box-shadow: 0 0 12px rgba(139, 69, 19, 0.5);
+}
+
+.bristol-history-edit-btn-bonus:hover {
+  border-color: #8B4513;
+  box-shadow: 0 0 10px rgba(139, 69, 19, 0.3);
+}
+
+.bristol-history-edit-cancel {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg-solid);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s;
+  padding: 0;
+  margin-left: 0.15rem;
+  flex-shrink: 0;
+}
+
+.bristol-history-edit-cancel:hover {
+  border-color: var(--danger, #cc0000);
+  color: var(--danger, #cc0000);
+}
+
+.bristol-history-edit-cancel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bristol-history-delete-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s;
+  padding: 0;
+  margin-left: 0.15rem;
+  opacity: 0.6;
+}
+
+.bristol-history-delete-btn:hover {
+  opacity: 1;
+  color: var(--danger, #cc0000);
+  background: rgba(204, 0, 0, 0.08);
+}
+
+.bristol-history-delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Bristol toggle in settings ── */
+.bristol-toggle-group {
+  display: flex;
+  gap: 0;
+  background: var(--button-bg);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.bristol-toggle-btn {
+  border: none;
+  background: none;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+}
+
+.bristol-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 2px 8px rgba(170, 21, 27, 0.2);
+}
+
+.bristol-toggle-btn:not(.active):hover {
+  color: var(--text-primary);
+}
+
+/* ── Highscore / Leaderboard ── */
+.bristol-leaderboard {
+  margin-bottom: 1rem;
+}
+
+.bristol-leaderboard:last-of-type {
+  margin-bottom: 0;
+}
+
+.bristol-leaderboard-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+}
+
+.bristol-leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--button-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.3rem;
+}
+
+.bristol-leaderboard-row:last-child {
+  margin-bottom: 0;
+}
+
+.bristol-medal {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bristol-leaderboard-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bristol-leaderboard-value {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Biggest Change Section ── */
+.bristol-change-section {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.bristol-change-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+}
+
+.bristol-change-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.4rem;
+}
+
+.bristol-change-row:last-child {
+  margin-bottom: 0;
+}
+
+.bristol-change-pos {
+  background: linear-gradient(135deg, rgba(170, 21, 27, 0.08) 0%, var(--button-bg) 100%);
+  border-color: rgba(170, 21, 27, 0.25);
+}
+
+.bristol-change-neg {
+  background: linear-gradient(135deg, rgba(170, 21, 27, 0.08) 0%, var(--button-bg) 100%);
+  border-color: rgba(170, 21, 27, 0.25);
+}
+
+.bristol-change-arrow {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.bristol-change-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bristol-change-detail {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.bristol-change-delta {
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.bristol-change-pos .bristol-change-delta {
+  background: rgba(170, 21, 27, 0.15);
+  color: #AA151B;
+}
+
+.bristol-change-neg .bristol-change-delta {
+  background: rgba(170, 21, 27, 0.15);
+  color: #AA151B;
+}
+
+.bristol-change-date {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-basis: 100%;
+  margin-top: 0.15rem;
+}
+
+/* ── Hero: Multi-Entry List ── */
+.bristol-hero-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.bristol-hero-entry-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--button-bg);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.bristol-hero-entry-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.bristol-hero-entry-time {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 2.5rem;
+}
+
+.bristol-hero-entry-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.bristol-hero-entry-adj {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.bristol-hero-max-hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ── Today: time in chip ── */
+.bristol-today-time {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Intraday date row ── */
+.bristol-intraday-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Day trend rows ── */
+.bristol-daytrend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--button-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.3rem;
+}
+
+.bristol-daytrend-row:last-child {
+  margin-bottom: 0;
+}
+
+.bristol-daytrend-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.bristol-daytrend-values {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.bristol-daytrend-arrow {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ── Fun Stats Grid (humorvolle Kacheln) ── */
+.bristol-funstats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .bristol-funstats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bristol-funstat-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bristol-funstat-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.bristol-funstat-emoji {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.bristol-funstat-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* Scheißtag-Kachel (rot getönt) */
+.bristol-funstat-worst {
+  background: linear-gradient(135deg, rgba(170, 21, 27, 0.08) 0%, var(--button-bg) 100%);
+  border-color: rgba(170, 21, 27, 0.2);
+}
+
+/* Toilettenglück-Kachel (grün getönt) */
+.bristol-funstat-best {
+  background: linear-gradient(135deg, rgba(170, 21, 27, 0.08) 0%, var(--button-bg) 100%);
+  border-color: rgba(170, 21, 27, 0.2);
+}

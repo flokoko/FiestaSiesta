@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <clipPath id="roundCorners">
+      <rect x="0" y="0" width="64" height="64" rx="14"/>
+    </clipPath>
+    <radialGradient id="sunGrad" cx="38%" cy="33%" r="75%">
+      <stop offset="0%" stop-color="#ffe89a"/>
+      <stop offset="55%" stop-color="#f6c343"/>
+      <stop offset="100%" stop-color="#e09803"/>
+    </radialGradient>
+    <radialGradient id="shineGrad" cx="35%" cy="28%" r="30%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#roundCorners)">
+    <!-- Spanish flag background (horizontal: red | yellow | red) -->
+    <rect x="0" y="0" width="64" height="21" fill="#AA151B"/>
+    <rect x="0" y="21" width="64" height="22" fill="#F1BF00"/>
+    <rect x="0" y="43" width="64" height="21" fill="#AA151B"/>
+    <!-- Sun -->
+    <circle cx="32" cy="32" r="16" fill="url(#sunGrad)" stroke="#ffffff" stroke-width="1.2"/>
+    <ellipse cx="26" cy="23" rx="7" ry="4.5" fill="url(#shineGrad)"/>
+  </g>
+</svg>
