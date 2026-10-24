@@ -14,38 +14,65 @@
       <stop offset="0%" stop-color="#E0CFB2"/>
       <stop offset="100%" stop-color="#BEAA88"/>
     </linearGradient>
+    <linearGradient id="vino" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D8392C"/>
+      <stop offset="100%" stop-color="#8E1710"/>
+    </linearGradient>
   </defs>
   <g clip-path="url(#r)">
     <rect width="512" height="512" fill="url(#sky)"/>
-    <!-- Ohren -->
-    <g fill="url(#fur)" transform="rotate(-22 168 156)">
-      <ellipse cx="168" cy="156" rx="30" ry="104"/>
+    <g transform="rotate(-7 228 300)">
+      <!-- Ohren (breiter, eseliger) -->
+      <g fill="url(#fur)" transform="rotate(-26 142 152)">
+        <ellipse cx="142" cy="152" rx="38" ry="96"/>
+      </g>
+      <g fill="#A98F6E" transform="rotate(-26 142 152)">
+        <ellipse cx="142" cy="164" rx="18" ry="58"/>
+      </g>
+      <g fill="url(#fur)" transform="rotate(26 314 152)">
+        <ellipse cx="314" cy="152" rx="38" ry="96"/>
+      </g>
+      <g fill="#A98F6E" transform="rotate(26 314 152)">
+        <ellipse cx="314" cy="164" rx="18" ry="58"/>
+      </g>
+      <!-- Kopf -->
+      <path d="M154 282 C154 244 188 220 228 220 C268 220 302 244 302 282 L302 388 C302 424 268 444 228 444 C188 444 154 424 154 388 Z" fill="url(#fur)"/>
+      <!-- rote Backen -->
+      <ellipse cx="170" cy="336" rx="26" ry="18" fill="#E2705E" opacity="0.62"/>
+      <ellipse cx="286" cy="336" rx="26" ry="18" fill="#E2705E" opacity="0.62"/>
+      <!-- Maul + Zunge -->
+      <ellipse cx="228" cy="398" rx="58" ry="38" fill="#F2E5CB"/>
+      <ellipse cx="209" cy="396" rx="8" ry="12" fill="#8A7458"/>
+      <ellipse cx="247" cy="396" rx="8" ry="12" fill="#8A7458"/>
+      <ellipse cx="228" cy="426" rx="15" ry="12" fill="#D9544A"/>
+      <!-- schiefe Sonnenbrille -->
+      <g fill="#25150F" transform="rotate(6 228 304)">
+        <rect x="158" y="278" width="66" height="50" rx="18"/>
+        <rect x="232" y="278" width="66" height="50" rx="18"/>
+        <rect x="218" y="295" width="20" height="11" rx="5"/>
+      </g>
+      <!-- Sombrero -->
+      <ellipse cx="228" cy="226" rx="200" ry="55" fill="url(#straw)"/>
+      <ellipse cx="228" cy="226" rx="200" ry="55" fill="none" stroke="#C9A96F" stroke-width="5"/>
+      <path d="M164 226 C164 150 184 120 228 120 C272 120 292 150 292 226 Z" fill="#F6E4BB"/>
+      <path d="M166 198 C188 210 268 210 290 198 L290 220 C268 232 188 232 166 220 Z" fill="#B3241D"/>
     </g>
-    <g fill="#A98F6E" transform="rotate(-22 168 156)">
-      <ellipse cx="168" cy="166" rx="13" ry="66"/>
+
+    <!-- Sangria -->
+    <g>
+      <path d="M352 300 L468 300 L460 384 C457 408 434 420 410 420 C386 420 363 408 360 384 Z" fill="#E8F3EF" opacity="0.92"/>
+      <path d="M362 326 L458 326 L460 384 C457 408 434 420 410 420 C386 420 363 408 360 384 Z" fill="url(#vino)"/>
+      <ellipse cx="410" cy="326" rx="48" ry="9" fill="#E4573F"/>
+      <rect x="405" y="420" width="10" height="42" rx="5" fill="#E8F3EF"/>
+      <ellipse cx="410" cy="466" rx="34" ry="10" fill="#E8F3EF"/>
+      <circle cx="463" cy="296" r="27" fill="#F2A03B"/>
+      <circle cx="463" cy="296" r="20" fill="#FBCB74"/>
+      <g stroke="#F2A03B" stroke-width="3">
+        <line x1="463" y1="278" x2="463" y2="314"/>
+        <line x1="445" y1="296" x2="481" y2="296"/>
+        <line x1="450" y1="283" x2="476" y2="309"/>
+        <line x1="476" y1="283" x2="450" y2="309"/>
+      </g>
     </g>
-    <g fill="url(#fur)" transform="rotate(22 344 156)">
-      <ellipse cx="344" cy="156" rx="30" ry="104"/>
-    </g>
-    <g fill="#A98F6E" transform="rotate(22 344 156)">
-      <ellipse cx="344" cy="166" rx="13" ry="66"/>
-    </g>
-    <!-- Kopf -->
-    <path d="M182 286 C182 250 214 226 256 226 C298 226 330 250 330 286 L330 392 C330 428 296 448 256 448 C216 448 182 428 182 392 Z" fill="url(#fur)"/>
-    <!-- Maul -->
-    <ellipse cx="256" cy="404" rx="60" ry="40" fill="#F2E5CB"/>
-    <ellipse cx="236" cy="402" rx="8" ry="13" fill="#8A7458"/>
-    <ellipse cx="276" cy="402" rx="8" ry="13" fill="#8A7458"/>
-    <!-- Sonnenbrille -->
-    <g fill="#25150F">
-      <rect x="184" y="284" width="70" height="52" rx="19"/>
-      <rect x="258" y="284" width="70" height="52" rx="19"/>
-      <rect x="246" y="301" width="20" height="12" rx="6"/>
-    </g>
-    <!-- Sombrero -->
-    <ellipse cx="256" cy="232" rx="216" ry="58" fill="url(#straw)"/>
-    <ellipse cx="256" cy="232" rx="216" ry="58" fill="none" stroke="#C9A96F" stroke-width="5"/>
-    <path d="M190 232 C190 154 208 122 256 122 C304 122 322 154 322 232 Z" fill="#F6E4BB"/>
-    <path d="M192 202 C216 214 296 214 320 202 L320 226 C296 238 216 238 192 226 Z" fill="#B3241D"/>
   </g>
 </svg>
