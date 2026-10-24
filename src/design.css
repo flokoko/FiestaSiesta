@@ -3579,3 +3579,162 @@ body {
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   STUFE 2/3 (v0.18): mehr Transparenz auf Touch-Geräten + Lichtreflex,
+   der dem Finger und dem Scroll folgt
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Beweglicher Lichtreflex auf den Hero-Karten ───────────────── */
+#root .today-hero::before,
+#root .trip-hero::before,
+#root .money-hero::before,
+#root .note-head::before,
+#root .lists-head::before {
+  transform: translate3d(calc(var(--gx, 0) * 22px), calc(var(--gy, 0) * 16px), 0);
+  transition: transform 0.22s linear;
+}
+
+#root .today-hero::after,
+#root .trip-hero::after,
+#root .money-hero::after,
+#root .note-head::after,
+#root .lists-head::after {
+  transform: translate3d(calc(var(--gx, 0) * -14px), calc(var(--gy, 0) * -10px - var(--gsy, 0px) * 0.05), 0);
+  transition: transform 0.22s linear;
+}
+
+/* Sheen-Band, das waagerecht mit dem Zeiger wandert */
+#root .today-hero,
+#root .trip-hero,
+#root .money-hero,
+#root .note-head,
+#root .lists-head,
+#root .wx-now {
+  background-image:
+    linear-gradient(
+      116deg,
+      rgba(255, 255, 255, 0) 26%,
+      rgba(255, 255, 255, 0.13) 44%,
+      rgba(255, 255, 255, 0.02) 52%,
+      rgba(255, 255, 255, 0) 66%
+    ),
+    var(--hero-glass);
+  background-size: 240% 100%, 100% 100%;
+  background-position: calc(50% + 34% * var(--gx, 0)) 50%, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  transition: background-position 0.25s linear;
+}
+
+/* Glanzkante im aktiven Nav-Pill */
+#root .bottom-nav-item.active {
+  background-image: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  background-position: calc(50% + 20% * var(--gx, 0)) 0;
+}
+
+/* ── 2. Kopfleiste reagiert auf Scroll ────────────────────────────── */
+#root .app-header {
+  transition: box-shadow 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+
+:root[data-scrolled] #root .app-header {
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  backdrop-filter: blur(38px) saturate(200%);
+  -webkit-backdrop-filter: blur(38px) saturate(200%);
+  box-shadow: 0 14px 34px -26px rgba(23, 20, 26, 0.55);
+}
+
+:root[data-scrolled] #root .app-header::after {
+  background: var(--glass-edge);
+}
+
+/* ── 3. Auf Touch-Geräten: transparenter + Blur auf den Karten ────── */
+@media (hover: none), (max-width: 600px) {
+  :root {
+    --surface: rgba(255, 255, 255, 0.68);
+    --surface-2: rgba(255, 255, 255, 0.5);
+  }
+
+  #root .today-chips,
+  #root .today-empty,
+  #root .today-tiles,
+  #root .trip-hub,
+  #root .trip-day,
+  #root .lists-card,
+  #root .dashboard-cards,
+  #root .set-rows,
+  #root .wx-rows,
+  #root .dash-notes-list,
+  #root .expense-list,
+  #root .money-debts-list,
+  #root .money-debts-empty,
+  #root .packlist-items,
+  #root .cat-items,
+  #root .bring-group,
+  #root .plan-slot,
+  #root .expense-form,
+  #root .dash-note-form,
+  #root .more-tile,
+  #root .weather-widget,
+  #root .bristol-widget,
+  #root .list-empty,
+  #root .bring-empty,
+  #root .expense-empty,
+  #root .dash-notes-empty {
+    background: var(--surface);
+    backdrop-filter: blur(18px) saturate(175%);
+    -webkit-backdrop-filter: blur(18px) saturate(175%);
+  }
+
+  /* Glaskante bleibt auch bei mehr Transparenz lesbar */
+  #root .today-tile-label,
+  #root .trip-hub-text strong,
+  #root .dash-card-title,
+  #root .lists-card-body strong,
+  #root .set-label,
+  #root .wx-day-name,
+  #root .expense-card-desc,
+  #root .plan-row-title,
+  #root .more-tile-label {
+    text-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+}
+
+/* Ohne backdrop-filter-Support: milchig deckend statt durchsichtig */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --surface: rgba(255, 255, 255, 0.92);
+    --surface-2: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* ── 4. Reduzierte Bewegung: alles statisch ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  #root .today-hero::before,
+  #root .today-hero::after,
+  #root .trip-hero::before,
+  #root .trip-hero::after,
+  #root .money-hero::before,
+  #root .money-hero::after,
+  #root .note-head::before,
+  #root .note-head::after,
+  #root .lists-head::before,
+  #root .lists-head::after {
+    transform: none;
+    transition: none;
+  }
+
+  #root .today-hero,
+  #root .trip-hero,
+  #root .money-hero,
+  #root .note-head,
+  #root .lists-head,
+  #root .wx-now {
+    background-position: 50% 50%, 0 0;
+    transition: none;
+  }
+}
