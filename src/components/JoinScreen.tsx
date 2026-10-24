@@ -74,21 +74,14 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
       <div className="join-card">
         <div className="join-logo">
           <div className="join-orbit">
-            <svg viewBox="0 0 200 160" width="160" height="128" className="join-flag-svg" aria-label="Spanische Flagge">
-              <defs>
-                <clipPath id="flagWave">
-                  <path d="M 12 8 Q 40 4 70 10 Q 100 16 130 10 Q 160 4 190 10 L 190 124 Q 160 130 130 124 Q 100 118 70 124 Q 40 118 12 122 Z" />
-                </clipPath>
-              </defs>
-              <line x1="12" y1="2" x2="12" y2="158" stroke="#8B7355" strokeWidth="3.5" strokeLinecap="round" />
-              <circle cx="12" cy="2" r="4" fill="#a08866" />
-              <g clipPath="url(#flagWave)">
-                {/* Spanien: horizontale Streifen — gelber Streifen ist doppelt so hoch wie rot */}
-                <rect x="0"   y="0"   width="200" height="40"  fill="#AA151B" />
-                <rect x="0"   y="40"  width="200" height="80"  fill="#F1BF00" />
-                <rect x="0"   y="120" width="200" height="40"  fill="#AA151B" />
-              </g>
-            </svg>
+            {/* Dasselbe Bild wie das App-Icon: Burro mit Sombrero */}
+            <img
+              src={`${import.meta.env.BASE_URL}favicon.svg`}
+              alt="Fiesta Siesta"
+              className="join-app-icon"
+              width={112}
+              height={112}
+            />
           </div>
         </div>
         <h1>Fiesta Siesta</h1>
