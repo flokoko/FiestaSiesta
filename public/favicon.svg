@@ -1,52 +1,55 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Fiesta Siesta">
   <defs>
     <clipPath id="r"><rect x="0" y="0" width="512" height="512" rx="112"/></clipPath>
-    <linearGradient id="wall" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0%" stop-color="#FDEFCB"/>
-      <stop offset="100%" stop-color="#EFCE85"/>
+    <clipPath id="wineClip"><rect x="150" y="212" width="220" height="220"/></clipPath>
+    <linearGradient id="flag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F7C81E"/>
+      <stop offset="100%" stop-color="#E8B20F"/>
     </linearGradient>
-    <linearGradient id="pig" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0%" stop-color="#4A2C22"/>
-      <stop offset="100%" stop-color="#1A0E0A"/>
+    <linearGradient id="vino" x1="0.15" y1="0" x2="0.75" y2="1">
+      <stop offset="0%" stop-color="#D33B2C"/>
+      <stop offset="35%" stop-color="#A81B16"/>
+      <stop offset="100%" stop-color="#6B0E0D"/>
     </linearGradient>
-    <linearGradient id="vino" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#E8543F"/>
-      <stop offset="50%" stop-color="#B3241D"/>
-      <stop offset="100%" stop-color="#7A1110"/>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1"/>
     </linearGradient>
+    <radialGradient id="vig" cx="0.5" cy="0.42" r="0.8">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#6B3B00" stop-opacity="0.22"/>
+    </radialGradient>
   </defs>
   <g clip-path="url(#r)">
-    <rect width="512" height="512" fill="url(#wall)"/>
-    <ellipse cx="252" cy="458" rx="212" ry="30" fill="#C39348" opacity="0.4"/>
+    <rect width="512" height="512" fill="url(#flag)"/>
+    <rect width="512" height="104" fill="#B0181E"/>
+    <rect y="408" width="512" height="104" fill="#B0181E"/>
+    <rect width="512" height="512" fill="url(#vig)"/>
 
-    <!-- Sangria -->
-    <g>
-      <path d="M402 296 L478 296 L470 386 C467 412 454 424 440 424 C426 424 413 412 410 386 Z" fill="#FFF6E0" opacity="0.55" stroke="#FFF8E7" stroke-width="7"/>
-      <path d="M410 320 L471 320 L464 384 C461 406 450 416 440 416 C430 416 419 406 416 384 Z" fill="url(#vino)"/>
-      <ellipse cx="440" cy="320" rx="31" ry="9" fill="#F2715B"/>
-      <circle cx="454" cy="350" r="13" fill="#F2A03B"/>
-      <circle cx="454" cy="350" r="8" fill="#FBCB74"/>
-      <rect x="434" y="424" width="13" height="42" rx="6" fill="#FFF8E7"/>
-      <ellipse cx="440" cy="470" rx="40" ry="11" fill="#FFF8E7"/>
-    </g>
+    <g transform="translate(256 300) scale(1.15) translate(-256 -300)">
+    <ellipse cx="256" cy="462" rx="98" ry="16" fill="#7A3A00" opacity="0.26"/>
 
-    <g fill="url(#pig)">
-      <rect x="142" y="368" width="38" height="88" rx="18"/>
-      <rect x="226" y="368" width="38" height="88" rx="18"/>
-      <ellipse cx="196" cy="298" rx="126" ry="90"/>
-      <g transform="rotate(-7 304 290)">
-        <circle cx="304" cy="290" r="78"/>
-        <path d="M250 250 C246 226 254 208 270 200 C274 220 278 238 284 252 Z" fill="#2A1710"/>
-        <path d="M272 242 C266 212 276 190 296 182 C302 204 308 226 314 246 Z"/>
-        <ellipse cx="372" cy="304" rx="38" ry="33" fill="#553229"/>
+    <path d="M172 170 C172 254 176 316 200 352 C218 380 236 394 256 394 C276 394 294 380 312 352 C336 316 340 254 340 170 Z" fill="url(#glass)"/>
+    <path d="M172 170 C172 254 176 316 200 352 C218 380 236 394 256 394 C276 394 294 380 312 352 C336 316 340 254 340 170 Z" fill="url(#vino)" clip-path="url(#wineClip)"/>
+    <ellipse cx="256" cy="214" rx="74" ry="12" fill="#E8543F"/>
+    <ellipse cx="234" cy="213" rx="24" ry="6" fill="#FF9078" opacity="0.5"/>
+    <path d="M172 170 C172 254 176 316 200 352 C218 380 236 394 256 394 C276 394 294 380 312 352 C336 316 340 254 340 170 Z" fill="none" stroke="#FFF8E7" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M190 232 C192 296 202 336 228 360" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.22"/>
+
+    <g transform="rotate(-14 348 202)">
+      <circle cx="348" cy="202" r="40" fill="#F2A03B"/>
+      <circle cx="348" cy="202" r="31" fill="#FBCB74"/>
+      <g stroke="#F2A03B" stroke-width="5" stroke-linecap="round">
+        <line x1="348" y1="173" x2="348" y2="231"/>
+        <line x1="319" y1="202" x2="377" y2="202"/>
+        <line x1="328" y1="182" x2="368" y2="222"/>
+        <line x1="368" y1="182" x2="328" y2="222"/>
       </g>
-      <!-- Ringelschwanz -->
-      <path d="M74 282 C50 274 42 252 56 240 C70 230 84 240 80 252" stroke="#2A1710" stroke-width="13" fill="none" stroke-linecap="round"/>
+      <circle cx="348" cy="202" r="40" fill="none" stroke="#FFF8E7" stroke-width="6"/>
     </g>
-    <g transform="rotate(-7 304 290)">
-      <ellipse cx="384" cy="298" rx="8" ry="11" fill="#120806"/>
-      <ellipse cx="364" cy="298" rx="8" ry="11" fill="#120806"/>
-      <circle cx="330" cy="266" r="9" fill="#FDEFCB"/>
+
+    <rect x="248" y="394" width="16" height="44" rx="8" fill="#FFF8E7"/>
+    <ellipse cx="256" cy="442" rx="58" ry="15" fill="#FFF8E7"/>
     </g>
   </g>
 </svg>
