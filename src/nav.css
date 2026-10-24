@@ -831,3 +831,96 @@
 .more-grid > .more-tile:last-child:nth-child(odd) .more-tile-icon {
   margin-bottom: 0;
 }
+
+
+/* ── Geteilte Bausteine: Options-Blatt und Suchzeile ────────────────
+   Liegen hier, weil sowohl Listen als auch Geld sie nutzen. */
+.list-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg-solid);
+  color: var(--text-muted);
+}
+
+.list-search-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.list-search-row button {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.list-menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(44, 26, 24, 0.34);
+  animation: more-fade 0.16s ease;
+}
+
+.list-menu-sheet {
+  width: 100%;
+  background: var(--card-bg-solid);
+  border-radius: 22px 22px 0 0;
+  padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 24px rgba(60, 30, 20, 0.2);
+  animation: more-rise 0.2s ease;
+}
+
+.list-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 6px;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.list-menu-item:last-of-type {
+  border-bottom: none;
+}
+
+.list-menu-item svg {
+  color: var(--text-secondary);
+  flex: none;
+}
+
+.list-menu-item.is-danger {
+  color: var(--danger, #B3261E);
+}
+
+.list-menu-item.is-danger svg {
+  color: var(--danger, #B3261E);
+}
+
+.list-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

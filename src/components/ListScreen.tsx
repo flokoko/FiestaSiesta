@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Trash2, Pizza, GripVertical, ChevronDown } from 'lucide-react'
+import { Trash2, Pizza, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X } from 'lucide-react'
 import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { supabase } from '../lib/supabase'
@@ -109,10 +109,11 @@ function DraggableCategorySection({
 
   return (
     <div className="cat-section">
-      <div className="cat-header" style={{ background: cat.bg }} data-cat={cat.name}>
-        <span className="cat-title" style={{ color: cat.color }}>{cat.name}</span>
+      <div className="cat-header" data-cat={cat.name}>
+        <span className="cat-dot" style={{ background: cat.color }} aria-hidden="true" />
+        <span className="cat-title">{cat.name}</span>
         <span className="cat-count">
-          {checkedCount}/{catItems.length} erledigt
+          {checkedCount}/{catItems.length}
         </span>
       </div>
       {aggregated.map((agg) => {
@@ -228,6 +229,10 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
   const [hideChecked, setHideChecked] = useState(() => localStorage.getItem('fiesta_hide_checked') === 'true')
   const [searchQuery, setSearchQuery] = useState('')
   const [editingItem, setEditingItem] = useState<ListItem | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [catsOpen, setCatsOpen] = useState(false)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
 
   const toggleHideChecked = () => {
     navigator.vibrate?.(8)
@@ -237,9 +242,12 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
   }
 
   const checkedItems = items.filter((i) => i.is_checked)
+  const openCount = items.length - checkedItems.length
+  const progress = items.length === 0 ? 0 : Math.round((checkedItems.length / items.length) * 100)
 
   const handleDeleteChecked = () => {
     if (checkedItems.length === 0) return
+    setMenuOpen(false)
     confirm('Alle erledigten Items löschen?', async () => {
       const { error } = await supabase.rpc('batch_delete_items', { item_ids: checkedItems.map(i => i.id) })
       if (error) {
@@ -254,6 +262,14 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
   const searchFiltered = searchQuery.trim()
     ? visibleItems.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : visibleItems
+
+  // Kategorie-Auswahl über die Wischleiste
+  const shownCategories = activeCat ? categories.filter((c) => c.name === activeCat) : categories
+  const chips = categories.map((cat) => {
+    const catItems = items.filter((i) => i.category === cat.name)
+    const catOpen = catItems.filter((i) => !i.is_checked).length
+    return { name: cat.name, color: cat.color, bg: cat.bg, open: catOpen, total: catItems.length }
+  }).filter((c) => c.total > 0)
 
   // Skeleton loading state
   if (isLoading) {
@@ -276,90 +292,202 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
 
   return (
     <div className="list-screen">
-      <div className="list-top-bar">
+      <header className="list-head">
+        <div className="list-head-text">
+          <h1>Einkaufen</h1>
+          <p>
+            {items.length === 0
+              ? 'Noch nichts drauf'
+              : openCount === 0
+                ? 'Alles erledigt 🎉'
+                : `${openCount} offen · ${checkedItems.length} erledigt`}
+          </p>
+        </div>
         <button
-          className={`list-top-bar-btn ${hideChecked ? 'active' : ''}`}
-          onClick={toggleHideChecked}
+          type="button"
+          className="list-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Optionen"
         >
-          {hideChecked ? 'Alle zeigen' : 'Erledigte ausblenden'}
+          <MoreHorizontal size={20} strokeWidth={2.2} />
         </button>
-        {checkedItems.length > 0 && (
-          <button
-            className="list-top-bar-btn list-delete-checked-btn"
-            onClick={handleDeleteChecked}
-          >
-            <Trash2 size={16} strokeWidth={2} /> Erledigte löschen ({checkedItems.length})
-          </button>
-        )}
+      </header>
+
+      <div className="list-progress" aria-hidden="true">
+        <i style={{ width: `${progress}%` }} />
       </div>
 
-      <input type="text" className="list-search-input" placeholder="🔍 Suchen…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-
-      <CategoryManager
-        categories={categories}
-        listId={listId}
-        listType="shopping"
-        onCategoriesChange={onCategoriesChange}
-      />
-      <AddItemForm
-        listId={listId}
-        userName={userName}
-        onAdded={onItemChange}
-        categories={categories}
-        listType="shopping"
-      />
-
-      {searchFiltered.length === 0 && (
-        <p className="list-empty"><Pizza size={24} strokeWidth={1.5} /> {hideChecked ? 'Alle erledigten Items ausgeblendet!' : 'Noch keine Items — füge welche hinzu!'}</p>
+      {searchOpen && (
+        <div className="list-search-row">
+          <Search size={15} strokeWidth={2} />
+          <input
+            type="text"
+            placeholder="Artikel suchen…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => { setSearchQuery(''); setSearchOpen(false) }}
+            aria-label="Suche schließen"
+          >
+            <X size={15} strokeWidth={2} />
+          </button>
+        </div>
       )}
 
-      {categories.map((cat) => {
-        const catItems = searchFiltered.filter((i) => i.category === cat.name)
-        if (catItems.length === 0) return null
-        return (
-          <DraggableCategorySection
-            key={cat.id}
-            catItems={catItems}
-            cat={cat}
-            onItemToggle={onItemToggle}
-            onBatchToggle={onBatchToggle}
-            onItemDelete={onItemDelete}
-            onEdit={(item) => setEditingItem(item)}
-            onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
-          />
-        )
-      })}
+      {chips.length > 1 && (
+        <div className="cat-strip">
+          <button
+            type="button"
+            className={`cat-chip${activeCat === null ? ' active' : ''}`}
+            onClick={() => { setActiveCat(null); navigator.vibrate?.(6) }}
+          >
+            Alle <b>{items.length}</b>
+          </button>
+          {chips.map((c) => (
+            <button
+              key={c.name}
+              type="button"
+              className={`cat-chip${activeCat === c.name ? ' active' : ''}`}
+              onClick={() => { setActiveCat(activeCat === c.name ? null : c.name); navigator.vibrate?.(6) }}
+              style={activeCat === c.name ? { borderColor: c.color, background: c.bg, color: c.color } : undefined}
+            >
+              {c.name} <b>{c.open}</b>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Fallback: items whose category was deleted or doesn't match any existing category */}
-      {(() => {
-        const orphanItems = categories.length === 0
-          ? searchFiltered
-          : searchFiltered.filter(item => !categories.some(cat => cat.name === item.category))
-        if (orphanItems.length === 0) return null
-        const fallbackCat: ItemCategory = {
-          id: '__uncategorized__',
-          list_id: listId,
-          name: 'Ohne Kategorie',
-          icon: '📦',
-          color: '#888',
-          bg: '#f0f0f0',
-          sort_order: 9999,
-          list_type: 'shopping',
-          created_at: '',
-        }
-        return (
-          <DraggableCategorySection
-            key="__uncategorized__"
-            catItems={orphanItems}
-            cat={fallbackCat}
-            onItemToggle={onItemToggle}
-            onBatchToggle={onBatchToggle}
-            onItemDelete={onItemDelete}
-            onEdit={(item) => setEditingItem(item)}
-            onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
+      {catsOpen && (
+        <div className="cat-manager-wrap">
+          <CategoryManager
+            categories={categories}
+            listId={listId}
+            listType="shopping"
+            onCategoriesChange={onCategoriesChange}
           />
-        )
-      })()}
+        </div>
+      )}
+
+      <div className="list-body">
+        {searchFiltered.length === 0 && (
+          <p className="list-empty">
+            <Pizza size={24} strokeWidth={1.5} />
+            {searchQuery.trim()
+              ? 'Nichts gefunden.'
+              : hideChecked
+                ? 'Alles erledigt — nichts mehr offen.'
+                : 'Noch nichts drauf. Tippe unten auf +.'}
+          </p>
+        )}
+
+        {shownCategories.map((cat) => {
+          const catItems = searchFiltered.filter((i) => i.category === cat.name)
+          if (catItems.length === 0) return null
+          return (
+            <DraggableCategorySection
+              key={cat.id}
+              catItems={catItems}
+              cat={cat}
+              onItemToggle={onItemToggle}
+              onBatchToggle={onBatchToggle}
+              onItemDelete={onItemDelete}
+              onEdit={(item) => setEditingItem(item)}
+              onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
+            />
+          )
+        })}
+
+        {/* Fallback: items whose category was deleted or doesn't match any existing category */}
+        {(() => {
+          const orphanItems = categories.length === 0
+            ? searchFiltered
+            : searchFiltered.filter(item => !categories.some(cat => cat.name === item.category))
+          if (orphanItems.length === 0) return null
+          const fallbackCat: ItemCategory = {
+            id: '__uncategorized__',
+            list_id: listId,
+            name: 'Ohne Kategorie',
+            icon: '📦',
+            color: '#8A6A4E',
+            bg: '#F3E7D8',
+            sort_order: 9999,
+            list_type: 'shopping',
+            created_at: '',
+          }
+          return (
+            <DraggableCategorySection
+              key="__uncategorized__"
+              catItems={orphanItems}
+              cat={fallbackCat}
+              onItemToggle={onItemToggle}
+              onBatchToggle={onBatchToggle}
+              onItemDelete={onItemDelete}
+              onEdit={(item) => setEditingItem(item)}
+              onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
+            />
+          )
+        })()}
+      </div>
+
+      <div className="list-addbar">
+        <AddItemForm
+          listId={listId}
+          userName={userName}
+          onAdded={onItemChange}
+          categories={activeCat ? categories.filter(c => c.name === activeCat) : categories}
+          listType="shopping"
+        />
+      </div>
+
+      {menuOpen && (
+        <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
+          <div
+            className="list-menu-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Listen-Optionen"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="more-grab" aria-hidden="true" />
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { toggleHideChecked(); setMenuOpen(false) }}
+            >
+              {hideChecked ? <Eye size={17} strokeWidth={2} /> : <EyeOff size={17} strokeWidth={2} />}
+              <span>{hideChecked ? 'Erledigte anzeigen' : 'Erledigte ausblenden'}</span>
+            </button>
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setSearchOpen(true); setMenuOpen(false) }}
+            >
+              <Search size={17} strokeWidth={2} />
+              <span>Suchen</span>
+            </button>
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setCatsOpen(v => !v); setMenuOpen(false) }}
+            >
+              <Settings2 size={17} strokeWidth={2} />
+              <span>{catsOpen ? 'Kategorien ausblenden' : 'Kategorien verwalten'}</span>
+            </button>
+            <button
+              type="button"
+              className="list-menu-item is-danger"
+              onClick={handleDeleteChecked}
+              disabled={checkedItems.length === 0}
+            >
+              <Trash2 size={17} strokeWidth={2} />
+              <span>Erledigte löschen ({checkedItems.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {editingItem && (
         <EditItemForm

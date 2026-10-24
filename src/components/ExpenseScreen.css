@@ -1255,3 +1255,270 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2 — Geld: Saldo zuerst, dann offene Schulden, dann Verlauf.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.money-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 0;
+}
+
+.money-head-text h1 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.money-head-text p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.money-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px;
+  padding: 15px 16px;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(140deg, #1F6F63 0%, #2E8B76 55%, #59B58F 100%);
+  box-shadow: 0 10px 24px rgba(31, 111, 99, 0.24);
+}
+
+.money-hero-glow {
+  position: absolute;
+  right: -58px;
+  top: -64px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.money-hero-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.86;
+}
+
+.money-hero-total {
+  margin-top: 4px;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.money-hero-balance {
+  margin-top: 3px;
+  font-size: 11.5px;
+  opacity: 0.95;
+}
+
+.money-debts {
+  margin-top: 14px;
+}
+
+.money-debts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.money-debts-head h2 {
+  margin: 0;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.money-debts-empty {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.money-debts-list {
+  margin-top: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-bg-solid);
+  overflow: hidden;
+}
+
+.money-debt-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12.5px;
+}
+
+.money-debt-row:last-child {
+  border-bottom: none;
+}
+
+.money-debt-from {
+  color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.money-debt-arrow {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.money-debt-to {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.money-debt-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #B3261E;
+}
+
+.money-debt-more {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-top: 1px solid var(--line-soft);
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.money-toggle {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0 10px;
+  padding: 3px;
+  border-radius: 13px;
+  background: var(--button-bg);
+}
+
+.money-toggle-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.money-toggle-btn.active {
+  background: var(--card-bg-solid);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.money-addbar {
+  position: sticky;
+  bottom: 74px;
+  z-index: 20;
+  padding: 8px 0 0;
+}
+
+.money-add-btn {
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(170, 21, 27, 0.26);
+}
+
+.money-add-btn:active {
+  transform: scale(0.98);
+}
+
+/* Zeilen in der Ausgabenliste ruhiger stellen */
+.expense-screen .expense-row,
+.expense-screen .expense-list-item {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: none;
+  background: transparent;
+}
+
+/* Ausgaben als Zeilen statt Karten */
+.expense-screen .expense-card {
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  margin-bottom: 0;
+  padding: 11px 2px;
+}
+
+.expense-screen .expense-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.expense-screen .expense-card-desc {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.expense-screen .expense-card-amount {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.expense-screen .expense-date-header {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 2px 2px;
+  background: none;
+}
+
+.expense-screen .expense-card-split,
+.expense-screen .expense-card-by,
+.expense-screen .expense-card-note {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* Letzte Zeile soll über die Aktionsleiste scrollen */
+.expense-screen .expense-list {
+  padding-bottom: 76px;
+}

@@ -1,9 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Wallet, Receipt, Table2, Percent } from 'lucide-react'
+import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight } from 'lucide-react'
 import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory, Settlement } from '../types'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
-import { isEqualQuotaDistribution } from '../lib/settlement'
+import {
+  isEqualQuotaDistribution, computeBalances, computeOpenBalances,
+  computeSettlement, totalExpenses, fmtEUR,
+} from '../lib/settlement'
 import ExpenseForm from './ExpenseForm'
 import ExpenseList from './ExpenseList'
 import ExpenseSettlement from './ExpenseSettlement'
@@ -60,6 +63,21 @@ export default function ExpenseScreen({
   const [expenseNote, setExpenseNote] = useState('')
   const [expenseCategory, setExpenseCategory] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  // ── Saldo-Logik: erst was offen ist, dann die Details ──
+  const balances = useMemo(() => computeBalances(expenses, expenseSplits), [expenses, expenseSplits])
+  const openBalances = useMemo(
+    () => computeOpenBalances(
+      balances,
+      settlements.map(s => ({ from: s.payer, to: s.payee, amount: s.amount })),
+    ),
+    [balances, settlements],
+  )
+  const proposals = useMemo(() => computeSettlement(openBalances), [openBalances])
+  const totalSpent = useMemo(() => totalExpenses(expenses), [expenses])
+  const myBalance = Math.round((openBalances[userName] ?? 0) * 100) / 100
 
   // ── All known persons (from props) ──
   const allPersons = useMemo(() => {
@@ -163,45 +181,118 @@ export default function ExpenseScreen({
 
   return (
     <div className="expense-screen">
-      {/* ── Sub-Toggle ── */}
-      <div className="expense-toggle">
+      {/* ── Kopf: was steht unterm Strich ── */}
+      <header className="money-head">
+        <div className="money-head-text">
+          <h1>Geld</h1>
+          <p>{expenses.length === 0 ? 'Noch keine Ausgabe' : `${expenses.length} Ausgaben · ${allPersons.length} Personen`}</p>
+        </div>
         <button
-          className={`expense-toggle-btn ${section === 'expenses' ? 'active' : ''}`}
+          type="button"
+          className="list-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Optionen"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.2} />
+        </button>
+      </header>
+
+      <section className="money-hero">
+        <div className="money-hero-glow" aria-hidden="true" />
+        <div className="money-hero-label">Gesamt ausgelegt</div>
+        <div className="money-hero-total">{fmtEUR(totalSpent)}</div>
+        <div className="money-hero-balance">
+          {expenses.length === 0
+            ? 'Trag die erste Ausgabe ein'
+            : myBalance >= 0
+              ? `Dir stehen ${fmtEUR(myBalance)} zu`
+              : `Du schuldest ${fmtEUR(Math.abs(myBalance))}`}
+        </div>
+      </section>
+
+      <section className="money-debts">
+        <div className="money-debts-head">
+          <h2>Offen zwischen euch</h2>
+          {proposals.length > 0 && (
+            <button
+              type="button"
+              className="today-link"
+              onClick={() => setSection('settlement')}
+            >
+              Abrechnen <ArrowRight size={13} strokeWidth={2.4} />
+            </button>
+          )}
+        </div>
+        {proposals.length === 0 ? (
+          <p className="money-debts-empty">
+            {expenses.length === 0 ? 'Noch nichts zu verteilen.' : 'Alles ausgeglichen 🎉'}
+          </p>
+        ) : (
+          <div className="money-debts-list">
+            {proposals.slice(0, 3).map((txn, i) => (
+              <div key={`${txn.from}-${txn.to}-${i}`} className="money-debt-row">
+                <span className="money-debt-from">{txn.from}</span>
+                <ArrowRight size={13} strokeWidth={2.2} className="money-debt-arrow" />
+                <span className="money-debt-to">{txn.to}</span>
+                <span className="money-debt-amount">{fmtEUR(txn.amount)}</span>
+              </div>
+            ))}
+            {proposals.length > 3 && (
+              <button
+                type="button"
+                className="money-debt-more"
+                onClick={() => setSection('settlement')}
+              >
+                +{proposals.length - 3} weitere
+              </button>
+            )}
+          </div>
+        )}
+      </section>
+
+      <div className="money-toggle">
+        <button
+          type="button"
+          className={`money-toggle-btn${section === 'expenses' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('expenses') }}
         >
-          <Wallet size={16} strokeWidth={2} /> Ausgaben{expenses.length > 0 && <span className="expense-toggle-badge">{expenses.length}</span>}
+          <Wallet size={15} strokeWidth={2} /> Ausgaben
         </button>
         <button
-          className={`expense-toggle-btn ${section === 'settlement' ? 'active' : ''}`}
+          type="button"
+          className={`money-toggle-btn${section === 'settlement' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('settlement') }}
         >
-          <Receipt size={16} strokeWidth={2} /> Abrechnung
+          <Receipt size={15} strokeWidth={2} /> Abrechnung
         </button>
-        <button
-          className={`expense-toggle-btn ${section === 'matrix' ? 'active' : ''}`}
-          onClick={() => { navigator.vibrate?.(8); setSection('matrix') }}
-        >
-          <Table2 size={16} strokeWidth={2} /> Matrix
-        </button>
-        {showQuotaTab && (
-          <button
-            className={`expense-toggle-btn ${section === 'quotas' ? 'active' : ''}`}
-            onClick={() => { navigator.vibrate?.(8); setSection('quotas') }}
-          >
-            <Percent size={16} strokeWidth={2} /> Quoten
+        {(section === 'matrix' || section === 'quotas') && (
+          <button type="button" className="money-toggle-btn active" onClick={() => setSection('expenses')}>
+            {section === 'matrix' ? <Table2 size={15} strokeWidth={2} /> : <Percent size={15} strokeWidth={2} />}
+            {section === 'matrix' ? 'Matrix' : 'Quoten'}
           </button>
         )}
       </div>
 
+      {searchOpen && section === 'expenses' && (
+        <div className="list-search-row">
+          <Search size={15} strokeWidth={2} />
+          <input
+            type="text"
+            placeholder="Ausgabe suchen…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          <button type="button" onClick={() => { setSearchQuery(''); setSearchOpen(false) }} aria-label="Suche schließen">
+            <X size={15} strokeWidth={2} />
+          </button>
+        </div>
+      )}
+
       {/* ── Ausgaben Section ── */}
       {section === 'expenses' && (
         <div key="expenses">
-          <input type="text" className="expense-search-input" placeholder="🔍 Suchen…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-          {!formExpanded ? (
-            <button className="expense-add-trigger" onClick={startAdd}>
-              + Ausgabe hinzufügen
-            </button>
-          ) : (
+          {formExpanded && (
             <ExpenseForm
               listId={listId}
               userName={userName}
@@ -246,6 +337,14 @@ export default function ExpenseScreen({
             onEdit={startEdit}
             onDelete={handleDelete}
           />
+
+          {!formExpanded && (
+            <div className="money-addbar">
+              <button type="button" className="money-add-btn" onClick={startAdd}>
+                + Ausgabe hinzufügen
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -276,6 +375,54 @@ export default function ExpenseScreen({
           expenseQuotas={expenseQuotas}
           onQuotasChange={onQuotasChange}
         />
+      )}
+
+      {menuOpen && (
+        <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
+          <div
+            className="list-menu-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Geld-Optionen"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="more-grab" aria-hidden="true" />
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setSection('expenses'); setSearchOpen(true); setMenuOpen(false) }}
+            >
+              <Search size={17} strokeWidth={2} />
+              <span>Ausgaben suchen</span>
+            </button>
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setSection('matrix'); setMenuOpen(false) }}
+            >
+              <Table2 size={17} strokeWidth={2} />
+              <span>Matrix aller Schulden</span>
+            </button>
+            {showQuotaTab && (
+              <button
+                type="button"
+                className="list-menu-item"
+                onClick={() => { setSection('quotas'); setMenuOpen(false) }}
+              >
+                <Percent size={17} strokeWidth={2} />
+                <span>Quoten je Kategorie</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setSection('settlement'); setMenuOpen(false) }}
+            >
+              <Receipt size={17} strokeWidth={2} />
+              <span>Abrechnung &amp; Verlauf</span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

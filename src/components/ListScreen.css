@@ -195,3 +195,251 @@
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2 — Einkaufsliste als ruhige Fläche:
+   Kopf mit Fortschritt, Wischleiste für Kategorien, Zeilen mit
+   Haarlinie statt Karten, eine primäre Aktion unten.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.list-screen {
+  padding: 2px 0 0;
+}
+
+.list-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 0;
+}
+
+.list-head-text h1 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.list-head-text p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.list-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  background: var(--card-bg-solid);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.list-progress {
+  height: 5px;
+  margin: 9px 2px 2px;
+  border-radius: 3px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.list-progress i {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, #E2703A 100%);
+  transition: width 0.3s ease;
+}
+
+/* Wischleiste der Kategorien */
+.cat-strip {
+  display: flex;
+  gap: 7px;
+  margin: 11px 0 3px;
+  padding-bottom: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cat-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 6px 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg-solid);
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.cat-chip b {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.cat-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.cat-manager-wrap {
+  margin-top: 10px;
+}
+
+.list-body {
+  margin-top: 8px;
+}
+
+/* Kategorie-Kopf: Punkt + Label statt Farbblock */
+.list-screen .cat-section {
+  margin-bottom: 0.85rem;
+}
+
+.list-screen .cat-header {
+  background: transparent;
+  padding: 0.55rem 0.15rem 0.3rem;
+  border-radius: 0;
+  margin-bottom: 0;
+  gap: 7px;
+}
+
+.list-screen .cat-header:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.list-screen .cat-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.list-screen .cat-count {
+  font-size: 10px;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+/* Zeilen: Haarlinie statt Karte */
+.list-screen .item-row {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0.62rem 0.15rem;
+  animation: none;
+}
+
+.list-screen .item-row:hover {
+  transform: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.list-screen .item-row:active {
+  background: var(--sand);
+}
+
+.list-screen .item-name {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.list-screen .item-qty {
+  font-size: 11px;
+}
+
+.list-screen .item-row.drag-over {
+  border-top: 2px solid var(--accent);
+  padding-top: calc(0.62rem - 2px);
+}
+
+.list-screen .agg-expanded {
+  padding-left: 1.9rem;
+}
+
+/* Primäre Aktion unten */
+.list-addbar {
+  position: sticky;
+  bottom: 74px;
+  z-index: 20;
+  padding: 6px 0 0;
+  margin-top: 8px;
+}
+
+.list-addbar .add-item-form {
+  margin-bottom: 0;
+}
+
+.list-addbar .add-item-trigger {
+  border: none;
+  border-radius: 14px;
+  padding: 0.85rem;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  box-shadow: 0 8px 20px rgba(170, 21, 27, 0.26);
+}
+
+.list-addbar .add-item-trigger:hover {
+  transform: none;
+  border-color: transparent;
+  box-shadow: 0 8px 22px rgba(170, 21, 27, 0.34);
+}
+
+.list-addbar .add-plus {
+  font-size: 1.05rem;
+}
+
+.list-addbar .add-item-expanded {
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-solid);
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+}
+
+/* Weniger Rauschen: Ersteller nur im aufgeklappten Aggregat zeigen */
+.list-screen .item-row > .item-content .item-created-by {
+  display: none;
+}
+
+/* Letzte Zeilen sollen über die Aktionsleiste scrollen können */
+.list-screen .list-body {
+  padding-bottom: 22px;
+}
