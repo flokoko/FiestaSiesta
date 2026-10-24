@@ -28,10 +28,10 @@ jobs:
 
       - name: Create .env
         run: |
-          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" > .env
-          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
-          echo "VITE_VAPID_PUBLIC_KEY=${{ secrets.VITE_VAPID_PUBLIC_KEY }}" >> .env
-          echo "VITE_OWM_API_KEY=${{ secrets.VITE_OWM_API_KEY }}" >> .env
+          # Öffentliche Build-Werte (URL, anon key, VAPID public) aus .env.public.
+          # Bewusst keine Actions-Secrets: der Repo-PAT kann sie nicht setzen, und
+          # leere VITE_*-Werte bauen grün, liefern aber eine blanke App.
+          cp .env.public .env
 
       - run: npm run build
 
