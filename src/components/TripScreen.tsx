@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { MapPin, Image, Map as MapIcon, FileText, StickyNote, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { SLOTS, isoDay, leadingProposal, proposalsFor, slotMeta } from '../lib/tripPlan'
+import SlotIcon from './SlotIcon'
+import { SLOTS, isoDay, planFor, proposalsFor } from '../lib/tripPlan'
 import type { TripProposal, TripSlot, TripVote, TabView } from '../types'
 import {
   TRIP, formatDayShort, formatDayLong, formatRange, tripDay, tripDays,
@@ -45,8 +46,8 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
         const iso = isoDay(day)
         const entry: DayPlan = {}
         for (const slot of SLOTS) {
-          const leader = leadingProposal(proposalsFor(rows, iso, slot.key))
-          if (leader) entry[slot.key] = leader.title
+          const entryPlan = planFor(proposalsFor(rows, iso, slot.key))
+          if (entryPlan) entry[slot.key] = entryPlan.title
         }
         if (Object.keys(entry).length > 0) next[iso] = entry
       }
@@ -63,8 +64,8 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
       : 'vorbei'
   const decidedSlots = Object.values(plans).reduce((n, day) => n + Object.keys(day).length, 0)
   const planHint = decidedSlots > 0
-    ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten entschieden · ${proposalCount} ${proposalCount === 1 ? 'Vorschlag' : 'Vorschläge'}`
-    : `${TRIP_LENGTH} Tage · noch nichts entschieden`
+    ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten geplant · ${proposalCount} ${proposalCount === 1 ? 'Vorschlag' : 'Vorschläge'}`
+    : `${TRIP_LENGTH} Tage · noch nichts geplant`
 
   return (
     <div className="trip">
@@ -141,7 +142,7 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
                   <ul className="trip-day-plan">
                     {SLOTS.filter((slot) => plan[slot.key]).map((slot) => (
                       <li key={slot.key}>
-                        <span className="trip-day-plan-emoji">{slotMeta(slot.key).emoji}</span>
+                        <SlotIcon slot={slot.key} size={10} className="trip-day-plan-emoji" />
                         {plan[slot.key]}
                       </li>
                     ))}

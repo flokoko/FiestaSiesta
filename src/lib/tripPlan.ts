@@ -56,3 +56,19 @@ export function proposalsFor(
       return a.created_at.localeCompare(b.created_at)
     })
 }
+
+/** Vorschlag, der für diese Zeit fest übernommen wurde */
+export function confirmedProposal(list: TripProposal[]): TripProposal | null {
+  return list.find((p) => p.confirmed_at) ?? null
+}
+
+/** Was gilt: bestätigter Plan vor Sieger der Abstimmung */
+export function planFor(list: TripProposal[]): TripProposal | null {
+  return confirmedProposal(list) ?? leadingProposal(list)
+}
+
+/** Google-Maps-Link zum Ort (mit Reise-Region als Kontext) */
+export function mapsUrl(place: string): string {
+  const query = `${place}, Las Palmas, Gran Canaria`
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+}

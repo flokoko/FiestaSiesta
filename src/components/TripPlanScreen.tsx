@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown } from 'lucide-react'
+import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw } from 'lucide-react'
+import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { SLOTS, isoDay, leadingProposal, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
+import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, formatDayLong, tripDay } from '../lib/trip'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 import './TripPlanScreen.css'
@@ -25,6 +26,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const [addSlot, setAddSlot] = useState<TripSlot | null>(null)
   const [draft, setDraft] = useState('')
   const [draftNote, setDraftNote] = useState('')
+  const [draftPlace, setDraftPlace] = useState('')
   const [selectedDay, setSelectedDay] = useState<string>(() => {
     const today = tripDay()
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
@@ -64,17 +66,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     onTableChange: () => void load(),
   })
 
-  const totalPlans = useMemo(
-    () =>
-      days.reduce((count, day) => {
-        const iso = isoDay(day)
-        return (
-          count +
-          SLOTS.filter((slot) => leadingProposal(proposalsFor(proposals, iso, slot.key))).length
-        )
-      }, 0),
-    [days, proposals]
-  )
+  const fixedCount = useMemo(() => proposals.filter((p) => p.confirmed_at).length, [proposals])
 
   const handleAdd = async (slot: TripSlot) => {
     const title = draft.trim()
@@ -86,6 +78,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       slot,
       title,
       note: draftNote.trim() || null,
+      place: draftPlace.trim() || null,
       created_by: userName,
     })
     setBusyId(null)
@@ -96,6 +89,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     navigator.vibrate?.(10)
     setDraft('')
     setDraftNote('')
+    setDraftPlace('')
     setAddSlot(null)
     void load()
   }
@@ -117,6 +111,37 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       return
     }
     void load()
+  }
+
+  const handleConfirm = (proposal: TripProposal) => {
+    confirm(`„${proposal.title}" als Plan übernehmen?`, async () => {
+      const { error } = await supabase
+        .from('trip_proposals')
+        .update({ confirmed_at: new Date().toISOString(), confirmed_by: userName })
+        .eq('id', proposal.id)
+      if (error) {
+        toast(`Fehler: ${error.message}`, 'error')
+        return
+      }
+      navigator.vibrate?.([10, 40, 10])
+      toast('Plan übernommen', 'success')
+      void load()
+    })
+  }
+
+  const handleReopen = (proposal: TripProposal) => {
+    confirm(`Plan „${proposal.title}" wieder freigeben?`, async () => {
+      const { error } = await supabase
+        .from('trip_proposals')
+        .update({ confirmed_at: null, confirmed_by: null })
+        .eq('id', proposal.id)
+      if (error) {
+        toast(`Fehler: ${error.message}`, 'error')
+        return
+      }
+      toast('Abstimmung wieder offen', 'success')
+      void load()
+    })
   }
 
   const handleDelete = (proposal: TripProposal) => {
@@ -143,7 +168,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         <div className="list-head-text">
           <h1>Reiseplan</h1>
           <p>
-            {totalPlans} von {days.length * SLOTS.length} Zeiten entschieden · {proposalTotal}{' '}
+            {fixedCount} von {days.length * SLOTS.length} Zeiten fest · {proposalTotal}{' '}
             {proposalTotal === 1 ? 'Vorschlag' : 'Vorschläge'}
           </p>
         </div>
@@ -174,14 +199,36 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       ) : (
         SLOTS.map((slot) => {
           const list = proposalsFor(proposals, selectedDay, slot.key)
-          const leader = leadingProposal(list)
+          const fixed = confirmedProposal(list)
+          const leader = planFor(list)
           const meta = slotMeta(slot.key)
           return (
             <section className="plan-slot" key={slot.key}>
               <h2 className="plan-slot-title">
-                <span className="plan-slot-emoji">{meta.emoji}</span>
+                <SlotIcon slot={slot.key} size={12} className="plan-slot-emoji" />
                 {meta.label}
-                {leader && <span className="plan-slot-plan">Plan</span>}
+                {fixed ? (
+                  <span className="plan-slot-plan is-fixed"><Check size={10} strokeWidth={3} /> Bestätigt</span>
+                ) : leader ? (
+                  <span className="plan-slot-plan">Favorit</span>
+                ) : null}
+                {fixed ? (
+                  <button
+                    type="button"
+                    className="plan-slot-action"
+                    onClick={() => handleReopen(fixed)}
+                  >
+                    <RotateCcw size={11} strokeWidth={2.2} /> ändern
+                  </button>
+                ) : leader ? (
+                  <button
+                    type="button"
+                    className="plan-slot-action"
+                    onClick={() => handleConfirm(leader)}
+                  >
+                    <Check size={11} strokeWidth={2.6} /> übernehmen
+                  </button>
+                ) : null}
               </h2>
 
               {list.length === 0 ? (
@@ -196,10 +243,20 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                       <div className={`plan-row${isLeader ? ' is-plan' : ''}`} key={proposal.id}>
                         <div className="plan-row-main">
                           <span className="plan-row-title">{proposal.title}</span>
-                          <span className="plan-row-meta">
-                            von {proposal.created_by}
-                            {proposal.note ? ` · ${proposal.note}` : ''}
-                          </span>
+                          <span className="plan-row-meta">von {proposal.created_by}</span>
+                          {proposal.place && (
+                            <a
+                              className="plan-row-place"
+                              href={mapsUrl(proposal.place)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MapPin size={11} strokeWidth={2.2} />
+                              {proposal.place}
+                            </a>
+                          )}
+                          {proposal.note && <span className="plan-row-note">{proposal.note}</span>}
                         </div>
                         {(mine || isAdmin) && (
                           <button
@@ -215,7 +272,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                           type="button"
                           className={`plan-vote${voted ? ' is-voted' : ''}`}
                           onClick={() => handleVote(proposal)}
-                          disabled={busyId === proposal.id}
+                          disabled={busyId === proposal.id || Boolean(fixed)}
                           aria-pressed={voted}
                           aria-label={`Für ${proposal.title} stimmen`}
                         >
@@ -240,6 +297,13 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAdd(slot.key)}
                     autoFocus
+                  />
+                  <input
+                    className="plan-input"
+                    type="text"
+                    placeholder="Ort (optional)"
+                    value={draftPlace}
+                    onChange={(e) => setDraftPlace(e.target.value)}
                   />
                   <input
                     className="plan-input"
@@ -282,7 +346,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       )}
 
       <p className="plan-footnote">
-        <Crown size={12} strokeWidth={2} /> Meiste Stimmen gewinnen — bei Gleichstand der ältere Vorschlag.
+        <Crown size={12} strokeWidth={2} /> Meiste Stimmen gewinnen — „übernehmen" macht daraus den festen Plan.
       </p>
     </div>
   )

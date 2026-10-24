@@ -278,3 +278,76 @@
 .plan-screen .list-head-text p {
   text-align: left;
 }
+
+/* Ort + Notiz in der Zeile */
+.plan-row-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 1px 6px 1px 5px;
+  border-radius: 6px;
+  background: var(--button-bg);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-row-place:active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.plan-row-note {
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Slot-Aktion (übernehmen / ändern) */
+.plan-slot-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: 7px;
+  background: none;
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  text-transform: none;
+  cursor: pointer;
+}
+
+.plan-slot-plan.is-fixed {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: color-mix(in srgb, var(--verde) 16%, transparent);
+  color: var(--verde);
+}
+
+.plan-slot-plan {
+  margin-left: auto;
+}
+
+.plan-slot-action {
+  margin-left: 6px;
+}
+
+.plan-vote:disabled {
+  opacity: 0.35;
+}

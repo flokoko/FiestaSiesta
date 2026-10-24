@@ -131,8 +131,13 @@ export interface TripProposal {
   slot: TripSlot
   title: string
   note: string | null
+  /** optionaler Ort, antippbar → Google Maps */
+  place: string | null
   created_by: string
   created_at: string
+  /** gesetzt, wenn der Vorschlag fest als Plan übernommen wurde */
+  confirmed_at: string | null
+  confirmed_by: string | null
   votes?: string[]
 }
 
