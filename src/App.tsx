@@ -36,6 +36,7 @@ function TabLoader() {
 
 import './App.css'
 import './nav.css'
+import './design.css'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>

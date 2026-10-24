@@ -235,6 +235,17 @@ export default function DashboardScreen({
 
   return (
     <div className="dashboard-screen">
+      <header className="note-head">
+        <div className="note-head-text">
+          <h1>Notizen</h1>
+          <p>
+            {notes.length === 0
+              ? 'Noch keine Notiz'
+              : `${notes.length} ${notes.length === 1 ? 'Notiz' : 'Notizen'}`}
+          </p>
+        </div>
+      </header>
+
       {/* ── Weather Widget ── */}
       <WeatherWidget onNavigate={() => { navigator.vibrate?.(8); onNavigate('weather') }} />
 

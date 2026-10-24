@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Trash2, Pizza, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X } from 'lucide-react'
+import { Trash2, ShoppingBasket, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X } from 'lucide-react'
 import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { supabase } from '../lib/supabase'
@@ -374,7 +374,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
       <div className="list-body">
         {searchFiltered.length === 0 && (
           <p className="list-empty">
-            <Pizza size={24} strokeWidth={1.5} />
+            <ShoppingBasket size={24} strokeWidth={1.5} />
             {searchQuery.trim()
               ? 'Nichts gefunden.'
               : hideChecked

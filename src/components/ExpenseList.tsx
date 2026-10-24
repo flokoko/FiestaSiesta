@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Pencil, Trash2, MessageSquare, Pizza } from 'lucide-react'
+import { Pencil, Trash2, MessageSquare, Receipt } from 'lucide-react'
 import type { Expense, ExpenseSplit, ItemCategory } from '../types'
 import { groupExpensesByDate, getSplitInfo, fmtEUR, fmtDate } from '../lib/settlement'
 import { SkeletonExpenseCard } from './Skeleton'
@@ -43,7 +43,7 @@ export default function ExpenseList({
   return (
     <>
       {expenses.length === 0 && !formExpanded && (
-        <p className="expense-empty"><Pizza size={24} strokeWidth={1.5} /> Noch keine Ausgaben — füge die erste hinzu!</p>
+        <p className="expense-empty"><Receipt size={24} strokeWidth={1.5} /> Noch keine Ausgaben — füge die erste hinzu!</p>
       )}
 
       <div className="expense-list">

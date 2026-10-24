@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { Trash2, GripVertical, Pizza, Plus, Copy, MoreHorizontal, Search, X, Settings2, Backpack, Luggage } from 'lucide-react'
+import { Trash2, GripVertical, Plus, Copy, MoreHorizontal, Search, X, Settings2, Backpack, Luggage } from 'lucide-react'
 import type { BringFilter, ListItem, ItemCategory, ListType } from '../types'
 import { supabase, getJoinCode } from '../lib/supabase'
 import { logError } from '../lib/logger'
@@ -538,7 +538,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           </div>
 
           {grouped.length === 0 && (
-            <p className="bring-empty"><Pizza size={24} strokeWidth={1.5} /> Nichts hier — vielleicht Filter ändern?</p>
+            <p className="bring-empty"><Backpack size={24} strokeWidth={1.5} /> Nichts hier — vielleicht Filter ändern?</p>
           )}
 
           {grouped.map(([person, personItems]) => {

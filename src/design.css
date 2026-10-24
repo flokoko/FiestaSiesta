@@ -1,0 +1,3285 @@
+/* ═══════════════════════════════════════════════════════════════════
+   FIESTA SIESTA — Designsprache „Cuaderno"
+
+   Ein spanisches Reisenotizbuch, nicht Bellas Glas-und-Karten-Look:
+   Papier statt Karten, Haarlinien statt Rahmen, Serif-Rubriken statt
+   Fettschrift, Rot nur als Marke und Aktion (nie als Fläche), Ocker
+   als Wegweiser. Zahlen stehen in der Display-Serif („Ledger").
+
+   Wird als LETZTE Stylesheet-Schicht geladen. Alle Regeln sind mit
+   #root gescopet, damit sie auch gegen lazy-geladene Screen-CSS
+   gewinnen (gleiche Spezifität sonst unentschieden, Last-Chunk
+   gewinnt — und das ist hier nicht dieses File).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Schriften (self-hosted, offline-fähig) ───────────────────────── */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../fonts/fraunces-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/inter-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Tokens ───────────────────────────────────────────────────────── */
+:root {
+  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --paper: #FBF5EB;
+  --paper-2: #F5EBDB;
+  --paper-3: #EFE3D0;
+  --ink: #1D1512;
+  --ink-soft: #574840;
+  --ink-faint: #92837A;
+  --rule: #E2D5C4;
+  --rule-strong: #CBB9A4;
+  --terra: #AA151B;
+  --terra-deep: #8B1015;
+  --ochre: #B7842B;
+  --ochre-soft: #E5C27C;
+  --olive: #4C6B48;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+
+  --pad: 20px;
+
+  /* Bestehende Tokens der Bella-Schicht überschreiben */
+  --bg-gradient: linear-gradient(180deg, #FCF7EE 0%, #F8F0E2 100%);
+  --header-bg: rgba(251, 245, 235, 0.9);
+  --card-bg: transparent;
+  --card-bg-solid: #FFFCF6;
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-muted: var(--ink-faint);
+  --border-color: var(--rule);
+  --input-border: var(--rule-strong);
+  --input-bg: #FFFCF6;
+  --select-bg: #FFFCF6;
+  --button-bg: transparent;
+  --button-text: var(--ink-soft);
+  --accent: var(--terra);
+  --accent-light: rgba(170, 21, 27, 0.07);
+  --accent-gradient: none;
+  --accent-gradient-hover: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow: transparent;
+  --checkbox-border: var(--rule-strong);
+  --cat-header-bg: transparent;
+  --line-soft: var(--rule);
+  --sand: var(--paper-2);
+  --spanish-cream: var(--paper);
+  --spanish-gold: var(--ochre);
+  --spanish-red: var(--terra);
+  --verde: var(--olive);
+  --danger: var(--terra);
+  --danger-hover: var(--terra-deep);
+  --glass-border: var(--rule);
+  --dashed-border: var(--rule-strong);
+}
+
+:root[data-theme='dark'] {
+  --paper: #16100D;
+  --paper-2: #1E1712;
+  --paper-3: #261D17;
+  --ink: #F6EDDF;
+  --ink-soft: #C3B2A4;
+  --ink-faint: #8C7B6D;
+  --rule: #33261E;
+  --rule-strong: #4A382C;
+  --terra: #E2585A;
+  --terra-deep: #C8464A;
+  --ochre: #DDB169;
+  --ochre-soft: #7A5F32;
+  --olive: #86B37E;
+
+  --bg-gradient: linear-gradient(180deg, #17110E 0%, #12100C 100%);
+  --header-bg: rgba(22, 16, 13, 0.92);
+  --card-bg-solid: #1E1712;
+  --input-bg: #1E1712;
+  --select-bg: #1E1712;
+  --accent-light: rgba(226, 88, 90, 0.1);
+}
+
+/* ── Grundfläche: Papier ──────────────────────────────────────────── */
+#root,
+#root body {
+  font-family: var(--font-ui);
+}
+
+body {
+  background: var(--bg-gradient) !important;
+  background-attachment: fixed;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+/* Sehr feine Papierkörnung — nur Textur, kein Muster */
+#root .app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(183, 132, 43, 0.05), transparent 42%),
+    radial-gradient(circle at 88% 78%, rgba(170, 21, 27, 0.04), transparent 48%);
+}
+
+#root .app {
+  position: relative;
+  max-width: 560px;
+  padding: 0 0 2px;
+}
+
+#root .app-main {
+  padding: 0 var(--pad) 104px;
+}
+
+/* ── Typografie ───────────────────────────────────────────────────── */
+#root h1,
+#root h2,
+#root h3,
+#root .today-date,
+#root .trip-title,
+#root .money-hero-total {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  font-variation-settings: 'SOFT' 20, 'WONK' 1;
+}
+
+#root p {
+  color: var(--ink-soft);
+}
+
+#root .header-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+/* Kleine Versalzeile über Titeln (Rubrik) */
+#root .today-kicker,
+#root .trip-kicker,
+#root .money-hero-label,
+#root .list-head-text p + *,
+#root .settings-section-title,
+#root .weather-section-title {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ochre);
+}
+
+/* ── Kopfleiste ───────────────────────────────────────────────────── */
+#root .app-header {
+  background: var(--header-bg);
+  backdrop-filter: saturate(120%) blur(8px);
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+  border-bottom: 1px solid var(--rule);
+  box-shadow: none;
+}
+
+#root .header-top {
+  padding: 0.7rem var(--pad);
+}
+
+#root .header-flag-bar-full {
+  height: 2px;
+}
+
+#root .header-flag-green,
+#root .header-flag-white,
+#root .header-flag-red {
+  background: var(--terra);
+}
+
+#root .header-flag-white {
+  background: var(--ochre-soft);
+}
+
+#root .header-user {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+#root .header-user strong {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+#root .header-back {
+  background: none;
+  color: var(--terra);
+  border-radius: 0;
+  padding: 0.3rem 0 0.3rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  gap: 0.25rem;
+}
+
+#root .header-back:hover {
+  background: none;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.7;
+}
+
+#root .header-settings-btn,
+#root .header-leave {
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--ink-faint);
+  padding: 0.25rem;
+}
+
+#root .header-settings-btn:hover,
+#root .header-leave:hover {
+  background: none;
+  color: var(--terra);
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Bottom-Navigation: flach, Marke als Strich ───────────────────── */
+#root .bottom-nav {
+  height: 64px;
+  background: var(--header-bg);
+  backdrop-filter: saturate(120%) blur(10px);
+  -webkit-backdrop-filter: saturate(120%) blur(10px);
+  border-top: 1px solid var(--rule);
+  box-shadow: none;
+  padding: 0 6px max(0px, env(safe-area-inset-bottom));
+}
+
+#root .bottom-nav-item {
+  position: relative;
+  gap: 5px;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-top: 6px;
+}
+
+#root .bottom-nav-item.active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+#root .bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 2px;
+  background: var(--terra);
+}
+
+#root .bottom-nav-item svg {
+  stroke-width: 1.7;
+}
+
+#root .bottom-nav-item.active svg {
+  stroke-width: 2.2;
+  color: var(--terra);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEUTE — Masthead + Ledger statt Karten
+   ═══════════════════════════════════════════════════════════════════ */
+#root .today {
+  gap: 0;
+  padding: 0;
+}
+
+#root .today-hero {
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  border-radius: 0;
+  padding: 22px 0 16px;
+  overflow: visible;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 2px;
+  position: relative;
+}
+
+#root .today-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .today-hero-glow {
+  display: none;
+}
+
+#root .today-kicker {
+  color: var(--terra);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+#root .today-date {
+  margin: 8px 0 0;
+  font-size: 34px;
+  line-height: 1.02;
+  font-weight: 600;
+}
+
+#root .today-sub {
+  margin-top: 10px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+}
+
+#root .today-sub-soft {
+  margin-top: 2px;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Kennzahlen: Ledger-Zeile mit Serif-Zahlen */
+#root .today-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 20px 0 4px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .today-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 12px 12px 0;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .today-chip:last-child {
+  border-right: none;
+  padding-left: 12px;
+}
+
+#root .today-chip:nth-child(2) {
+  padding-left: 12px;
+}
+
+#root .today-chip-num {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .today-chip.is-warm .today-chip-num {
+  color: var(--terra);
+}
+
+#root .today-chip-label {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .today-balance {
+  margin: 12px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding-left: 10px;
+  border-left: 2px solid var(--ochre-soft);
+}
+
+/* Abschnitte */
+#root .today-section {
+  margin-top: 26px;
+}
+
+#root .today-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: 0;
+}
+
+#root .today-section-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+}
+
+#root .today-hint {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+#root .today-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--terra);
+  cursor: pointer;
+}
+
+#root .today-empty {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 16px 0 16px 0;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+#root .today-empty-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .today-empty-hint {
+  grid-column: 1;
+  font-size: 12px;
+  color: var(--ink-faint);
+  line-height: 1.45;
+}
+
+#root .today-empty-chevron {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  color: var(--ink-faint);
+}
+
+/* Schnellzugriff: Ledger-Zeilen statt Kacheln */
+#root .today-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#root .today-tile {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .today-tile:active {
+  background: rgba(183, 132, 43, 0.05);
+}
+
+#root .today-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-faint);
+}
+
+#root .today-tile:hover .today-tile-icon {
+  color: var(--terra);
+}
+
+#root .today-tile-label {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+#root .today-tile-hint {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REISE
+   ═══════════════════════════════════════════════════════════════════ */
+#root .trip-hero {
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  border-radius: 0;
+  padding: 22px 0 16px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 2px;
+  position: relative;
+  overflow: visible;
+}
+
+#root .trip-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .trip-hero-glow {
+  display: none;
+}
+
+#root .trip-kicker {
+  color: var(--terra);
+  letter-spacing: 0.2em;
+}
+
+#root .trip-title {
+  font-size: 34px;
+  line-height: 1.03;
+  margin: 8px 0 0;
+}
+
+#root .trip-range {
+  margin-top: 10px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+#root .trip-section {
+  margin-top: 26px;
+}
+
+#root .trip-h2 {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ink);
+}
+
+#root .trip-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#root .trip-hub-row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+#root .trip-hub-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-faint);
+}
+
+#root .trip-hub-row.is-active .trip-hub-icon {
+  color: var(--terra);
+}
+
+#root .trip-hub-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#root .trip-hub-text strong {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+#root .trip-hub-text small {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.35;
+}
+
+#root .trip-hub-badge {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+#root .trip-hub-row.is-active .trip-hub-badge {
+  color: var(--terra);
+}
+
+#root .trip-hub-chevron {
+  color: var(--ink-faint);
+}
+
+#root .trip-hub-row.is-muted {
+  opacity: 1;
+  cursor: default;
+}
+
+#root .trip-hub-row.is-muted .trip-hub-text strong {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+#root .trip-days {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#root .trip-day {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 14px 0;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+#root .trip-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#root .trip-day-num {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+#root .trip-day.is-today .trip-day-num {
+  color: var(--terra);
+}
+
+#root .trip-day-date {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+#root .trip-day-plan {
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#root .trip-day-plan li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+#root .trip-day-plan-emoji {
+  color: var(--ochre);
+  flex-shrink: 0;
+}
+
+#root .trip-day-empty {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LISTEN-ÜBERSICHT
+   ═══════════════════════════════════════════════════════════════════ */
+#root .lists-domain {
+  padding: 0;
+}
+
+#root .lists-head {
+  padding: 22px 0 16px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 2px;
+  position: relative;
+}
+
+#root .lists-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .lists-head h1 {
+  font-size: 32px;
+  line-height: 1.05;
+  margin: 0;
+}
+
+#root .lists-head p {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  line-height: 1.45;
+  max-width: 34ch;
+}
+
+#root .lists-card {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 18px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .lists-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-faint);
+}
+
+#root .lists-card:hover .lists-card-icon {
+  color: var(--terra);
+}
+
+#root .lists-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+#root .lists-card-body strong {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+#root .lists-card-body small {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+#root .lists-bar {
+  display: block;
+  height: 2px;
+  margin-top: 6px;
+  background: var(--rule);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+#root .lists-bar i {
+  display: block;
+  height: 100%;
+  background: var(--ochre);
+  border-radius: 0;
+}
+
+#root .lists-card-chevron {
+  color: var(--ink-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GELD
+   ═══════════════════════════════════════════════════════════════════ */
+#root .money-head {
+  padding: 22px 0 14px;
+  align-items: flex-end;
+}
+
+#root .money-head h1 {
+  font-size: 30px;
+  margin: 0;
+}
+
+#root .money-head-text p {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+#root .money-hero {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  color: var(--ink);
+  padding: 0 0 16px;
+  border-bottom: 2px solid var(--ink);
+  position: relative;
+  margin-bottom: 2px;
+}
+
+#root .money-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .money-hero-glow {
+  display: none;
+}
+
+#root .money-hero-label {
+  color: var(--ochre);
+  letter-spacing: 0.18em;
+}
+
+#root .money-hero-total {
+  margin: 7px 0 0;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .money-hero-balance {
+  margin-top: 9px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding-left: 10px;
+  border-left: 2px solid var(--ochre-soft);
+}
+
+#root .money-debts {
+  margin-top: 24px;
+}
+
+#root .money-debts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ink);
+}
+
+#root .money-debts-head h2 {
+  font-size: 17px;
+  margin: 0;
+}
+
+#root .money-debts-empty {
+  margin: 0;
+  padding: 14px 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .money-debt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+#root .money-debt-amount {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .money-debt-arrow {
+  color: var(--ochre);
+}
+
+#root .money-debt-more {
+  width: 100%;
+  text-align: left;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+
+/* Umschalter: Unterstriche statt Pillen */
+#root .money-toggle {
+  display: flex;
+  gap: 22px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0;
+}
+
+#root .money-toggle-btn {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 9px;
+  margin-bottom: -1px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+#root .money-toggle-btn.active {
+  color: var(--ink);
+  border-bottom-color: var(--terra);
+  background: none;
+  box-shadow: none;
+}
+
+/* Ausgabenzeilen */
+#root .expense-card {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 13px 0;
+  margin: 0;
+}
+
+#root .expense-card:hover {
+  background: none;
+}
+
+#root .expense-card-desc {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .expense-card-amount {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .expense-card-meta,
+#root .expense-card-split,
+#root .expense-card-by {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+#root .expense-date-header {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: none;
+  padding: 14px 0 6px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .expense-card-btn {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  color: var(--ink-faint);
+}
+
+#root .expense-card-btn:hover {
+  color: var(--terra);
+  border-color: var(--rule-strong);
+}
+
+/* Aktionsleisten */
+#root .money-addbar {
+  border-top: 1px solid var(--rule);
+  background: var(--bg-gradient);
+}
+
+#root .money-add-btn {
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 0;
+}
+
+#root .money-add-btn:hover {
+  background: var(--terra-deep);
+}
+
+#root .expense-btn-save,
+#root .plan-btn-primary,
+#root .settings-btn-primary,
+#root .packlist-add-btn {
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+#root .expense-btn-save:hover:not(:disabled),
+#root .plan-btn-primary:hover:not(:disabled) {
+  background: var(--terra-deep);
+  transform: none;
+  box-shadow: none;
+}
+
+#root .expense-btn-cancel,
+#root .plan-btn,
+#root .settings-btn-secondary {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#root .expense-toggle-btn.active,
+#root .bring-subtab.active,
+#root .bring-filter-btn.active {
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EINKAUFSLISTE / MITBRINGEN
+   ═══════════════════════════════════════════════════════════════════ */
+#root .list-head,
+#root .money-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#root .list-head {
+  padding: 20px 0 10px;
+}
+
+#root .list-head-text h1 {
+  font-size: 30px;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+#root .list-head-text p {
+  margin: 6px 0 0;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .list-menu-btn,
+#root .more-close,
+#root .list-top-bar-btn {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  box-shadow: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#root .list-menu-btn:hover,
+#root .more-close:hover {
+  color: var(--terra);
+  border-color: var(--rule-strong);
+  background: none;
+  transform: none;
+}
+
+#root .list-progress {
+  height: 2px;
+  background: var(--rule);
+  border-radius: 0;
+  margin: 4px 0 0;
+  overflow: hidden;
+}
+
+#root .list-progress i {
+  height: 100%;
+  background: var(--ochre);
+  border-radius: 0;
+}
+
+/* Kategorie-Leiste: Registerkarten mit Unterstrich */
+#root .cat-strip {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 14px 0 0;
+  margin: 0 0 2px;
+  border-bottom: 1px solid var(--rule);
+  scrollbar-width: none;
+}
+
+#root .cat-strip::-webkit-scrollbar {
+  display: none;
+}
+
+#root .cat-chip {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0 0 8px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#root .cat-chip.active {
+  color: var(--ink);
+  border-bottom-color: var(--terra);
+  background: none;
+  box-shadow: none;
+}
+
+#root .cat-chip b {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-left: 4px;
+  color: var(--ochre);
+}
+
+/* Kategoriekopf: Rubrik, keine Fläche */
+#root .cat-header,
+#root .list-screen .cat-header {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  margin-top: 20px;
+  padding: 0 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+#root .cat-header:hover {
+  background: none;
+}
+
+#root .cat-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 0;
+  align-self: center;
+}
+
+#root .cat-title,
+#root .list-screen .cat-title {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+#root .cat-count,
+#root .list-screen .cat-count {
+  margin-left: auto;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* Artikelzeilen */
+#root .list-screen .item-row,
+#root .item-row {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 13px 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#root .list-screen .item-row:hover {
+  background: rgba(183, 132, 43, 0.045);
+}
+
+#root .item-name {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+#root .item-row.checked .item-name,
+#root .bring-item.brought .bring-item-name {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule-strong);
+}
+
+#root .item-qty,
+#root .item-row .item-qty {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .item-created-by,
+#root .item-meta {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+#root .item-delete,
+#root .item-edit,
+#root .item-drag-handle {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  opacity: 0.7;
+}
+
+#root .item-delete:hover {
+  color: var(--terra);
+  background: none;
+}
+
+#root .item-edit:hover {
+  color: var(--ink);
+  background: none;
+}
+
+/* Checkbox: Quadrat mit dünner Linie */
+#root .custom-checkbox-visual,
+#root .item-checkmark,
+#root .bring-checkmark,
+#root .packlist-checkmark {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1.5px solid var(--rule-strong);
+  background: transparent;
+  box-shadow: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+#root .custom-checkbox-visual.checked,
+#root .item-row.checked .item-checkmark,
+#root .bring-item.brought .bring-checkmark {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+#root .checkmark-icon {
+  color: var(--paper);
+}
+
+#root .agg-badge {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+/* Eingabeleiste unten */
+#root .list-addbar {
+  background: var(--bg-gradient);
+  border-top: 1px solid var(--rule);
+  backdrop-filter: none;
+  padding: 10px var(--pad) calc(10px + env(safe-area-inset-bottom));
+}
+
+#root .list-addbar .add-item-trigger {
+  background: var(--terra);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#root .list-addbar .add-item-trigger:hover {
+  background: var(--terra-deep);
+  transform: none;
+  box-shadow: none;
+}
+
+#root .list-addbar .add-plus {
+  background: none;
+  color: inherit;
+}
+
+#root .list-addbar .add-item-expanded {
+  background: var(--card-bg-solid);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+
+#root .list-empty,
+#root .bring-empty,
+#root .expense-empty {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-sm);
+  background: none;
+  padding: 30px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#root .list-empty svg,
+#root .bring-empty svg,
+#root .expense-empty svg {
+  color: var(--ochre);
+  opacity: 0.75;
+}
+
+/* Bringen */
+#root .bring-group {
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+#root .bring-group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 0 6px;
+  border-bottom: 1px solid var(--ink);
+}
+
+#root .bring-person {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+#root .bring-me-badge {
+  background: none;
+  color: var(--terra);
+  border-radius: 0;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 0;
+  margin-right: 6px;
+}
+
+#root .bring-group-count {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--ochre);
+}
+
+#root .bring-item {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 13px 0;
+}
+
+#root .bring-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+#root .bring-item-qty {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ochre);
+}
+
+#root .bring-filters,
+#root .bring-subtabs {
+  border-bottom: 1px solid var(--rule);
+  gap: 18px;
+  padding: 12px 0 0;
+  background: none;
+}
+
+#root .bring-filter-btn,
+#root .bring-subtab {
+  background: none;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0 0 8px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  box-shadow: none;
+}
+
+#root .bring-filter-btn.active,
+#root .bring-subtab.active {
+  color: var(--ink);
+  border-bottom-color: var(--terra);
+  background: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REISEPLAN
+   ═══════════════════════════════════════════════════════════════════ */
+#root .plan-screen .list-head {
+  padding: 16px 0 10px;
+}
+
+#root .plan-screen .list-head-text h1 {
+  font-size: 28px;
+}
+
+#root .plan-days {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 0 0;
+  scrollbar-width: none;
+}
+
+#root .plan-days::-webkit-scrollbar {
+  display: none;
+}
+
+#root .plan-day-title {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  padding: 0 0 8px;
+}
+
+#root .plan-day-title.active {
+  color: var(--ink);
+  border-bottom-color: var(--terra);
+  background: none;
+}
+
+#root .plan-slot {
+  margin-top: 22px;
+}
+
+#root .plan-slot-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ink);
+}
+
+#root .plan-slot-emoji {
+  color: var(--ochre);
+}
+
+#root .plan-row {
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  background: none;
+  padding: 12px 0;
+}
+
+#root .plan-row-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .plan-row-note,
+#root .plan-row-place,
+#root .plan-row-meta {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+#root .plan-vote {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#root .plan-vote.is-voted {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+#root .plan-empty {
+  font-size: 12px;
+  color: var(--ink-faint);
+  border: none;
+  padding: 10px 0;
+}
+
+#root .plan-add {
+  color: var(--terra);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#root .plan-footnote {
+  font-size: 11px;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--rule);
+  padding-top: 10px;
+  margin-top: 18px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EINSTELLUNGEN / WETTER / BRISTOL — Haarlinien statt Karten
+   ═══════════════════════════════════════════════════════════════════ */
+#root .settings-screen,
+#root .weather-screen,
+#root .bristol-screen {
+  padding: 0;
+}
+
+/* Gruppen als Ledger: Rubrik + Haarlinien, keine Karten */
+#root .set-group,
+#root .wx-group {
+  margin-top: 24px;
+}
+
+#root .set-group-title,
+#root .wx-group-title {
+  margin: 0;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .set-rows,
+#root .wx-rows {
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+}
+
+#root .set-row {
+  min-height: 48px;
+  padding: 11px 0;
+  gap: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .set-row:last-child,
+#root .set-rows > .set-row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .set-icon {
+  color: var(--ink-faint);
+}
+
+#root .set-label {
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+#root .set-value {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+#root .set-hint {
+  font-size: 11px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+#root .set-toggle {
+  border-bottom: none;
+  margin: 0;
+  padding: 2px;
+  gap: 14px;
+}
+
+#root .set-toggle .money-toggle-btn {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  padding: 4px 0 5px;
+}
+
+#root .set-code {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--terra);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+#root .set-footer,
+#root .set-tag,
+#root .settings-admin-badge {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+#root .set-mini-btn {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-soft);
+  box-shadow: none;
+}
+
+#root .set-btn,
+#root .settings-btn {
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+}
+
+#root .set-btn-primary,
+#root .settings-btn-primary {
+  background: var(--terra);
+  color: #fff;
+  border: 1px solid var(--terra);
+}
+
+#root .set-btn-ghost,
+#root .settings-btn-secondary {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-soft);
+}
+
+#root .set-btn-danger,
+#root .settings-btn-danger {
+  background: none;
+  border: 1px solid var(--terra);
+  color: var(--terra);
+}
+
+#root .set-inline {
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 0;
+}
+
+#root .settings-inline-input,
+#root .settings-cat-icon-input,
+#root .settings-cat-name-input,
+#root .weather-screen-location-input,
+#root .expense-input,
+#root .expense-select,
+#root .plan-input,
+#root .packlist-input-name,
+#root .packlist-input-qty {
+  background: var(--input-bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  padding: 10px 12px;
+}
+
+#root .settings-inline-input:focus,
+#root .weather-screen-location-input:focus,
+#root .expense-input:focus,
+#root .plan-input:focus {
+  border-color: var(--terra);
+  box-shadow: none;
+  outline: none;
+}
+
+#root .settings-cat-item {
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 10px 0;
+}
+
+#root .settings-cat-subsection-title {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .settings-participant-name {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+/* ── Wetter ──────────────────────────────────────────────────────── */
+#root .wx-now {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  color: var(--ink);
+  padding: 18px 0 16px;
+  margin: 0;
+  border-bottom: 2px solid var(--ink);
+  position: relative;
+  gap: 14px;
+}
+
+#root .wx-now::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .wx-now-temp {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 40px;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .wx-now-desc {
+  color: var(--ink-soft);
+  opacity: 1;
+  font-size: 12px;
+}
+
+#root .wx-now-time {
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#root .wx-now-emoji {
+  font-size: 26px;
+}
+
+#root .wx-day,
+#root .wx-row {
+  border-bottom: 1px solid var(--rule);
+  min-height: 46px;
+  padding: 10px 0;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+#root .wx-day-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .wx-day-name small,
+#root .wx-day-sub {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .wx-day-temps {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .wx-day-emoji {
+  font-size: 17px;
+}
+
+#root .wx-day-rain {
+  color: var(--ochre);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+}
+
+#root .weather-hourly-card {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink-soft);
+}
+
+#root .weather-hourly-temp {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .weather-hourly-time {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .weather-screen-change-btn,
+#root .weather-screen-set-btn,
+#root .weather-screen-geo-btn {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Bristol ─────────────────────────────────────────────────────── */
+#root .bristol-card {
+  background: none;
+  border: none;
+  border-top: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#root .bristol-card-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#root .bristol-hero {
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 2px solid var(--ink);
+  color: var(--ink);
+}
+
+#root .bristol-hero-label {
+  color: var(--ochre);
+  letter-spacing: 0.16em;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+#root .bristol-hero-number {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+#root .bristol-today-chip {
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+}
+
+#root .bristol-today-val {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MEHR-BLATT, MENÜS, TOASTS
+   ═══════════════════════════════════════════════════════════════════ */
+#root .more-scrim,
+#root .list-menu-scrim {
+  background: rgba(29, 21, 18, 0.34);
+  backdrop-filter: blur(2px);
+}
+
+#root .more-sheet,
+#root .list-menu-sheet {
+  background: var(--paper);
+  border-radius: 18px 18px 0 0;
+  box-shadow: none;
+  border-top: 1px solid var(--rule);
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+#root .more-grab {
+  background: var(--rule-strong);
+  width: 34px;
+  height: 3px;
+  border-radius: 0;
+}
+
+#root .more-head {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 10px;
+  margin-bottom: 0;
+}
+
+#root .more-head h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+#root .more-head-right span {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Kachelraster → Ledger-Liste */
+#root .more-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#root .more-tile {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .more-grid > .more-tile:last-child:nth-child(odd) {
+  grid-column: auto;
+}
+
+#root .more-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-faint);
+}
+
+#root .more-tile-label {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .more-tile-hint {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+#root .more-leave {
+  margin-top: 18px;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+#root .list-menu-item {
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  color: var(--ink);
+  padding: 14px 0;
+  background: none;
+}
+
+#root .list-menu-item:hover {
+  background: rgba(183, 132, 43, 0.06);
+}
+
+#root .list-menu-item.is-danger {
+  color: var(--terra);
+}
+
+#root .toast {
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+#root .toast-success,
+#root .toast-error {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════════════════════════════════ */
+#root .join-screen {
+  background: none;
+}
+
+#root .join-card {
+  background: rgba(255, 252, 246, 0.92);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  box-shadow: none;
+  padding: 30px 22px 24px;
+  position: relative;
+}
+
+#root .join-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--terra);
+}
+
+#root .join-app-name,
+#root .join-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+#root .join-subtitle {
+  color: var(--ink-faint);
+  font-size: 12.5px;
+}
+
+#root .join-label {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .join-input {
+  background: var(--input-bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  padding: 12px;
+  color: var(--ink);
+}
+
+#root .join-input:focus {
+  border-color: var(--terra);
+  outline: none;
+}
+
+#root .join-btn {
+  background: var(--terra);
+  border: none;
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 15px 0;
+}
+
+#root .join-btn:hover {
+  background: var(--terra-deep);
+  transform: none;
+  box-shadow: none;
+}
+
+#root .join-hint {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
+/* ── Update-Hinweis ───────────────────────────────────────────────── */
+#root .update-banner {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  justify-content: space-between;
+  padding: 9px var(--pad);
+}
+
+#root .update-banner-btn {
+  border: 1px solid color-mix(in srgb, var(--paper) 40%, transparent);
+  background: none;
+  color: var(--paper);
+  border-radius: 3px;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+}
+
+#root .update-banner-btn:hover {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 3px;
+}
+
+/* Skeletons an Papier anpassen */
+#root .skeleton {
+  background: linear-gradient(90deg, var(--paper-2) 25%, var(--paper-3) 50%, var(--paper-2) 75%);
+  border-radius: var(--r-sm);
+}
+
+/* ── Feinschliff: Reiseplan, Listen-Fortschritt, Eingabeleiste ────── */
+#root .plan-add {
+  border: none;
+  border-top: 1px solid var(--rule);
+  border-radius: 0;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 11px 0;
+  margin-top: 4px;
+  background: none;
+  color: var(--terra);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#root .plan-add:hover {
+  background: none;
+  color: var(--terra-deep);
+}
+
+#root .plan-back {
+  border: none;
+  background: none;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin-right: 6px;
+  color: var(--terra);
+}
+
+#root .plan-back:hover {
+  background: none;
+  color: var(--terra-deep);
+}
+
+#root .plan-slot-action {
+  border: none;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  margin-left: 8px;
+  color: var(--terra);
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#root .plan-slot-plan {
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+}
+
+#root .plan-slot-plan.is-fixed {
+  border-left: 2px solid var(--ochre);
+  padding-left: 12px;
+}
+
+#root .lists-bar {
+  width: 104px;
+  margin-top: 7px;
+}
+
+#root .list-addbar {
+  background: var(--header-bg);
+  backdrop-filter: saturate(120%) blur(8px);
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+  border-top: none;
+  padding: 10px 0 0;
+  bottom: 74px;
+}
+
+#root .list-addbar .add-item-trigger {
+  border-radius: var(--r-sm);
+}
+
+#root .list-addbar .add-plus {
+  font-size: 15px;
+}
+
+/* ── Untere Aktionsleisten: Eingabezeile statt roter Fläche ───────── */
+#root .list-addbar {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  width: min(560px, 100%);
+  z-index: 30;
+  padding: 8px var(--pad) 10px;
+  margin: 0;
+  background: var(--header-bg);
+  backdrop-filter: saturate(120%) blur(10px);
+  -webkit-backdrop-filter: saturate(120%) blur(10px);
+  border-top: 1px solid var(--rule);
+}
+
+#root .list-addbar .add-item-trigger,
+#root .money-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  width: 100%;
+  margin: 0;
+  padding: 13px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+}
+
+#root .list-addbar .add-item-trigger:hover,
+#root .money-add-btn:hover {
+  background: var(--paper-3);
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+
+#root .list-addbar .add-plus,
+#root .money-add-btn .add-plus {
+  color: var(--terra);
+  font-size: 16px;
+  line-height: 1;
+}
+
+#root .list-screen .list-body {
+  padding-bottom: 84px;
+}
+
+#root .money-list,
+#root .expense-screen .list-body {
+  padding-bottom: 84px;
+}
+
+/* ── Geld: Schulden- und Ausgabenlisten ohne Kartenrahmen ─────────── */
+#root .money-debts-list,
+#root .expense-list,
+#root .expense-date-group,
+#root .expense-balance-list {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+#root .expense-card-buttons {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 10px;
+}
+
+#root .expense-card-top {
+  background: none;
+}
+
+#root .expense-balance-card {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 0;
+}
+
+#root .expense-balance-amount,
+#root .expense-total-banner strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#root .expense-balance-card.positive .expense-balance-amount {
+  color: var(--olive);
+}
+
+#root .expense-balance-card.negative .expense-balance-amount {
+  color: var(--terra);
+}
+
+#root .expense-chips .expense-chip,
+#root .expense-mode-btn {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  color: var(--ink-soft);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 10px;
+}
+
+#root .expense-chips .expense-chip.active,
+#root .expense-mode-btn.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+#root .expense-form {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 2px solid var(--ink);
+  padding-top: 12px;
+}
+
+#root .expense-chips-label {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .expense-toggle-btn {
+  border-radius: 0;
+  background: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .expense-toggle-btn.active {
+  background: none;
+  color: var(--ink);
+  border-bottom-color: var(--terra);
+  box-shadow: none;
+}
+
+#root .expense-toggle {
+  background: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0;
+  gap: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOTIZEN (DashboardScreen) + Widgets — letzter Bella-Rest
+   ═══════════════════════════════════════════════════════════════════ */
+#root .dashboard-screen {
+  padding: 0;
+}
+
+/* Wetter-Widget: eine Ledger-Zeile, keine Pille */
+#root .weather-widget {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 18px 0 12px;
+  color: var(--ink);
+}
+
+#root .weather-widget:hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+#root .weather-temp,
+#root .weather-temp-max {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .weather-temp-min {
+  font-family: var(--font-display);
+  color: var(--ink-faint);
+}
+
+#root .weather-desc,
+#root .weather-prompt-text {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+#root .weather-location-name {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .weather-emoji {
+  font-size: 20px;
+}
+
+#root .weather-forecast-day {
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 8px 0;
+}
+
+#root .weather-forecast-dayname {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .weather-forecast-temps {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .weather-change-btn,
+#root .weather-open-btn,
+#root .weather-location-btn,
+#root .weather-geo-btn {
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--terra);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  padding: 0;
+}
+
+#root .weather-location-input {
+  background: var(--input-bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 9px 11px;
+}
+
+/* Bristol-Widget */
+#root .bristol-widget {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 14px 0 12px;
+  color: var(--ink);
+}
+
+#root .bristol-widget:hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+#root .bristol-widget-title,
+#root .bristol-widget-section-title {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .bristol-widget-total,
+#root .bristol-widget-stat-num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .bristol-widget-summary,
+#root .bristol-widget-stat-label {
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+/* Feature-Reihen statt Kachelraster */
+#root .dashboard-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
+#root .dash-card {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .dash-card::before,
+#root .dash-card::after {
+  display: none;
+}
+
+#root .dash-card:hover,
+#root .dash-card:nth-child(2):hover,
+#root .dash-card:nth-child(4):hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+#root .dash-card-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  background: none;
+}
+
+#root .dash-card-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+#root .dash-card:hover .dash-card-icon {
+  color: var(--terra);
+}
+
+#root .dash-card-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+#root .dash-card-sub {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+#root .dash-card-badge {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ochre);
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Notizen */
+#root .dash-notes-section {
+  margin-top: 24px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+#root .dash-notes-section:hover {
+  background: none;
+}
+
+#root .dash-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--ink);
+}
+
+#root .dash-section-title svg {
+  color: var(--ochre);
+  width: 13px;
+  height: 13px;
+}
+
+#root .dash-notes-count {
+  background: none;
+  border: none;
+  color: var(--ochre);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+}
+
+#root .dash-notes-chevron {
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+#root .dash-notes-search {
+  width: 100%;
+  margin: 12px 0 0;
+  background: var(--input-bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+#root .dash-notes-search:focus {
+  border-color: var(--terra);
+  box-shadow: none;
+  outline: none;
+}
+
+#root .dash-add-btn {
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--terra);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  padding: 12px 0;
+  box-shadow: none;
+}
+
+#root .dash-add-btn:hover {
+  background: none;
+  color: var(--terra-deep);
+  transform: none;
+}
+
+#root .dash-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#root .dash-note-card {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 13px 0;
+  margin: 0;
+}
+
+#root .dash-note-card:hover {
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+#root .dash-note-card.dash-note-favorite {
+  border-left: 2px solid var(--ochre);
+  padding-left: 10px;
+}
+
+#root .dash-note-card-editing {
+  border-bottom: 2px solid var(--ink);
+  padding: 12px 0;
+}
+
+#root .dash-note-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .dash-note-text {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+#root .dash-note-by {
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#root .dash-note-star,
+#root .dash-note-delete,
+#root .dash-note-drag-handle {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  box-shadow: none;
+  padding: 2px;
+}
+
+#root .dash-note-star:hover {
+  color: var(--ochre);
+}
+
+#root .dash-note-delete:hover {
+  color: var(--terra);
+}
+
+#root .dash-note-favorite .dash-note-star {
+  color: var(--ochre);
+}
+
+#root .dash-note-link {
+  color: var(--terra);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+#root .dash-note-input,
+#root .dash-note-textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+#root .dash-note-input:focus,
+#root .dash-note-textarea:focus {
+  border-color: var(--terra);
+  box-shadow: none;
+  outline: none;
+}
+
+#root .dash-note-form {
+  background: none;
+  border: none;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 0;
+  margin: 0;
+}
+
+#root .dash-btn-save {
+  background: var(--terra);
+  border: none;
+  border-radius: var(--r-sm);
+  color: #fff;
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+}
+
+#root .dash-btn-save:hover:not(:disabled) {
+  background: var(--terra-deep);
+  transform: none;
+  box-shadow: none;
+}
+
+#root .dash-btn-cancel {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  color: var(--ink-soft);
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+}
+
+#root .dash-notes-empty {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+#root .dash-install-banner {
+  background: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  box-shadow: none;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  padding: 11px 13px;
+  margin-top: 14px;
+}
+
+#root .dash-install-banner:hover {
+  background: none;
+  border-color: var(--ink-faint);
+  transform: none;
+}
+
+/* Die Notizen sind eine Unterseite von „Reise" — Rubrik-Kopf ergänzen
+   wir über die Masthead-Regel der Unterseiten. */
+#root .dash-bristol-row {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 13px 0;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+/* Notizen: eigener Masthead */
+#root .note-head {
+  padding: 22px 0 16px;
+  border-bottom: 2px solid var(--ink);
+  position: relative;
+}
+
+#root .note-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+#root .note-head h1 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+#root .note-head p {
+  margin: 9px 0 0;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Wetterzeile: Ort in eigene Zeile, damit nichts abgeschnitten wird */
+#root .weather-compact-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+}
+
+#root .weather-location-name {
+  order: 10;
+  flex: 1 0 100%;
+  white-space: normal;
+}
+
+#root .weather-widget {
+  padding-top: 16px;
+}
