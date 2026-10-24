@@ -35,7 +35,17 @@ export interface ShoppingList {
   created_at: string
 }
 
-export type TabView = 'home' | 'list' | 'bring' | 'expenses' | 'bristol' | 'weather' | 'settings'
+export type TabView =
+  | 'home'   // Heute-Cockpit
+  | 'trip'   // Reise-Domäne (Plan, Fotos, Karte …)
+  | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
+  | 'list'
+  | 'bring'
+  | 'expenses'
+  | 'bristol'
+  | 'weather'
+  | 'settings'
+  | 'notes'
 export type BringFilter = 'all' | 'mine' | 'unfilled'
 
 export interface QuickNote {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react'
-import { ArrowLeft, Settings, Sun, Moon, WifiOff, ShoppingCart, Backpack, Wallet, Activity, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, MoreVertical, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
@@ -17,6 +17,11 @@ const ExpenseScreen = lazy(() => import('./components/ExpenseScreen'))
 const SettingsScreen = lazy(() => import('./components/SettingsScreen'))
 const BristolScreen = lazy(() => import('./components/BristolScreen'))
 const WeatherScreen = lazy(() => import('./components/WeatherScreen'))
+import TodayScreen from './components/TodayScreen'
+import TripScreen from './components/TripScreen'
+import ListsScreen from './components/ListsScreen'
+import BottomNav from './components/BottomNav'
+import MoreSheet from './components/MoreSheet'
 
 function TabLoader() {
   return (
@@ -28,6 +33,7 @@ function TabLoader() {
 }
 
 import './App.css'
+import './nav.css'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -73,15 +79,6 @@ async function fireConfetti() {
   navigator.vibrate?.([100, 50, 100, 50, 200])
 }
 
-const featureTitles: Record<Exclude<TabView, 'home'>, { icon: LucideIcon; label: string }> = {
-  list: { icon: ShoppingCart, label: 'Einkaufsliste' },
-  bring: { icon: Backpack, label: 'Mitbringen' },
-  expenses: { icon: Wallet, label: 'Ausgaben' },
-  bristol: { icon: Activity, label: 'Bristol' },
-  weather: { icon: Sun, label: 'Wetter' },
-  settings: { icon: Settings, label: 'Einstellungen' },
-}
-
 export default function App() {
   const { toast } = useToast()
 
@@ -101,6 +98,7 @@ export default function App() {
 
   // ── Tab state ──────────────────────────────────────────────────────
   const [tab, setTab] = useState<TabView>('home')
+  const [moreOpen, setMoreOpen] = useState(false)
 
   // ── PWA update available banner ─────────────────────────────────────
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -264,6 +262,16 @@ export default function App() {
   // ── Render ─────────────────────────────────────────────────────────
   const expenseCategories = useMemo(() => categories.filter(c => c.list_type === 'expense'), [categories])
 
+  // Wohin der Zurück-Pfeil zeigt: Unterseiten → Domäne, Blatt-Ziele → Heute
+  const backTarget: TabView | null =
+    tab === 'list' || tab === 'bring'
+      ? 'lists'
+      : tab === 'notes' || tab === 'weather' || tab === 'settings'
+        ? 'home'
+        : null
+
+  const bringBrought = bringItems.filter(i => i.is_brought).length
+
   return (
     <>
       {!userName || !list ? (
@@ -279,7 +287,11 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-top">
-          {tab === 'home' ? (
+          {backTarget ? (
+            <button className="header-back" onClick={() => setTab(backTarget)}>
+              <ArrowLeft size={18} strokeWidth={2} /> Zurück
+            </button>
+          ) : (
             <div className="header-info">
               <span className="header-name">
                 <span className="header-flag">
@@ -287,35 +299,22 @@ export default function App() {
                   <span className="header-flag-band yellow"></span>
                   <span className="header-flag-band red-bottom"></span>
                 </span>
-                🏖️ {list.name}
+                {list.name}
               </span>
               <span className="header-user">
-                Angemeldet als: <strong>{userName}</strong>
+                {userName}
               </span>
             </div>
-          ) : (
-            <button className="header-back" onClick={() => setTab('home')}>
-              <ArrowLeft size={18} strokeWidth={2} /> Zurück
-            </button>
           )}
           <div className="header-actions">
-            {tab !== 'home' && tab !== 'settings' && (
-              <span className="header-feature-title">
-                {(() => {
-                  const ft = featureTitles[tab as Exclude<TabView, 'home' | 'settings'>]
-                  const Icon = ft.icon
-                  return <Icon size={16} strokeWidth={2} />
-                })()}
-                {featureTitles[tab as Exclude<TabView, 'home' | 'settings'>].label}
-              </span>
-            )}
-            <button className="header-settings-btn" onClick={() => setTab('settings')} aria-label="Einstellungen">
-              <Settings size={20} strokeWidth={2} />
+            <button
+              type="button"
+              className="header-more-btn"
+              onClick={() => setMoreOpen(true)}
+              aria-label="Weitere Bereiche"
+            >
+              <MoreVertical size={18} strokeWidth={2.2} />
             </button>
-            <button className="header-theme-toggle" onClick={handleToggleTheme} aria-label="Theme wechseln">
-              {isDark ? <Sun size={20} strokeWidth={2} /> : <Moon size={20} strokeWidth={2} />}
-            </button>
-            <button className="header-leave" onClick={handleLeave}>Verlassen</button>
           </div>
         </div>
         <div className="header-flag-bar-full">
@@ -342,6 +341,32 @@ export default function App() {
 
       <main className="app-main">
         {tab === 'home' && (
+          <TodayScreen
+            userName={userName}
+            listName={list.name}
+            participantCount={participants.length}
+            shoppingCount={shoppingItems.length}
+            shoppingChecked={checkedCount}
+            bringCount={bringItems.length}
+            expenseTotal={expenseTotal}
+            userBalance={userBalance}
+            bristolEnabled={bristolEnabled}
+            onNavigate={setTab}
+          />
+        )}
+        {tab === 'trip' && (
+          <TripScreen onNavigate={setTab} notesCount={notes.length} />
+        )}
+        {tab === 'lists' && (
+          <ListsScreen
+            shoppingCount={shoppingItems.length}
+            shoppingChecked={checkedCount}
+            bringCount={bringItems.length}
+            bringBrought={bringBrought}
+            onNavigate={setTab}
+          />
+        )}
+        {tab === 'notes' && (
           <DashboardScreen
             listId={list.id}
             userName={userName}
@@ -453,6 +478,18 @@ export default function App() {
           </Suspense>
         )}
       </main>
+
+      <BottomNav tab={tab} onNavigate={setTab} bristolEnabled={bristolEnabled} />
+
+      <MoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        onNavigate={setTab}
+        isDark={isDark}
+        onToggleTheme={handleToggleTheme}
+        onLeave={handleLeave}
+        userName={userName}
+      />
     </div>
       )}
     </>
