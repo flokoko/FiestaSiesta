@@ -532,3 +532,229 @@
   margin-bottom: 0;
   line-height: 1.4;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3a — Einstellungen im Haarlinien-Muster
+   ═══════════════════════════════════════════════════════════════════ */
+
+.settings-screen {
+  padding: 2px 0 0;
+}
+
+.set-group {
+  margin-top: 16px;
+}
+
+.set-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 2px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.set-group-title .set-mini-btn {
+  margin-left: auto;
+}
+
+.set-rows {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-bg-solid);
+  overflow: hidden;
+  padding: 0 12px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.set-rows > .set-row:last-child {
+  border-bottom: none;
+}
+
+.set-icon {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.set-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set-value {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set-toggle {
+  flex: none;
+  margin: 0;
+  padding: 2px;
+}
+
+.set-toggle .money-toggle-btn {
+  padding: 5px 9px;
+  font-size: 10.5px;
+}
+
+.set-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.set-mini-btn.danger {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.set-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: var(--button-bg);
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+.set-tag.on {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.set-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.set-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.set-inline.column {
+  flex-direction: column;
+}
+
+.set-rows > .set-inline:last-child {
+  border-bottom: none;
+}
+
+.set-inline .settings-inline-input {
+  flex: 1 1 130px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.set-inline-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.set-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.set-btn-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+
+.set-btn-ghost {
+  width: 100%;
+  margin-top: 8px;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.set-btn:disabled {
+  opacity: 0.6;
+}
+
+.set-admin-block {
+  padding: 0 2px;
+}
+
+.set-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 2px 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.set-footer {
+  margin: 22px 0 6px;
+  text-align: center;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.list-menu-item.danger {
+  color: var(--accent);
+}
+
+.set-btn-wide {
+  width: 100%;
+  margin-top: 8px;
+}

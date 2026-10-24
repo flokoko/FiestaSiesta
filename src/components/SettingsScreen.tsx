@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Trash2, Palette, Sun, Moon, Pencil, Crown, Lock, KeyRound, Bell, BellOff, Loader2 } from 'lucide-react'
+import {
+  Trash2, Palette, Sun, Moon, Pencil, Crown, Lock, KeyRound, Bell, BellOff, Loader2,
+  MoreHorizontal, X, Settings2, Info, LogOut, Copy, Activity, Plus,
+} from 'lucide-react'
 import type { ItemCategory, ListType, Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
 import { getTheme, setTheme } from '../lib/theme'
@@ -81,6 +84,9 @@ export default function SettingsScreen({
   const [adminPwError, setAdminPwError] = useState('')
   const [localCatNames, setLocalCatNames] = useState<Record<string, string>>({})
   const [bristolEnabled, setBristolEnabled] = useState(() => localStorage.getItem('bristol_modus_enabled') === 'true')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [catsOpen, setCatsOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const { updateCategory, deleteCategory, addCategory } = useCategories(onCategoriesChange)
   const debouncedUpdateCategory = useDebouncedCallback(updateCategory, 400)
@@ -150,13 +156,13 @@ export default function SettingsScreen({
     setEditingName(false)
   }
 
-  const MAX_PARTICIPANTS = 14
+  const MAX_PARTICIPANTS = 3
 
   const handleAddParticipant = async () => {
     const n = newParticipantName.trim()
     if (!n) return
     if (participants.length >= MAX_PARTICIPANTS) {
-      toast(`Maximal ${MAX_PARTICIPANTS} Teilnehmer erreicht.`, 'error')
+      toast(`Die Reise ist voll — maximal ${MAX_PARTICIPANTS} Personen.`, 'error')
       return
     }
     const exists = participants.find(p => p.name.toLowerCase() === n.toLowerCase())
@@ -300,125 +306,116 @@ export default function SettingsScreen({
     )
   }
 
+  const JOIN_CODE = import.meta.env.VITE_JOIN_CODE || 'SIESTA26'
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(JOIN_CODE)
+      toast('Reise-Code kopiert', 'success')
+    } catch {
+      toast(`Reise-Code: ${JOIN_CODE}`, 'success')
+    }
+  }
+
   return (
     <div className="settings-screen">
-      {/* ── Erscheinungsbild ────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Erscheinungsbild</h3>
-        <div className="settings-item">
-          <span className="settings-item-icon"><Palette size={18} strokeWidth={2} /></span>
-          <span className="settings-item-label">Design</span>
-          <div className="settings-item-control theme-toggle-group">
+      <header className="list-head">
+        <div className="list-head-text">
+          <h1>Einstellungen</h1>
+          <p>{userName} · {listName} · {participants.length} von {MAX_PARTICIPANTS}</p>
+        </div>
+        <button
+          type="button"
+          className="list-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Weitere Optionen"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.2} />
+        </button>
+      </header>
+
+      {menuOpen && (
+        <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
+          <div
+            className="list-menu-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Weitere Optionen"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="more-grab" aria-hidden="true" />
             <button
-              className={`theme-toggle-btn ${theme === 'auto' ? 'active' : ''}`}
-              onClick={() => handleThemeChange('auto')}
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setCatsOpen(true); setMenuOpen(false) }}
             >
-              Auto
+              <Settings2 size={17} strokeWidth={2} />
+              <span>Kategorien verwalten</span>
             </button>
             <button
-              className={`theme-toggle-btn ${theme === 'light' ? 'active' : ''}`}
-              onClick={() => handleThemeChange('light')}
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setInfoOpen(true); setMenuOpen(false) }}
             >
-              <Sun size={14} strokeWidth={2} /> Hell
+              <Info size={17} strokeWidth={2} />
+              <span>Über Fiesta Siesta</span>
             </button>
             <button
-              className={`theme-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
-              onClick={() => handleThemeChange('dark')}
+              type="button"
+              className="list-menu-item danger"
+              onClick={() => { setMenuOpen(false); onLeave() }}
             >
-              <Moon size={14} strokeWidth={2} /> Dunkel
+              <LogOut size={17} strokeWidth={2} />
+              <span>Liste verlassen</span>
             </button>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Push-Benachrichtigungen ──────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Push-Benachrichtigungen</h3>
-        {!pushConfigured ? (
-          <p className="settings-cat-hint" style={{ marginBottom: 0 }}>
-            Push ist auf diesem Gerät nicht verfügbar / nicht konfiguriert.
-          </p>
-        ) : !pushSupported ? (
-          <p className="settings-cat-hint" style={{ marginBottom: 0 }}>
-            Push wird von diesem Browser nicht unterstützt
-            {pushPermission === 'denied' ? ' (Benachrichtigungen blockiert).' : '.'}
-          </p>
-        ) : pushEnabled ? (
-          <>
-            <div className="settings-item">
-              <span className="settings-item-icon">
-                <Bell size={18} strokeWidth={2} />
-              </span>
-              <span className="settings-item-label">Push aktiv</span>
-              <div className="settings-item-control">
-                <span className="settings-push-status on">Aktiviert</span>
-              </div>
-            </div>
-            <button
-              className="settings-btn settings-btn-secondary"
-              style={{ marginTop: '0.6rem', width: '100%' }}
-              onClick={handleUnsubscribePush}
-              disabled={pushLoading}
-            >
-              {pushLoading
-                ? <Loader2 size={16} strokeWidth={2} className="spin" />
-                : <BellOff size={16} strokeWidth={2} />}
-              Deaktivieren
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="settings-item">
-              <span className="settings-item-icon">
-                <BellOff size={18} strokeWidth={2} />
-              </span>
-              <span className="settings-item-label">Benachrichtigungen bei neuen Items</span>
-              <div className="settings-item-control">
-                <span className="settings-push-status off">Deaktiviert</span>
-              </div>
-            </div>
-            {pushPermission === 'denied' && (
-              <p className="settings-cat-hint" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
-                Benachrichtigungen wurden im Browser blockiert. Bitte in den Browser-Einstellungen erlauben.
-              </p>
-            )}
-            {pushPermission !== 'denied' && (
+      <section className="set-group">
+        <h2 className="set-group-title">Darstellung</h2>
+        <div className="set-rows">
+          <div className="set-row">
+            <Palette size={17} strokeWidth={2} className="set-icon" />
+            <span className="set-label">Design</span>
+            <div className="money-toggle set-toggle">
               <button
-                className="settings-btn settings-btn-primary"
-                style={{ marginTop: '0.6rem', width: '100%' }}
-                onClick={handleSubscribePush}
-                disabled={pushLoading}
+                type="button"
+                className={`money-toggle-btn${theme === 'auto' ? ' active' : ''}`}
+                onClick={() => handleThemeChange('auto')}
               >
-                {pushLoading
-                  ? <Loader2 size={16} strokeWidth={2} className="spin" />
-                  : <Bell size={16} strokeWidth={2} />}
-                Push-Benachrichtigungen aktivieren
+                Auto
               </button>
-            )}
-          </>
-        )}
-        {pushEnabled && (
-          <p className="settings-push-hint">
-            Änderungen werden gebündelt als eine Benachrichtigung zusammengefasst.
-          </p>
-        )}
-      </div>
-
-      {/* ── Bristol Modus ──────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Bristol Modus</h3>
-        <div className="settings-item" style={{ cursor: 'pointer' }}>
-          <span className="settings-item-label">Bristol Modus</span>
-          <div className="settings-item-control">
-            <div className="bristol-toggle-group">
               <button
-                className={`bristol-toggle-btn ${!bristolEnabled ? 'active' : ''}`}
+                type="button"
+                className={`money-toggle-btn${theme === 'light' ? ' active' : ''}`}
+                onClick={() => handleThemeChange('light')}
+              >
+                <Sun size={13} strokeWidth={2} /> Hell
+              </button>
+              <button
+                type="button"
+                className={`money-toggle-btn${theme === 'dark' ? ' active' : ''}`}
+                onClick={() => handleThemeChange('dark')}
+              >
+                <Moon size={13} strokeWidth={2} /> Dunkel
+              </button>
+            </div>
+          </div>
+          <div className="set-row">
+            <Activity size={17} strokeWidth={2} className="set-icon" />
+            <span className="set-label">Bristol-Modus</span>
+            <div className="money-toggle set-toggle">
+              <button
+                type="button"
+                className={`money-toggle-btn${!bristolEnabled ? ' active' : ''}`}
                 onClick={() => { navigator.vibrate?.(8); setBristolEnabled(false) }}
               >
                 Aus
               </button>
               <button
-                className={`bristol-toggle-btn ${bristolEnabled ? 'active' : ''}`}
+                type="button"
+                className={`money-toggle-btn${bristolEnabled ? ' active' : ''}`}
                 onClick={() => { navigator.vibrate?.(8); setBristolEnabled(true) }}
               >
                 An
@@ -426,187 +423,127 @@ export default function SettingsScreen({
             </div>
           </div>
         </div>
-        {bristolEnabled && (
-          <p className="settings-cat-hint" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
-            Bristol-Tracking ist aktiviert. Du siehst die Bristol-Karte im Dashboard.
-          </p>
-        )}
-      </div>
+      </section>
 
-      {/* ── Account ─────────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Account</h3>
-        <div className="settings-info-row">
-          <span className="settings-info-label">Name</span>
-          <span className="settings-info-value">{userName}</span>
-        </div>
-        <div className="settings-info-row">
-          <span className="settings-info-label">Liste</span>
-          <span className="settings-info-value">{listName}</span>
-        </div>
-
-        {editingName ? (
-          <div className="settings-inline-form">
-            <input
-              className="settings-inline-input"
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-              autoFocus
-            />
-            <button className="settings-btn settings-btn-primary" onClick={handleSaveName}>
-              Speichern
-            </button>
-            <button className="settings-btn settings-btn-secondary" onClick={() => setEditingName(false)}>
-              Abbrechen
-            </button>
-          </div>
-        ) : (
-          <button
-            className="settings-btn settings-btn-secondary"
-            style={{ marginTop: '0.6rem', width: '100%' }}
-            onClick={() => { setNewName(userName); setEditingName(true) }}
-          >
-            <Pencil size={16} strokeWidth={2} /> Namen ändern
-          </button>
-        )}
-
-        {/* ── Eigenes Passwort ändern ──────────────────────────────── */}
-        {showChangeOwnPw ? (
-          <div className="settings-inline-form" style={{ flexDirection: 'column', gap: '0.5rem', marginTop: '0.6rem' }}>
-            <input
-              className="settings-inline-input"
-              type="password"
-              placeholder="Altes Passwort"
-              value={ownOldPw}
-              onChange={(e) => setOwnOldPw(e.target.value)}
-              autoFocus
-            />
-            <input
-              className="settings-inline-input"
-              type="password"
-              placeholder="Neues Passwort"
-              value={ownNewPw}
-              onChange={(e) => setOwnNewPw(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleOwnPasswordChange()}
-            />
-            {ownPwError && <p className="settings-admin-error">{ownPwError}</p>}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="settings-btn settings-btn-secondary" onClick={() => { setShowChangeOwnPw(false); setOwnOldPw(''); setOwnNewPw(''); setOwnPwError('') }}>
-                Abbrechen
-              </button>
-              <button className="settings-btn settings-btn-primary" onClick={handleOwnPasswordChange}>
-                Speichern
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className="settings-btn settings-btn-secondary"
-            style={{ marginTop: '0.6rem', width: '100%' }}
-            onClick={() => setShowChangeOwnPw(true)}
-          >
-            <KeyRound size={16} strokeWidth={2} /> Passwort ändern
-          </button>
-        )}
-
-        <button className="settings-btn-danger" onClick={onLeave}>
-          Liste verlassen
-        </button>
-      </div>
-
-      {/* ── Teilnehmer ─────────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">
-          Teilnehmer
-          {isAdmin && adminUnlocked && <span className="settings-admin-badge"><Crown size={12} strokeWidth={2} /> Admin</span>}
-        </h3>
-        <p className="settings-cat-hint">{participants.length} {participants.length === 1 ? 'Person' : 'Personen'} in dieser Liste.</p>
-
-        {participants.map((p) => (
-          <div key={p.id} className="settings-cat-item">
-            <span className="settings-participant-name">
-              {p.name}
-              {p.is_admin && <span className="settings-participant-admin"><Crown size={12} strokeWidth={2} /></span>}
-            </span>
-            {isAdmin && adminUnlocked && (
+      <section className="set-group">
+        <h2 className="set-group-title">Dein Konto</h2>
+        <div className="set-rows">
+          <div className="set-row">
+            <span className="set-label">Name</span>
+            <span className="set-value">{userName}</span>
+            {!editingName && (
               <button
-                className="settings-cat-delete-btn"
-                onClick={() => handleDeleteParticipant(p)}
-                aria-label="Teilnehmer entfernen"
+                type="button"
+                className="set-mini-btn"
+                onClick={() => { setNewName(userName); setEditingName(true) }}
+                aria-label="Namen ändern"
               >
-              <Trash2 size={16} strokeWidth={2} />
+                <Pencil size={15} strokeWidth={2} />
               </button>
             )}
           </div>
-        ))}
-        {participants.length === 0 && (
-          <p className="settings-cat-empty">Noch keine Teilnehmer</p>
-        )}
-
-        {/* Admin-Bereich: Passwort-geschützte Teilnehmer-Verwaltung */}
-        {isAdmin && !hasAdminPassword && !showSetPassword && (
-          <button
-            className="settings-btn settings-btn-secondary"
-            style={{ marginTop: '0.6rem', width: '100%' }}
-            onClick={() => setShowSetPassword(true)}
-          >
-            <Lock size={16} strokeWidth={2} /> Admin-Passwort festlegen
-          </button>
-        )}
-
-        {isAdmin && !hasAdminPassword && showSetPassword && (
-          <div className="settings-inline-form" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-            <p className="settings-cat-hint" style={{ marginBottom: 0 }}>
-              Lege ein Passwort fest, um die Teilnehmer-Verwaltung zu schützen.
-            </p>
-            <input
-              className="settings-inline-input"
-              type="password"
-              placeholder="Admin-Passwort"
-              value={newAdminPassword}
-              onChange={(e) => setNewAdminPassword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSavePassword()}
-              autoFocus
-            />
-            {adminError && <p className="settings-admin-error">{adminError}</p>}
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="settings-btn settings-btn-secondary" onClick={() => { setShowSetPassword(false); setNewAdminPassword(''); setAdminError('') }}>
-                Abbrechen
-              </button>
-              <button className="settings-btn settings-btn-primary" onClick={handleSavePassword}>
-                Speichern
-              </button>
+          {editingName && (
+            <div className="set-inline">
+              <input
+                className="settings-inline-input"
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                autoFocus
+              />
+              <button className="set-btn set-btn-primary" onClick={handleSaveName}>Speichern</button>
+              <button className="set-btn" onClick={() => setEditingName(false)}>Abbrechen</button>
             </div>
-          </div>
-        )}
+          )}
 
-        {isAdmin && hasAdminPassword && !adminUnlocked && (
-          <div className="settings-inline-form" style={{ flexDirection: 'column', gap: '0.5rem' }}>
-            <p className="settings-cat-hint" style={{ marginBottom: 0 }}>
-              <Lock size={16} strokeWidth={2} /> Gib das Admin-Passwort ein, um Teilnehmer zu verwalten.
-            </p>
-            <input
-              className="settings-inline-input"
-              type="password"
-              placeholder="Admin-Passwort"
-              value={adminPasswordInput}
-              onChange={(e) => setAdminPasswordInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-              autoFocus
-            />
-            {adminError && <p className="settings-admin-error">{adminError}</p>}
-            <button className="settings-btn settings-btn-primary" onClick={handleUnlock} style={{ width: '100%' }}>
-              Entsperren
+          <div className="set-row">
+            <span className="set-label">Passwort</span>
+            <span className="set-value">geschützt</span>
+            {!showChangeOwnPw && (
+              <button
+                type="button"
+                className="set-mini-btn"
+                onClick={() => setShowChangeOwnPw(true)}
+                aria-label="Passwort ändern"
+              >
+                <KeyRound size={15} strokeWidth={2} />
+              </button>
+            )}
+          </div>
+          {showChangeOwnPw && (
+            <div className="set-inline column">
+              <input
+                className="settings-inline-input"
+                type="password"
+                placeholder="Altes Passwort"
+                value={ownOldPw}
+                onChange={(e) => setOwnOldPw(e.target.value)}
+                autoFocus
+              />
+              <input
+                className="settings-inline-input"
+                type="password"
+                placeholder="Neues Passwort"
+                value={ownNewPw}
+                onChange={(e) => setOwnNewPw(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleOwnPasswordChange()}
+              />
+              {ownPwError && <p className="settings-admin-error">{ownPwError}</p>}
+              <div className="set-inline-actions">
+                <button
+                  className="set-btn"
+                  onClick={() => { setShowChangeOwnPw(false); setOwnOldPw(''); setOwnNewPw(''); setOwnPwError('') }}
+                >
+                  Abbrechen
+                </button>
+                <button className="set-btn set-btn-primary" onClick={handleOwnPasswordChange}>Speichern</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="set-group">
+        <h2 className="set-group-title">
+          Reise · {participants.length} von {MAX_PARTICIPANTS}
+          {isAdmin && adminUnlocked && (
+            <span className="settings-admin-badge"><Crown size={11} strokeWidth={2.2} /> Admin</span>
+          )}
+        </h2>
+        <div className="set-rows">
+          {participants.map((p) => (
+            <div key={p.id} className="set-row">
+              <span className="set-label">{p.name}</span>
+              {p.is_admin && (
+                <span className="set-tag"><Crown size={11} strokeWidth={2.2} /> Admin</span>
+              )}
+              {isAdmin && adminUnlocked && (
+                <button
+                  className="set-mini-btn danger"
+                  onClick={() => handleDeleteParticipant(p)}
+                  aria-label="Teilnehmer entfernen"
+                >
+                  <Trash2 size={15} strokeWidth={2} />
+                </button>
+              )}
+            </div>
+          ))}
+          {participants.length === 0 && <p className="settings-cat-empty">Noch keine Teilnehmer</p>}
+
+          <div className="set-row">
+            <span className="set-label">Reise-Code</span>
+            <code className="set-code">{JOIN_CODE}</code>
+            <button type="button" className="set-mini-btn" onClick={handleCopyCode} aria-label="Code kopieren">
+              <Copy size={15} strokeWidth={2} />
             </button>
           </div>
-        )}
+        </div>
 
         {isAdmin && adminUnlocked && (
-          <>
+          <div className="set-admin-block">
             {showAddParticipant ? (
-              <div className="settings-inline-form">
+              <div className="set-inline">
                 <input
                   className="settings-inline-input"
                   type="text"
@@ -616,34 +553,71 @@ export default function SettingsScreen({
                   onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
                   autoFocus
                 />
-                <button className="settings-btn settings-btn-primary" onClick={handleAddParticipant}>
-                  Hinzufügen
-                </button>
-                <button className="settings-btn settings-btn-secondary" onClick={() => { setShowAddParticipant(false); setNewParticipantName('') }}>
+                <button className="set-btn set-btn-primary" onClick={handleAddParticipant}>Hinzufügen</button>
+                <button
+                  className="set-btn"
+                  onClick={() => { setShowAddParticipant(false); setNewParticipantName('') }}
+                >
                   Abbrechen
                 </button>
               </div>
             ) : participants.length < MAX_PARTICIPANTS ? (
-              <button
-                className="settings-btn settings-btn-secondary"
-                style={{ marginTop: '0.6rem', width: '100%' }}
-                onClick={() => setShowAddParticipant(true)}
-              >
-                + Teilnehmer hinzufügen
+              <button className="set-btn set-btn-ghost" onClick={() => setShowAddParticipant(true)}>
+                <Plus size={15} strokeWidth={2.2} /> Person eintragen
               </button>
             ) : (
-              <p className="settings-cat-hint" style={{ marginTop: '0.5rem' }}>
-                Maximum von {MAX_PARTICIPANTS} Teilnehmern erreicht.
-              </p>
+              <p className="set-hint">Die Reise ist voll — mehr als {MAX_PARTICIPANTS} Personen gehen nicht.</p>
             )}
+          </div>
+        )}
 
-            {/* Admin: Passwort ändern */}
-            {showChangeAdminPw ? (
-              <div className="settings-inline-form" style={{ flexDirection: 'column', gap: '0.5rem', marginTop: '0.6rem' }}>
+        {isAdmin && !adminUnlocked && (
+          <div className="set-admin-block">
+            <p className="set-hint">
+              <Lock size={13} strokeWidth={2} /> Teilnehmerverwaltung ist gesperrt.
+            </p>
+            {hasAdminPassword ? (
+              <div className="set-inline">
                 <input
                   className="settings-inline-input"
                   type="password"
-                  placeholder="Altes Passwort"
+                  placeholder="Admin-Passwort"
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+                />
+                <button className="set-btn set-btn-primary" onClick={handleUnlock}>Entsperren</button>
+              </div>
+            ) : showSetPassword ? (
+              <div className="set-inline">
+                <input
+                  className="settings-inline-input"
+                  type="password"
+                  placeholder="Admin-Passwort festlegen"
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSavePassword()}
+                  autoFocus
+                />
+                <button className="set-btn set-btn-primary" onClick={handleSavePassword}>Speichern</button>
+              </div>
+            ) : (
+              <button className="set-btn set-btn-ghost" onClick={() => setShowSetPassword(true)}>
+                <Lock size={15} strokeWidth={2.2} /> Admin-Passwort festlegen
+              </button>
+            )}
+            {adminError && <p className="settings-admin-error">{adminError}</p>}
+          </div>
+        )}
+
+        {isAdmin && adminUnlocked && (
+          <div className="set-admin-block">
+            {showChangeAdminPw ? (
+              <div className="set-inline column">
+                <input
+                  className="settings-inline-input"
+                  type="password"
+                  placeholder="Altes Admin-Passwort"
                   value={adminOldPw}
                   onChange={(e) => setAdminOldPw(e.target.value)}
                   autoFocus
@@ -651,75 +625,115 @@ export default function SettingsScreen({
                 <input
                   className="settings-inline-input"
                   type="password"
-                  placeholder="Neues Passwort"
+                  placeholder="Neues Admin-Passwort"
                   value={adminNewPw}
                   onChange={(e) => setAdminNewPw(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAdminPasswordChange()}
                 />
                 {adminPwError && <p className="settings-admin-error">{adminPwError}</p>}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="settings-btn settings-btn-secondary" onClick={() => { setShowChangeAdminPw(false); setAdminOldPw(''); setAdminNewPw(''); setAdminPwError('') }}>
+                <div className="set-inline-actions">
+                  <button
+                    className="set-btn"
+                    onClick={() => { setShowChangeAdminPw(false); setAdminOldPw(''); setAdminNewPw(''); setAdminPwError('') }}
+                  >
                     Abbrechen
                   </button>
-                  <button className="settings-btn settings-btn-primary" onClick={handleAdminPasswordChange}>
-                    Speichern
-                  </button>
+                  <button className="set-btn set-btn-primary" onClick={handleAdminPasswordChange}>Speichern</button>
                 </div>
               </div>
             ) : (
-              <button
-                className="settings-btn settings-btn-secondary"
-                style={{ marginTop: '0.6rem', width: '100%' }}
-                onClick={() => setShowChangeAdminPw(true)}
-              >
-                <KeyRound size={16} strokeWidth={2} /> Passwort ändern
+              <button className="set-btn set-btn-ghost" onClick={() => setShowChangeAdminPw(true)}>
+                <KeyRound size={15} strokeWidth={2.2} /> Admin-Passwort ändern
               </button>
             )}
-          </>
-        )}
-
-        {!isAdmin && (
-          <p className="settings-cat-hint" style={{ marginTop: '0.5rem' }}>
-            Nur der Admin kann Teilnehmer verwalten.
-          </p>
-        )}
-      </div>
-
-      {/* ── Kategorien ──────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Kategorien</h3>
-        <p className="settings-cat-hint">Kategorien für Einkaufsliste und Mitbringen getrennt verwalten.</p>
-        {renderCategoryEditor('shopping', 'Einkaufsliste')}
-        {renderCategoryEditor('bring', 'Mitbringen')}
-      </div>
-
-      {/* ── Info ─────────────────────────────────────────────────────── */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">Info</h3>
-        <div className="settings-info-block">
-          <div className="settings-app-name">
-            <span className="settings-flag">
-              <span className="settings-flag-band red"></span>
-              <span className="settings-flag-band yellow"></span>
-              <span className="settings-flag-band red-bottom"></span>
-            </span>
-            Fiesta Siesta
           </div>
-          <div className="settings-app-version">Version {APP_VERSION}</div>
-          <p className="settings-app-desc">
-            Urlaubs-App für Gran Canaria mit Realtime-Sync — Einkaufsliste, Mitbringen, Ausgaben, Bristol, Wetter &amp; Notizen.
-          </p>
-          <p className="settings-app-motto">{spanishMotto()}</p>
+        )}
+
+        {!isAdmin && <p className="set-hint">Nur der Admin kann Teilnehmer verwalten.</p>}
+      </section>
+
+      <section className="set-group">
+        <h2 className="set-group-title">Mitteilungen</h2>
+        <div className="set-rows">
+          <div className="set-row">
+            <Bell size={17} strokeWidth={2} className="set-icon" />
+            <span className="set-label">Push</span>
+            <span className={`set-tag ${pushEnabled ? 'on' : ''}`}>
+              {pushEnabled ? 'Aktiv' : 'Aus'}
+            </span>
+          </div>
+        </div>
+        <div className="set-admin-block">
+          {!pushConfigured ? (
+            <p className="set-hint">Push ist auf diesem Gerät nicht konfiguriert.</p>
+          ) : !pushSupported ? (
+            <p className="set-hint">
+              Dieser Browser unterstützt kein Push
+              {pushPermission === 'denied' ? ' (Benachrichtigungen blockiert).' : '.'}
+            </p>
+          ) : pushEnabled ? (
+            <button className="set-btn set-btn-ghost set-btn-wide" onClick={handleUnsubscribePush} disabled={pushLoading}>
+              {pushLoading ? <Loader2 size={15} className="spin" /> : <BellOff size={15} strokeWidth={2.2} />}
+              Deaktivieren
+            </button>
+          ) : pushPermission === 'denied' ? (
+            <p className="set-hint">Benachrichtigungen sind im Browser blockiert — dort erlauben.</p>
+          ) : (
+            <button className="set-btn set-btn-primary set-btn-wide" onClick={handleSubscribePush} disabled={pushLoading}>
+              {pushLoading ? <Loader2 size={15} className="spin" /> : <Bell size={15} strokeWidth={2.2} />}
+              Aktivieren
+            </button>
+          )}
+        </div>
+      </section>
+
+      {catsOpen && (
+        <section className="set-group">
+          <h2 className="set-group-title">
+            Kategorien
+            <button type="button" className="set-mini-btn" onClick={() => setCatsOpen(false)} aria-label="Schließen">
+              <X size={15} strokeWidth={2} />
+            </button>
+          </h2>
+          <p className="set-hint">Getrennt für Einkaufsliste und Mitbringen.</p>
+          {renderCategoryEditor('shopping', 'Einkaufsliste')}
+          {renderCategoryEditor('bring', 'Mitbringen')}
+        </section>
+      )}
+
+      {infoOpen && (
+        <section className="set-group">
+          <h2 className="set-group-title">
+            Über die App
+            <button type="button" className="set-mini-btn" onClick={() => setInfoOpen(false)} aria-label="Schließen">
+              <X size={15} strokeWidth={2} />
+            </button>
+          </h2>
+          <div className="set-rows">
+            <div className="set-row">
+              <span className="set-label">Version</span>
+              <span className="set-value">{APP_VERSION}</span>
+            </div>
+            <div className="set-row">
+              <span className="set-label">Reise</span>
+              <span className="set-value">{listName}</span>
+            </div>
+          </div>
+          <p className="set-hint">{spanishMotto()}</p>
           <a
-            className="settings-link"
+            className="set-btn set-btn-ghost"
             href="https://github.com/flokoko/FiestaSiesta"
             target="_blank"
             rel="noopener noreferrer"
           >
-            GitHub Repository →
+            GitHub-Repository →
           </a>
-        </div>
-      </div>
+        </section>
+      )}
+
+      <footer className="set-footer">
+        Fiesta Siesta · v{APP_VERSION}
+      </footer>
     </div>
   )
 }
