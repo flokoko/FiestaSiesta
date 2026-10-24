@@ -1103,3 +1103,37 @@
   background: linear-gradient(135deg, rgba(170, 21, 27, 0.08) 0%, var(--button-bg) 100%);
   border-color: rgba(170, 21, 27, 0.2);
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2b — Bristol im selben Muster (Kopf, ruhige Zeilen)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.bristol-screen {
+  padding: 2px 0 0;
+}
+
+.bristol-screen .bristol-hero {
+  margin-top: 10px;
+}
+
+.bristol-screen .bristol-history-row {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: none;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+.bristol-screen .bristol-history-list {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-bg-solid);
+  overflow: hidden;
+  padding: 0 12px;
+}
+
+.bristol-screen .bristol-stats-row {
+  gap: 8px;
+}

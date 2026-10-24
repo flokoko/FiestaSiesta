@@ -119,6 +119,7 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
         <p className="join-hint">
           Beim ersten Mal mit dem Initial-Passwort <strong>SIESTA26</strong> anmelden.
           Danach in den Einstellungen ein eigenes Passwort setzen.
+          Die Reise fasst <strong>drei Personen</strong>.
         </p>
 
         {error && <p className="join-error">{error}</p>}

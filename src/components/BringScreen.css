@@ -607,3 +607,100 @@
 .packlist-item-delete:active {
   transform: scale(0.9);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2b — Mitbringen im selben Muster wie Einkaufen und Geld
+   ═══════════════════════════════════════════════════════════════════ */
+
+.bring-screen {
+  padding: 2px 0 0;
+}
+
+.bring-screen .bring-group {
+  margin-bottom: 0.85rem;
+}
+
+.bring-screen .bring-group-header {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0.5rem 0.15rem 0.3rem;
+  margin-bottom: 0;
+}
+
+.bring-screen .bring-person {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.bring-screen .bring-me-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.bring-screen .bring-group-count {
+  font-size: 10px;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.bring-screen .bring-item {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0.62rem 0.15rem;
+}
+
+.bring-screen .bring-item:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.bring-screen .bring-item-name {
+  font-size: 13.5px;
+}
+
+.bring-screen .bring-item-qty {
+  font-size: 11px;
+}
+
+.bring-screen .packlist-item {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0.62rem 0.15rem;
+}
+
+.bring-screen .packlist-item-name {
+  font-size: 13.5px;
+}
+
+.bring-screen .packlist-add-form {
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-solid);
+  box-shadow: var(--shadow-sm);
+}
+
+.bring-screen .packlist-copy-btn {
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg-solid);
+  box-shadow: none;
+}
+
+.bring-screen .packlist-section {
+  padding-bottom: 76px;
+}

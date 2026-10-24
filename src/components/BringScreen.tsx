@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { Trash2, GripVertical, Pizza, Plus, Copy } from 'lucide-react'
+import { Trash2, GripVertical, Pizza, Plus, Copy, MoreHorizontal, Search, X, Settings2, Backpack, Luggage } from 'lucide-react'
 import type { BringFilter, ListItem, ItemCategory, ListType } from '../types'
 import { supabase, getJoinCode } from '../lib/supabase'
 import { logError } from '../lib/logger'
@@ -126,6 +126,9 @@ export default function BringScreen({ items, categories, listId, userName, onIte
   // ── Shared bring-list state (existing) ──
   const [filter, setFilter] = useState<BringFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [catsOpen, setCatsOpen] = useState(false)
 
   // ── Personal packing-list state ──
   const [packItems, setPackItems] = useState<PacklistItem[]>([])
@@ -389,69 +392,150 @@ export default function BringScreen({ items, categories, listId, userName, onIte
     return sorted
   }, [filtered, userName])
 
+  const broughtCount = items.filter(i => i.is_brought).length
+  const openBring = items.length - broughtCount
+  const progress = subTab === 'bring'
+    ? (items.length === 0 ? 0 : Math.round((broughtCount / items.length) * 100))
+    : (packStats.total === 0 ? 0 : Math.round((packStats.checked / packStats.total) * 100))
+
+  const headline = subTab === 'bring'
+    ? items.length === 0
+      ? 'Noch nichts verteilt'
+      : openBring === 0
+        ? 'Alles dabei 🎉'
+        : `${openBring} offen · ${broughtCount} mitgebracht`
+    : packStats.total === 0
+      ? 'Noch nichts gepackt'
+      : `${packStats.total - packStats.checked} offen · ${packStats.checked} gepackt`
+
   return (
     <div className="bring-screen">
-      {/* ── Sub-tab toggle: Mitbringen vs Meine Packliste ── */}
-      <div className="bring-subtabs">
+      <header className="list-head">
+        <div className="list-head-text">
+          <h1>{subTab === 'bring' ? 'Mitbringen' : 'Packliste'}</h1>
+          <p>{headline}</p>
+        </div>
         <button
-          className={`bring-subtab ${subTab === 'bring' ? 'active' : ''}`}
+          type="button"
+          className="list-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Optionen"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.2} />
+        </button>
+      </header>
+
+      <div className="list-progress" aria-hidden="true">
+        <i style={{ width: `${progress}%` }} />
+      </div>
+
+      <div className="money-toggle">
+        <button
+          type="button"
+          className={`money-toggle-btn${subTab === 'bring' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('bring') }}
         >
-          🎒 Mitbringen
+          <Backpack size={15} strokeWidth={2} /> Mitbringen
         </button>
         <button
-          className={`bring-subtab ${subTab === 'packlist' ? 'active' : ''}`}
+          type="button"
+          className={`money-toggle-btn${subTab === 'packlist' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('packlist') }}
         >
-          🧳 Meine Packliste
+          <Luggage size={15} strokeWidth={2} /> Packliste
         </button>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════ */}
-      {/* TAB: Shared Mitbringen (existing — unchanged)                */}
-      {/* ══════════════════════════════════════════════════════════════ */}
-      {subTab === 'bring' && (
-        <>
-          <div className="bring-filters">
+      {menuOpen && (
+        <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
+          <div
+            className="list-menu-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mitbringen-Optionen"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="more-grab" aria-hidden="true" />
             <button
-              className={`bring-filter-btn ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => { navigator.vibrate?.(8); setFilter('all') }}
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setSearchOpen(true); setMenuOpen(false) }}
             >
-              Alle
+              <Search size={17} strokeWidth={2} />
+              <span>Suchen</span>
             </button>
             <button
-              className={`bring-filter-btn ${filter === 'mine' ? 'active' : ''}`}
-              onClick={() => { navigator.vibrate?.(8); setFilter('mine') }}
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setCatsOpen(v => !v); setMenuOpen(false) }}
             >
-              Nur meine
+              <Settings2 size={17} strokeWidth={2} />
+              <span>{catsOpen ? 'Kategorien ausblenden' : 'Kategorien verwalten'}</span>
             </button>
             <button
-              className={`bring-filter-btn ${filter === 'unfilled' ? 'active' : ''}`}
-              onClick={() => { navigator.vibrate?.(8); setFilter('unfilled') }}
+              type="button"
+              className="list-menu-item"
+              onClick={() => { handleCopyFromBring(); setMenuOpen(false) }}
             >
-              Unzugewiesen
+              <Copy size={17} strokeWidth={2} />
+              <span>Aus Mitbringen in die Packliste</span>
             </button>
           </div>
+        </div>
+      )}
 
-          <input type="text" className="bring-search-input" placeholder="🔍 Suchen…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      {searchOpen && (
+        <div className="list-search-row">
+          <Search size={15} strokeWidth={2} />
+          <input
+            type="text"
+            placeholder="Suchen…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => { setSearchQuery(''); setSearchOpen(false) }}
+            aria-label="Suche schließen"
+          >
+            <X size={15} strokeWidth={2} />
+          </button>
+        </div>
+      )}
 
+      {catsOpen && (
+        <div className="cat-manager-wrap">
           <CategoryManager
             categories={categories}
             listId={listId}
             listType="bring"
             onCategoriesChange={onCategoriesChange}
           />
+        </div>
+      )}
 
-          <AddItemForm
-            listId={listId}
-            userName={userName}
-            onAdded={onItemChange}
-            defaultAssignedTo={userName}
-            placeholder="Was bringst du mit?"
-            categories={categories}
-            listType="bring"
-            persons={persons}
-          />
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {/* TAB: Shared Mitbringen (existing — unchanged)                */}
+      {/* ══════════════════════════════════════════════════════════════ */}
+      {subTab === 'bring' && (
+        <>
+          <div className="cat-strip">
+            {([
+              { key: 'all' as BringFilter, label: 'Alle', count: items.length },
+              { key: 'mine' as BringFilter, label: 'Nur meine', count: items.filter(i => i.assigned_to === userName).length },
+              { key: 'unfilled' as BringFilter, label: 'Offen', count: items.filter(i => !i.assigned_to).length },
+            ]).map(({ key, label, count }) => (
+              <button
+                key={key}
+                type="button"
+                className={`cat-chip${filter === key ? ' active' : ''}`}
+                onClick={() => { navigator.vibrate?.(6); setFilter(key) }}
+              >
+                {label} <b>{count}</b>
+              </button>
+            ))}
+          </div>
 
           {grouped.length === 0 && (
             <p className="bring-empty"><Pizza size={24} strokeWidth={1.5} /> Nichts hier — vielleicht Filter ändern?</p>
@@ -471,6 +555,19 @@ export default function BringScreen({ items, categories, listId, userName, onIte
               />
             )
           })}
+
+          <div className="list-addbar">
+            <AddItemForm
+              listId={listId}
+              userName={userName}
+              onAdded={onItemChange}
+              defaultAssignedTo={userName}
+              placeholder="Was bringst du mit?"
+              categories={categories}
+              listType="bring"
+              persons={persons}
+            />
+          </div>
         </>
       )}
 

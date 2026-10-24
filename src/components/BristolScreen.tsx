@@ -618,9 +618,23 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
   }, [entries])
 
   const hasData = entries.length > 0
+  const avgValue = hasData
+    ? (entries.reduce((sum, e) => sum + e.value, 0) / entries.length).toFixed(1).replace('.', ',')
+    : null
 
   return (
     <div className="bristol-screen">
+      <header className="list-head">
+        <div className="list-head-text">
+          <h1>Bristol</h1>
+          <p>
+            {hasData
+              ? `${entries.length} ${entries.length === 1 ? 'Eintrag' : 'Einträge'} · Ø ${avgValue}`
+              : 'Noch kein Eintrag'}
+          </p>
+        </div>
+      </header>
+
       {/* ── Hero: Entry for selected date ── */}
       <div className="bristol-hero">
         <div className="bristol-hero-label">Dein Wert</div>
