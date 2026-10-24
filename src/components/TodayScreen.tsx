@@ -1,4 +1,4 @@
-import { ShoppingCart, Backpack, Wallet, Activity, StickyNote, ChevronRight, ArrowRight } from 'lucide-react'
+import { ShoppingCart, Backpack, Wallet, Activity, ChevronRight, ArrowRight } from 'lucide-react'
 import type { TabView } from '../types'
 import {
   TRIP, formatDayLong, formatRange, tripDay, tripPhase, daysUntilTrip, TRIP_LENGTH,
@@ -42,11 +42,14 @@ export default function TodayScreen({
     { key: 'bring', label: 'Mitbringen', hint: `${bringCount} Sachen`, icon: Backpack },
     { key: 'expenses', label: 'Ausgabe', hint: 'eintragen', icon: Wallet },
   ]
-  quickTiles.push(
-    bristolEnabled
-      ? { key: 'bristol', label: 'Bristol', hint: 'Eintrag', icon: Activity }
-      : { key: 'notes', label: 'Notizen', hint: 'kurz festhalten', icon: StickyNote },
-  )
+  // Bristol ist fester Bestandteil des Cockpits (Flo-Entscheid) — der Tab dafür
+  // ist aus der Bottom-Navigation gewandert.
+  quickTiles.push({
+    key: 'bristol',
+    label: 'Bristol',
+    hint: bristolEnabled ? 'Eintrag' : 'einschalten',
+    icon: Activity,
+  })
 
   return (
     <div className="today">

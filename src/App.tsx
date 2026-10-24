@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react'
-import { ArrowLeft, MoreVertical, WifiOff } from 'lucide-react'
+import { ArrowLeft, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
@@ -307,16 +307,6 @@ export default function App() {
               </span>
             </div>
           )}
-          <div className="header-actions">
-            <button
-              type="button"
-              className="header-more-btn"
-              onClick={() => setMoreOpen(true)}
-              aria-label="Weitere Bereiche"
-            >
-              <MoreVertical size={18} strokeWidth={2.2} />
-            </button>
-          </div>
         </div>
         <div className="header-flag-bar-full">
           <span className="header-flag-red"></span>
@@ -489,7 +479,12 @@ export default function App() {
         )}
       </main>
 
-      <BottomNav tab={tab} onNavigate={setTab} />
+      <BottomNav
+        tab={tab}
+        onNavigate={setTab}
+        onMore={() => setMoreOpen(true)}
+        moreOpen={moreOpen}
+      />
 
       <MoreSheet
         open={moreOpen}

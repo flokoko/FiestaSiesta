@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X } from 'lucide-react'
+import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity } from 'lucide-react'
+import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
 
 interface MoreSheetProps {
@@ -38,6 +39,12 @@ export default function MoreSheet({
       action: () => { onNavigate('notes'); onClose() },
     },
     {
+      label: 'Bristol',
+      hint: 'Skala, Statistik, Gag',
+      icon: Activity,
+      action: () => { onNavigate('bristol'); onClose() },
+    },
+    {
       label: 'Einstellungen',
       hint: 'Name, Passwort, Admin',
       icon: Settings,
@@ -64,7 +71,7 @@ export default function MoreSheet({
         <div className="more-head">
           <h2>Mehr</h2>
           <div className="more-head-right">
-            <span>{userName}</span>
+            <span>{userName} · v{APP_VERSION}</span>
             <button type="button" className="more-close" onClick={onClose} aria-label="Schließen">
               <X size={16} strokeWidth={2.2} />
             </button>

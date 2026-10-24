@@ -1,4 +1,4 @@
-import { Home, Map, ListChecks, Wallet, Activity, type LucideIcon } from 'lucide-react'
+import { Home, Map, ListChecks, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
 import type { TabView } from '../types'
 
 interface NavItem {
@@ -12,30 +12,35 @@ const ITEMS: NavItem[] = [
   { key: 'trip', label: 'Reise', icon: Map },
   { key: 'lists', label: 'Listen', icon: ListChecks },
   { key: 'expenses', label: 'Geld', icon: Wallet },
-  { key: 'bristol', label: 'Bristol', icon: Activity },
 ]
 
 /** Tabs, die einer Navigations-Domäne zugeordnet sind */
 const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
   list: 'lists',
   bring: 'lists',
+  notes: 'home',
+  weather: 'home',
+  settings: 'home',
+  bristol: 'home',
 }
 
 interface BottomNavProps {
   tab: TabView
   onNavigate: (tab: TabView) => void
+  onMore: () => void
+  moreOpen: boolean
 }
 
-export default function BottomNav({ tab, onNavigate }: BottomNavProps) {
+// Bristol lebt im Cockpit (Schnellzugriff) und im „Mehr"-Blatt — die Leiste
+// bleibt damit bei vier Domänen plus „Mehr".
+export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomNavProps) {
   const activeDomain = DOMAIN_OF[tab] ?? tab
-  // Bristol bleibt immer sichtbar — Flo will es als Domäne im Schnellzugriff.
-  // Ist der Modus aus, zeigt der Screen eine Einschalt-Karte.
   const items = ITEMS
 
   return (
     <nav className="bottom-nav" aria-label="Hauptnavigation">
       {items.map(({ key, label, icon: Icon }) => {
-        const isActive = activeDomain === key
+        const isActive = !moreOpen && activeDomain === key
         return (
           <button
             key={key}
@@ -49,6 +54,15 @@ export default function BottomNav({ tab, onNavigate }: BottomNavProps) {
           </button>
         )
       })}
+      <button
+        type="button"
+        className={`bottom-nav-item${moreOpen ? ' active' : ''}`}
+        onClick={onMore}
+        aria-expanded={moreOpen}
+      >
+        <MoreHorizontal size={21} strokeWidth={moreOpen ? 2.4 : 1.9} />
+        <span>Mehr</span>
+      </button>
     </nav>
   )
 }
