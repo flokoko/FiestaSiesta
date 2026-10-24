@@ -23,19 +23,23 @@
   --font-display: 'Jakarta', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   --bg: #F4F2EF;
-  --surface: #FFFFFF;
-  --surface-2: #FAF8F6;
-  --surface-3: #F0EDE9;
+  --surface: rgba(255, 255, 255, 0.74);
+  --surface-2: rgba(255, 255, 255, 0.56);
+  --surface-3: rgba(23, 20, 26, 0.055);
+  --glass-edge: rgba(255, 255, 255, 0.72);
+  --glass-hi: rgba(255, 255, 255, 0.85);
+  --glass-blur: blur(26px) saturate(185%);
   --ink: #17141A;
-  --ink-2: #5C5661;
-  --ink-3: #948E9A;
+  --ink-2: #4E4854;
+  --ink-3: #7C7682;
   --line: rgba(23, 20, 26, 0.07);
   --line-2: rgba(23, 20, 26, 0.12);
 
   --accent: #D7263D;
   --accent-2: #FF6B4A;
   --accent-soft: rgba(215, 38, 61, 0.09);
-  --accent-grad: linear-gradient(135deg, #FF6B4A 0%, #D7263D 58%, #A8102A 100%);
+  --accent-grad: linear-gradient(150deg, #E2705F 0%, #D2525E 42%, #B23A50 78%, #8C2640 100%);
+  --hero-glass: linear-gradient(150deg, rgba(198, 84, 84, 0.9) 0%, rgba(176, 58, 72, 0.9) 45%, rgba(148, 44, 66, 0.92) 78%, rgba(110, 32, 54, 0.95) 100%);
   --gold: #F0A62E;
   --gold-soft: rgba(240, 166, 46, 0.14);
   --green: #249B77;
@@ -54,10 +58,13 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Bella-Tokens auf die neue Welt mappen */
-  --bg-gradient: radial-gradient(120% 80% at 12% 0%, #FFF1E8 0%, rgba(255, 241, 232, 0) 55%),
-    radial-gradient(100% 70% at 90% 8%, #FFE9EC 0%, rgba(255, 233, 236, 0) 50%),
-    linear-gradient(180deg, #F6F4F1 0%, #F1EEEA 100%);
-  --header-bg: rgba(244, 242, 239, 0.72);
+  --bg-gradient:
+    radial-gradient(75% 50% at 6% -6%, #FFE7D8 0%, rgba(255, 231, 216, 0) 58%),
+    radial-gradient(65% 45% at 100% 4%, #FFE1E8 0%, rgba(255, 225, 232, 0) 54%),
+    radial-gradient(65% 50% at 82% 76%, #EDE7FB 0%, rgba(237, 231, 251, 0) 58%),
+    radial-gradient(55% 42% at 0% 92%, #E2F1EA 0%, rgba(226, 241, 234, 0) 56%),
+    linear-gradient(180deg, #F8F6F4 0%, #F3F0ED 100%);
+  --header-bg: rgba(250, 248, 246, 0.52);
   --card-bg: var(--surface);
   --card-bg-solid: var(--surface);
   --text-primary: var(--ink);
@@ -92,9 +99,11 @@
 
 :root[data-theme='dark'] {
   --bg: #0E0C11;
-  --surface: #17141C;
-  --surface-2: #1D1923;
-  --surface-3: #262130;
+  --surface: rgba(255, 255, 255, 0.065);
+  --surface-2: rgba(255, 255, 255, 0.045);
+  --surface-3: rgba(255, 255, 255, 0.09);
+  --glass-edge: rgba(255, 255, 255, 0.11);
+  --glass-hi: rgba(255, 255, 255, 0.16);
   --ink: #F7F4F8;
   --ink-2: #B7B0BE;
   --ink-3: #7E7787;
@@ -104,7 +113,8 @@
   --accent: #FF5B67;
   --accent-2: #FF8A5C;
   --accent-soft: rgba(255, 91, 103, 0.14);
-  --accent-grad: linear-gradient(135deg, #FF7A5C 0%, #E0364B 55%, #A8102A 100%);
+  --accent-grad: linear-gradient(150deg, #C9645F 0%, #B85061 42%, #963A52 78%, #6E2440 100%);
+  --hero-glass: linear-gradient(150deg, rgba(201, 100, 95, 0.9) 0%, rgba(184, 80, 97, 0.88) 44%, rgba(150, 58, 82, 0.9) 78%, rgba(110, 36, 64, 0.93) 100%);
   --gold: #F5BE5C;
   --gold-soft: rgba(245, 190, 92, 0.16);
   --green: #4DBE9A;
@@ -115,10 +125,13 @@
   --shadow-3: 0 26px 60px -24px rgba(0, 0, 0, 0.8);
   --shadow-accent: 0 16px 34px -16px rgba(255, 91, 103, 0.45);
 
-  --bg-gradient: radial-gradient(120% 80% at 10% 0%, #2A1720 0%, rgba(42, 23, 32, 0) 55%),
-    radial-gradient(100% 70% at 92% 6%, #22182C 0%, rgba(34, 24, 44, 0) 50%),
-    linear-gradient(180deg, #100E14 0%, #0B0A0E 100%);
-  --header-bg: rgba(14, 12, 17, 0.7);
+  --bg-gradient:
+    radial-gradient(80% 55% at 6% -4%, #4A2233 0%, rgba(74, 34, 51, 0) 62%),
+    radial-gradient(70% 50% at 98% 4%, #3A2140 0%, rgba(58, 33, 64, 0) 58%),
+    radial-gradient(70% 55% at 80% 74%, #222447 0%, rgba(34, 36, 71, 0) 62%),
+    radial-gradient(60% 45% at 2% 90%, #1B3A34 0%, rgba(27, 58, 52, 0) 60%),
+    linear-gradient(180deg, #0F0D12 0%, #0A0910 100%);
+  --header-bg: rgba(18, 16, 22, 0.55);
   --input-bg: var(--surface-2);
   --select-bg: var(--surface-2);
   --button-bg: var(--surface-3);
@@ -3126,4 +3139,361 @@ body {
 #root .cat-chip:not(.active) .plan-day-count {
   background: var(--surface-3);
   color: var(--ink-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIQUID GLASS (v0.17) — transluzente Flächen, Blur, Lichtkanten
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Alle Karten sind Glas: Blur hinter der Fläche, helle Oberkante,
+   weicher Wurf nach unten. */
+#root .today-chips,
+#root .today-empty,
+#root .today-tiles,
+#root .trip-hub,
+#root .trip-day,
+#root .lists-card,
+#root .dashboard-cards,
+#root .set-rows,
+#root .wx-rows,
+#root .dash-notes-list,
+#root .expense-list,
+#root .money-debts-list,
+#root .money-debts-empty,
+#root .packlist-items,
+#root .cat-items,
+#root .bring-group,
+#root .plan-slot,
+#root .expense-form,
+#root .dash-note-form,
+#root .dash-add-btn,
+#root .dash-install-banner,
+#root .dash-bristol-row,
+#root .weather-widget,
+#root .bristol-widget,
+#root .more-tile,
+#root .list-empty,
+#root .bring-empty,
+#root .expense-empty,
+#root .dash-notes-empty {
+  background: var(--surface);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 1px 2px rgba(23, 20, 26, 0.04),
+    0 18px 40px -26px rgba(23, 20, 26, 0.28);
+}
+
+/* Zeilen innerhalb einer Glaskarte bleiben randlos */
+#root .today-tile,
+#root .trip-hub-row,
+#root .dash-card,
+#root .set-row,
+#root .wx-day,
+#root .wx-row,
+#root .item-row,
+#root .bring-item,
+#root .plan-row,
+#root .expense-card,
+#root .dash-note-card,
+#root .money-debt-row {
+  border-bottom-color: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+/* Hero: transluzenter Verlauf, Blur dahinter, Lichtkante oben */
+#root .today-hero,
+#root .trip-hero,
+#root .money-hero,
+#root .note-head,
+#root .lists-head {
+  background: var(--hero-glass);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    0 26px 54px -28px rgba(150, 40, 60, 0.55);
+}
+
+/* Specular-Highlight: weicher Lichtbogen statt harter Kreis */
+#root .today-hero::before,
+#root .trip-hero::before,
+#root .money-hero::before,
+#root .note-head::before,
+#root .lists-head::before {
+  width: 240px;
+  height: 240px;
+  top: -110px;
+  right: -70px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 58%);
+  filter: blur(6px);
+}
+
+#root .today-hero::after,
+#root .trip-hero::after,
+#root .money-hero::after,
+#root .note-head::after,
+#root .lists-head::after {
+  width: 260px;
+  height: 260px;
+  left: -90px;
+  bottom: -140px;
+  background: radial-gradient(circle, rgba(255, 214, 170, 0.34), rgba(255, 214, 170, 0) 62%);
+  filter: blur(10px);
+}
+
+#root .today-kicker,
+#root .trip-kicker,
+#root .money-hero-label,
+#root .note-head p,
+#root .lists-head p {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+#root .today-sub,
+#root .trip-range {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#root .today-sub-soft {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+#root .money-hero-balance {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Kopfleiste und Navigation: mehr Glas, weniger Fläche */
+#root .app-header {
+  background: color-mix(in srgb, var(--header-bg) 88%, transparent);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+}
+
+#root .app-header::after {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+#root .bottom-nav {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 2px 6px rgba(23, 20, 26, 0.06),
+    0 24px 50px -22px rgba(23, 20, 26, 0.38);
+}
+
+#root .bottom-nav-item.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Chips und Pills: transluzent */
+#root .cat-chip,
+#root .plan-day-title,
+#root .bring-filter-btn,
+#root .bring-subtab,
+#root .plan-vote,
+#root .money-toggle,
+#root .expense-toggle,
+#root .set-toggle {
+  background: var(--surface);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 6px 18px -14px rgba(23, 20, 26, 0.3);
+}
+
+#root .cat-chip.active,
+#root .plan-day-title.active,
+#root .bring-filter-btn.active,
+#root .bring-subtab.active {
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 10px 24px -16px rgba(23, 20, 26, 0.5);
+}
+
+#root .money-toggle-btn.active,
+#root .expense-toggle-btn.active {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 6px 16px -12px rgba(23, 20, 26, 0.35);
+}
+
+/* Buttons: Verlauf mit Lichtkante, weicherer Wurf */
+#root .join-btn,
+#root .set-btn-primary,
+#root .settings-btn-primary,
+#root .expense-btn-save,
+#root .plan-btn-primary,
+#root .packlist-add-btn,
+#root .dash-btn-save,
+#root .list-addbar .add-item-trigger,
+#root .money-add-btn {
+  background: var(--accent-grad);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 16px 34px -18px rgba(170, 50, 70, 0.55);
+}
+
+#root .join-btn:hover,
+#root .set-btn-primary:hover,
+#root .expense-btn-save:hover:not(:disabled),
+#root .plan-btn-primary:hover:not(:disabled),
+#root .list-addbar .add-item-trigger:hover,
+#root .money-add-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 22px 42px -20px rgba(170, 50, 70, 0.62);
+}
+
+#root .set-btn-ghost,
+#root .settings-btn-secondary,
+#root .expense-btn-cancel,
+#root .plan-btn,
+#root .dash-btn-cancel,
+#root .more-leave,
+#root .set-btn-danger {
+  background: var(--surface-2);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+
+/* Eingaben: Glasfeld mit Fokusring */
+#root .settings-inline-input,
+#root .settings-cat-icon-input,
+#root .settings-cat-name-input,
+#root .weather-screen-location-input,
+#root .weather-location-input,
+#root .expense-input,
+#root .expense-select,
+#root .plan-input,
+#root .packlist-input-name,
+#root .packlist-input-qty,
+#root .dash-note-input,
+#root .dash-note-textarea,
+#root .dash-notes-search,
+#root .join-input,
+#root .list-search-input,
+#root .bring-search-input {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+
+#root .settings-inline-input:focus,
+#root .weather-screen-location-input:focus,
+#root .expense-input:focus,
+#root .plan-input:focus,
+#root .dash-note-input:focus,
+#root .dash-note-textarea:focus,
+#root .join-input:focus,
+#root .list-search-input:focus {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* Sheets: Milchglas mit Lichtkante */
+#root .more-sheet,
+#root .list-menu-sheet {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(36px) saturate(190%);
+  -webkit-backdrop-filter: blur(36px) saturate(190%);
+  border-top: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 -20px 60px -30px rgba(23, 20, 26, 0.5);
+}
+
+#root .more-tile {
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+}
+
+/* Login-Karte: Glas über dem Szenen-Hintergrund */
+#root .join-card {
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 30px 70px -40px rgba(23, 20, 26, 0.45);
+}
+
+/* Toast */
+#root .toast {
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Update-Banner */
+#root .update-banner {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border-bottom: 1px solid var(--glass-edge);
+}
+
+/* Wetter-Hero ebenfalls glasig */
+#root .wx-now {
+  background: linear-gradient(150deg, #D98A6A 0%, #C9705F 45%, #A84A53 100%);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 24px 48px -26px rgba(140, 70, 50, 0.5);
+}
+
+/* Erledigt-Checkbox: Glas statt Vollfläche */
+#root .custom-checkbox-visual.checked,
+#root .item-row.checked .item-checkmark,
+#root .bring-item.brought .bring-checkmark {
+  background: var(--accent-grad);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Icon-Kacheln etwas präsenter im Glas */
+#root .today-tile-icon,
+#root .trip-hub-icon,
+#root .dash-card-icon,
+#root .more-tile-icon,
+#root .lists-card-icon {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* Leerzustand in einer Glaskarte: keine zweite Glasfläche */
+#root .expense-list .expense-empty,
+#root .dash-notes-list .dash-notes-empty,
+#root .plan-slot .plan-empty {
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Dark-Aurora ruhiger */
+:root[data-theme='dark'] {
+  --bg-gradient:
+    radial-gradient(75% 50% at 6% -6%, #452031 0%, rgba(69, 32, 49, 0) 58%),
+    radial-gradient(65% 45% at 100% 4%, #36203F 0%, rgba(54, 32, 63, 0) 54%),
+    radial-gradient(65% 50% at 82% 76%, #232642 0%, rgba(35, 38, 66, 0) 58%),
+    radial-gradient(55% 42% at 0% 92%, #1E2A33 0%, rgba(30, 42, 51, 0) 56%),
+    linear-gradient(180deg, #0F0D12 0%, #0A0910 100%);
 }
