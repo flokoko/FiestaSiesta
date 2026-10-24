@@ -33,7 +33,7 @@
 .join-card {
   position: relative;
   z-index: 1;
-  background: color-mix(in srgb, var(--card-bg-solid) 90%, transparent);
+  background: color-mix(in srgb, var(--card-bg-solid) 96%, transparent);
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
   border-radius: 28px;
