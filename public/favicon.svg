@@ -1,56 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Fiesta Siesta">
   <defs>
     <clipPath id="r"><rect x="0" y="0" width="512" height="512" rx="112"/></clipPath>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#22456F"/>
-      <stop offset="55%" stop-color="#152C4C"/>
-      <stop offset="100%" stop-color="#0A1730"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#F2A03B" stop-opacity="0.28"/>
-      <stop offset="100%" stop-color="#F2A03B" stop-opacity="0"/>
+    <radialGradient id="vig" cx="0.5" cy="0.4" r="0.78">
+      <stop offset="50%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.26"/>
     </radialGradient>
-    <linearGradient id="straw" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0%" stop-color="#FDF2D6"/>
-      <stop offset="60%" stop-color="#F0D89F"/>
-      <stop offset="100%" stop-color="#D8B97C"/>
-    </linearGradient>
     <linearGradient id="vino" x1="0" y1="0" x2="0.1" y2="1">
       <stop offset="0%" stop-color="#F2634C"/>
       <stop offset="45%" stop-color="#B3241D"/>
       <stop offset="100%" stop-color="#750F0E"/>
     </linearGradient>
+    <linearGradient id="toro" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#40231C"/>
+      <stop offset="100%" stop-color="#1A0C09"/>
+    </linearGradient>
   </defs>
   <g clip-path="url(#r)">
-    <rect width="512" height="512" fill="url(#bg)"/>
-    <rect width="512" height="512" fill="url(#glow)"/>
+    <rect width="512" height="512" fill="#F7C81E"/>
+    <rect width="512" height="120" fill="#B0181E"/>
+    <rect y="392" width="512" height="120" fill="#B0181E"/>
+    <rect width="512" height="512" fill="url(#vig)"/>
 
-    <!-- Stiel + Fuß -->
-    <rect x="246" y="360" width="20" height="72" rx="10" fill="#FDF2D6"/>
-    <ellipse cx="256" cy="442" rx="64" ry="18" fill="#FDF2D6"/>
-
-    <!-- Glas + Sangria -->
-    <path d="M174 172 L338 172 L322 300 C318 342 296 360 256 360 C216 360 194 342 190 300 Z" fill="#FFF6E0" opacity="0.16"/>
-    <path d="M186 210 L326 210 L314 298 C311 334 292 350 256 350 C220 350 201 334 198 298 Z" fill="url(#vino)"/>
-    <ellipse cx="256" cy="210" rx="70" ry="15" fill="#F2715B"/>
-    <ellipse cx="232" cy="208" rx="24" ry="7" fill="#FF8A72" opacity="0.55"/>
-    <!-- Frucht -->
-    <circle cx="286" cy="252" r="25" fill="#F2A03B"/>
-    <circle cx="286" cy="252" r="17" fill="#FBCB74"/>
-    <g stroke="#F2A03B" stroke-width="3">
-      <line x1="286" y1="235" x2="286" y2="269"/>
-      <line x1="269" y1="252" x2="303" y2="252"/>
+    <!-- Ohren -->
+    <g fill="url(#toro)">
+      <ellipse cx="152" cy="212" rx="30" ry="42" transform="rotate(-20 152 212)"/>
+      <ellipse cx="360" cy="212" rx="30" ry="42" transform="rotate(20 360 212)"/>
     </g>
-    <circle cx="222" cy="300" r="16" fill="#7CB342"/>
-    <circle cx="222" cy="300" r="9" fill="#C6E39B"/>
-    <path d="M174 172 L338 172 L322 300 C318 342 296 360 256 360 C216 360 194 342 190 300 Z" fill="none" stroke="#FDF2D6" stroke-width="10" stroke-linejoin="round"/>
+    <!-- Kopf + Hörner -->
+    <g fill="url(#toro)" stroke="#FDF2D6" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M186 158 C146 148 116 110 106 62 C132 90 168 100 202 104 Z"/>
+      <path d="M326 158 C366 148 396 110 406 62 C380 90 344 100 310 104 Z"/>
+      <path d="M172 190 C172 142 208 116 256 116 C304 116 340 142 340 190 L340 286 C340 336 302 362 256 362 C210 362 172 336 172 286 Z"/>
+    </g>
+    <!-- Maul -->
+    <ellipse cx="256" cy="312" rx="66" ry="46" fill="#4A2A20"/>
+    <ellipse cx="230" cy="310" rx="12" ry="16" fill="#140907"/>
+    <ellipse cx="282" cy="310" rx="12" ry="16" fill="#140907"/>
+    <!-- verschlafene Augen -->
+    <g fill="#FDF2D6">
+      <ellipse cx="210" cy="212" rx="19" ry="15"/>
+      <ellipse cx="302" cy="212" rx="19" ry="15"/>
+    </g>
+    <g fill="#140907">
+      <rect x="191" y="197" width="38" height="13" rx="6"/>
+      <rect x="283" y="197" width="38" height="13" rx="6"/>
+      <ellipse cx="210" cy="220" rx="7" ry="7"/>
+      <ellipse cx="302" cy="220" rx="7" ry="7"/>
+    </g>
 
-    <!-- Sombrero über dem Glasrand -->
-    <g transform="rotate(-20 248 174)">
-      <ellipse cx="248" cy="174" rx="150" ry="44" fill="url(#straw)"/>
-      <ellipse cx="248" cy="174" rx="150" ry="44" fill="none" stroke="#8A6A38" stroke-width="6"/>
-      <path d="M198 174 C198 118 214 94 248 94 C282 94 298 118 298 174 Z" fill="#FBEECB"/>
-      <path d="M200 150 C220 160 276 160 296 150 L296 172 C276 182 220 182 200 172 Z" fill="#B3241D"/>
+    <g transform="rotate(0 256 400) translate(256 400) scale(1.0) translate(-256 -400)">
+      <path d="M210 322 L302 322 L292 402 C289 428 273 440 256 440 C239 440 223 428 220 402 Z" fill="#FFF6E0" opacity="0.2"/>
+      <path d="M216 346 L296 346 L288 400 C285 422 271 432 256 432 C241 432 227 422 224 400 Z" fill="url(#vino)"/>
+      <ellipse cx="256" cy="346" rx="40" ry="10" fill="#F2715B"/>
+      <circle cx="274" cy="382" r="15" fill="#F2A03B"/>
+      <circle cx="274" cy="382" r="9" fill="#FBCB74"/>
+      <circle cx="240" cy="406" r="11" fill="#7CB342"/>
+      <path d="M210 322 L302 322 L292 402 C289 428 273 440 256 440 C239 440 223 428 220 402 Z" fill="none" stroke="#FFF6E0" stroke-width="8" stroke-linejoin="round"/>
+      <rect x="249" y="440" width="14" height="40" rx="7" fill="#FFF6E0"/>
+      <ellipse cx="256" cy="484" rx="46" ry="13" fill="#FFF6E0"/>
     </g>
   </g>
 </svg>
