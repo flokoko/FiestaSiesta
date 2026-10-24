@@ -38,6 +38,7 @@ export interface ShoppingList {
 export type TabView =
   | 'home'   // Heute-Cockpit
   | 'trip'   // Reise-Domäne (Plan, Fotos, Karte …)
+  | 'plan'   // Reiseplan: Vorschläge + Abstimmung
   | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
   | 'list'
   | 'bring'
@@ -117,5 +118,28 @@ export interface BristolEntry {
   value: number  // 1-13
   entry_date: string  // YYYY-MM-DD
   entry_time: string  // ISO timestamptz
+  created_at: string
+}
+// ── Reiseplan ─────────────────────────────────────────────────────────
+export type TripSlot = 'morning' | 'noon' | 'evening'
+
+export interface TripProposal {
+  id: string
+  list_id: string
+  /** ISO-Datum (YYYY-MM-DD) */
+  day: string
+  slot: TripSlot
+  title: string
+  note: string | null
+  created_by: string
+  created_at: string
+  votes?: string[]
+}
+
+export interface TripVote {
+  id: string
+  list_id: string
+  proposal_id: string
+  voter: string
   created_at: string
 }

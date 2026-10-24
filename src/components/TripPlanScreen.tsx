@@ -1,0 +1,289 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { useToast } from '../context/ToastContext'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { SLOTS, isoDay, leadingProposal, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
+import { tripDays, formatDayShort, formatDayLong, tripDay } from '../lib/trip'
+import type { TripProposal, TripSlot, TripVote } from '../types'
+import './TripPlanScreen.css'
+
+interface TripPlanScreenProps {
+  listId: string
+  userName: string
+  isAdmin: boolean
+  onBack: () => void
+}
+
+export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: TripPlanScreenProps) {
+  const { toast, confirm } = useToast()
+  const days = useMemo(() => tripDays(), [])
+  const [proposals, setProposals] = useState<TripProposal[]>([])
+  const [votes, setVotes] = useState<TripVote[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [addSlot, setAddSlot] = useState<TripSlot | null>(null)
+  const [draft, setDraft] = useState('')
+  const [draftNote, setDraftNote] = useState('')
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
+    const today = tripDay()
+    if (today !== null) return isoDay(days[today - 1] ?? days[0])
+    return isoDay(days[0])
+  })
+
+  const load = useCallback(async () => {
+    const [p, v] = await Promise.all([
+      supabase.from('trip_proposals').select('*').eq('list_id', listId).order('created_at'),
+      supabase.from('trip_votes').select('*').eq('list_id', listId),
+    ])
+    if (p.error || v.error) {
+      setLoading(false)
+      toast(`Reiseplan konnte nicht geladen werden: ${(p.error ?? v.error)?.message}`, 'error')
+      return
+    }
+    const voteRows = (v.data ?? []) as TripVote[]
+    const grouped: Record<string, string[]> = {}
+    for (const row of voteRows) {
+      grouped[row.proposal_id] = [...(grouped[row.proposal_id] ?? []), row.voter]
+    }
+    setVotes(voteRows)
+    setProposals(
+      ((p.data ?? []) as TripProposal[]).map((row) => ({ ...row, votes: grouped[row.id] ?? [] }))
+    )
+    setLoading(false)
+  }, [listId, toast])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useRealtimeSync({
+    listId,
+    channelSuffix: ':plan',
+    tables: ['trip_proposals', 'trip_votes'],
+    onTableChange: () => void load(),
+  })
+
+  const totalPlans = useMemo(
+    () =>
+      days.reduce((count, day) => {
+        const iso = isoDay(day)
+        return (
+          count +
+          SLOTS.filter((slot) => leadingProposal(proposalsFor(proposals, iso, slot.key))).length
+        )
+      }, 0),
+    [days, proposals]
+  )
+
+  const handleAdd = async (slot: TripSlot) => {
+    const title = draft.trim()
+    if (!title) return
+    setBusyId(`new-${slot}`)
+    const { error } = await supabase.from('trip_proposals').insert({
+      list_id: listId,
+      day: selectedDay,
+      slot,
+      title,
+      note: draftNote.trim() || null,
+      created_by: userName,
+    })
+    setBusyId(null)
+    if (error) {
+      toast(`Fehler: ${error.message}`, 'error')
+      return
+    }
+    navigator.vibrate?.(10)
+    setDraft('')
+    setDraftNote('')
+    setAddSlot(null)
+    void load()
+  }
+
+  const handleVote = async (proposal: TripProposal) => {
+    const own = votes.find((v) => v.proposal_id === proposal.id && v.voter === userName)
+    navigator.vibrate?.(8)
+    setBusyId(proposal.id)
+    const { error } = own
+      ? await supabase.from('trip_votes').delete().eq('id', own.id)
+      : await supabase.from('trip_votes').insert({
+          list_id: listId,
+          proposal_id: proposal.id,
+          voter: userName,
+        })
+    setBusyId(null)
+    if (error) {
+      toast(`Fehler: ${error.message}`, 'error')
+      return
+    }
+    void load()
+  }
+
+  const handleDelete = (proposal: TripProposal) => {
+    confirm(`„${proposal.title}" mit allen Stimmen löschen?`, async () => {
+      const { error } = await supabase.from('trip_proposals').delete().eq('id', proposal.id)
+      if (error) {
+        toast(`Fehler: ${error.message}`, 'error')
+        return
+      }
+      toast('Vorschlag gelöscht', 'success')
+      void load()
+    })
+  }
+
+  const selectedDate = days.find((d) => isoDay(d) === selectedDay) ?? days[0]
+  const proposalTotal = proposals.length
+
+  return (
+    <div className="plan-screen">
+      <header className="list-head">
+        <button type="button" className="plan-back" onClick={onBack} aria-label="Zurück zur Reise">
+          <ArrowLeft size={18} strokeWidth={2.2} />
+        </button>
+        <div className="list-head-text">
+          <h1>Reiseplan</h1>
+          <p>
+            {totalPlans} von {days.length * SLOTS.length} Zeiten entschieden · {proposalTotal}{' '}
+            {proposalTotal === 1 ? 'Vorschlag' : 'Vorschläge'}
+          </p>
+        </div>
+      </header>
+
+      <div className="cat-strip plan-days">
+        {days.map((day) => {
+          const iso = isoDay(day)
+          const count = proposals.filter((p) => p.day === iso).length
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={`cat-chip${iso === selectedDay ? ' active' : ''}`}
+              onClick={() => { navigator.vibrate?.(6); setSelectedDay(iso) }}
+            >
+              {formatDayShort(day)}
+              {count > 0 && <span className="plan-day-count">{count}</span>}
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="plan-day-title">{formatDayLong(selectedDate)}</p>
+
+      {loading ? (
+        <div className="plan-loading"><Loader2 size={18} className="spin" /> Lade Vorschläge …</div>
+      ) : (
+        SLOTS.map((slot) => {
+          const list = proposalsFor(proposals, selectedDay, slot.key)
+          const leader = leadingProposal(list)
+          const meta = slotMeta(slot.key)
+          return (
+            <section className="plan-slot" key={slot.key}>
+              <h2 className="plan-slot-title">
+                <span className="plan-slot-emoji">{meta.emoji}</span>
+                {meta.label}
+                {leader && <span className="plan-slot-plan">Plan</span>}
+              </h2>
+
+              {list.length === 0 ? (
+                <p className="plan-empty">{meta.hint} — noch kein Vorschlag.</p>
+              ) : (
+                <div className="plan-rows">
+                  {list.map((proposal) => {
+                    const mine = proposal.created_by === userName
+                    const voted = (proposal.votes ?? []).includes(userName)
+                    const isLeader = leader?.id === proposal.id
+                    return (
+                      <div className={`plan-row${isLeader ? ' is-plan' : ''}`} key={proposal.id}>
+                        <div className="plan-row-main">
+                          <span className="plan-row-title">{proposal.title}</span>
+                          <span className="plan-row-meta">
+                            von {proposal.created_by}
+                            {proposal.note ? ` · ${proposal.note}` : ''}
+                          </span>
+                        </div>
+                        {(mine || isAdmin) && (
+                          <button
+                            type="button"
+                            className="plan-mini"
+                            onClick={() => handleDelete(proposal)}
+                            aria-label="Vorschlag löschen"
+                          >
+                            <Trash2 size={14} strokeWidth={2} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={`plan-vote${voted ? ' is-voted' : ''}`}
+                          onClick={() => handleVote(proposal)}
+                          disabled={busyId === proposal.id}
+                          aria-pressed={voted}
+                          aria-label={`Für ${proposal.title} stimmen`}
+                        >
+                          {busyId === proposal.id
+                            ? <Loader2 size={13} className="spin" />
+                            : <ThumbsUp size={13} strokeWidth={2.2} />}
+                          {voteCount(proposal)}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {addSlot === slot.key ? (
+                <div className="plan-form">
+                  <input
+                    className="plan-input"
+                    type="text"
+                    placeholder={`Was machen wir ${meta.label.toLowerCase()}?`}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAdd(slot.key)}
+                    autoFocus
+                  />
+                  <input
+                    className="plan-input"
+                    type="text"
+                    placeholder="Notiz (optional)"
+                    value={draftNote}
+                    onChange={(e) => setDraftNote(e.target.value)}
+                  />
+                  <div className="plan-form-actions">
+                    <button
+                      type="button"
+                      className="plan-btn"
+                      onClick={() => { setAddSlot(null); setDraft(''); setDraftNote('') }}
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="button"
+                      className="plan-btn plan-btn-primary"
+                      onClick={() => handleAdd(slot.key)}
+                      disabled={!draft.trim() || busyId === `new-${slot.key}`}
+                    >
+                      {busyId === `new-${slot.key}` ? <Loader2 size={14} className="spin" /> : 'Vorschlagen'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="plan-add"
+                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); setDraft(''); setDraftNote('') }}
+                >
+                  <Plus size={15} strokeWidth={2.2} />
+                  Vorschlag
+                </button>
+              )}
+            </section>
+          )
+        })
+      )}
+
+      <p className="plan-footnote">
+        <Crown size={12} strokeWidth={2} /> Meiste Stimmen gewinnen — bei Gleichstand der ältere Vorschlag.
+      </p>
+    </div>
+  )
+}

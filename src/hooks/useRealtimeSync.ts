@@ -1,14 +1,18 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { supabase, getJoinCode } from '../lib/supabase'
 
-type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements'
+type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes'
 
 interface UseRealtimeSyncOptions {
   listId: string | null
   onTableChange: (table: TableName, payload: any) => void
+  /** eigener Kanalname, wenn ein zweiter Sync parallel läuft (z. B. Reiseplan) */
+  channelSuffix?: string
+  /** nur diese Tabellen abonnieren */
+  tables?: TableName[]
 }
 
-export function useRealtimeSync({ listId, onTableChange }: UseRealtimeSyncOptions) {
+export function useRealtimeSync({ listId, onTableChange, channelSuffix = '', tables: onlyTables }: UseRealtimeSyncOptions) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const onTableChangeRef = useRef(onTableChange)
   onTableChangeRef.current = onTableChange
@@ -24,9 +28,11 @@ export function useRealtimeSync({ listId, onTableChange }: UseRealtimeSyncOption
     if (!listId) return
 
     const joinCode = getJoinCode()
-    const tables: TableName[] = ['items', 'categories', 'notes', 'expenses', 'expense_splits', 'expense_quotas', 'participants', 'bristol_entries', 'settlements']
+    const tables: TableName[] =
+      onlyTables ??
+      ['items', 'categories', 'notes', 'expenses', 'expense_splits', 'expense_quotas', 'participants', 'bristol_entries', 'settlements']
 
-    const channel = supabase.channel(`list:${listId}`, {
+    const channel = supabase.channel(`list:${listId}${channelSuffix}`, {
       config: { headers: { 'x-join-code': joinCode } },
     } as any)
 
@@ -49,7 +55,7 @@ export function useRealtimeSync({ listId, onTableChange }: UseRealtimeSyncOption
     channelRef.current = channel
 
     return cleanup
-  }, [listId, cleanup])
+  }, [listId, cleanup, channelSuffix, onlyTables])
 
   // Cleanup on unmount
   useEffect(() => {

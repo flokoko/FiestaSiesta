@@ -17,6 +17,7 @@ const ExpenseScreen = lazy(() => import('./components/ExpenseScreen'))
 const SettingsScreen = lazy(() => import('./components/SettingsScreen'))
 const BristolScreen = lazy(() => import('./components/BristolScreen'))
 const WeatherScreen = lazy(() => import('./components/WeatherScreen'))
+const TripPlanScreen = lazy(() => import('./components/TripPlanScreen'))
 import TodayScreen from './components/TodayScreen'
 import TripScreen from './components/TripScreen'
 import ListsScreen from './components/ListsScreen'
@@ -346,7 +347,17 @@ export default function App() {
           />
         )}
         {tab === 'trip' && (
-          <TripScreen onNavigate={setTab} notesCount={notes.length} />
+          <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
+        )}
+        {tab === 'plan' && (
+          <Suspense fallback={<TabLoader />}>
+            <TripPlanScreen
+              listId={list.id}
+              userName={userName}
+              isAdmin={isAdmin}
+              onBack={() => setTab('trip')}
+            />
+          </Suspense>
         )}
         {tab === 'lists' && (
           <ListsScreen

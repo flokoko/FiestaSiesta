@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
 import { MapPin, Image, Map as MapIcon, FileText, StickyNote, ChevronRight } from 'lucide-react'
-import type { TabView } from '../types'
+import { supabase } from '../lib/supabase'
+import { SLOTS, isoDay, leadingProposal, proposalsFor, slotMeta } from '../lib/tripPlan'
+import type { TripProposal, TripSlot, TripVote, TabView } from '../types'
 import {
   TRIP, formatDayShort, formatDayLong, formatRange, tripDay, tripDays,
   tripPhase, daysUntilTrip, TRIP_LENGTH,
@@ -8,20 +11,60 @@ import {
 interface TripScreenProps {
   onNavigate: (tab: TabView) => void
   notesCount: number
+  listId: string
 }
 
-export default function TripScreen({ onNavigate, notesCount }: TripScreenProps) {
+type DayPlan = Partial<Record<TripSlot, string>>
+
+export default function TripScreen({ onNavigate, notesCount, listId }: TripScreenProps) {
   const days = tripDays()
   const current = tripDay()
   const phase = tripPhase()
+  const [plans, setPlans] = useState<Record<string, DayPlan>>({})
+  const [proposalCount, setProposalCount] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const [p, v] = await Promise.all([
+        supabase.from('trip_proposals').select('*').eq('list_id', listId),
+        supabase.from('trip_votes').select('*').eq('list_id', listId),
+      ])
+      if (cancelled || p.error || v.error) return
+      const grouped: Record<string, string[]> = {}
+      for (const row of (v.data ?? []) as TripVote[]) {
+        grouped[row.proposal_id] = [...(grouped[row.proposal_id] ?? []), row.voter]
+      }
+      const rows = ((p.data ?? []) as TripProposal[]).map((row) => ({
+        ...row,
+        votes: grouped[row.id] ?? [],
+      }))
+      setProposalCount(rows.length)
+      const next: Record<string, DayPlan> = {}
+      for (const day of days) {
+        const iso = isoDay(day)
+        const entry: DayPlan = {}
+        for (const slot of SLOTS) {
+          const leader = leadingProposal(proposalsFor(rows, iso, slot.key))
+          if (leader) entry[slot.key] = leader.title
+        }
+        if (Object.keys(entry).length > 0) next[iso] = entry
+      }
+      setPlans(next)
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [listId, days])
+
   const badge = current
     ? `Tag ${current}`
     : phase === 'before'
       ? `in ${daysUntilTrip()} Tagen`
       : 'vorbei'
-  const planHint = current
-    ? `${TRIP_LENGTH} Tage · Tag ${current} läuft`
-    : `${TRIP_LENGTH} Tage · noch nichts geplant`
+  const decidedSlots = Object.values(plans).reduce((n, day) => n + Object.keys(day).length, 0)
+  const planHint = decidedSlots > 0
+    ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten entschieden · ${proposalCount} ${proposalCount === 1 ? 'Vorschlag' : 'Vorschläge'}`
+    : `${TRIP_LENGTH} Tage · noch nichts entschieden`
 
   return (
     <div className="trip">
@@ -35,14 +78,15 @@ export default function TripScreen({ onNavigate, notesCount }: TripScreenProps) 
       <section className="trip-section">
         <h2 className="trip-h2">Dazu gehören</h2>
         <div className="trip-hub">
-          <div className="trip-hub-row is-active">
+          <button type="button" className="trip-hub-row is-active" onClick={() => onNavigate('plan')}>
             <span className="trip-hub-icon"><MapPin size={16} strokeWidth={2} /></span>
             <span className="trip-hub-text">
               <strong>Reiseplan</strong>
               <small>{planHint}</small>
             </span>
             <span className="trip-hub-badge">{badge}</span>
-          </div>
+            <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
+          </button>
           <button type="button" className="trip-hub-row" onClick={() => onNavigate('notes')}>
             <span className="trip-hub-icon"><StickyNote size={16} strokeWidth={2} /></span>
             <span className="trip-hub-text">
@@ -80,14 +124,32 @@ export default function TripScreen({ onNavigate, notesCount }: TripScreenProps) 
         <div className="trip-days">
           {days.map((date, index) => {
             const isToday = current === index + 1
+            const iso = isoDay(date)
+            const plan = plans[iso]
             return (
-              <article key={date.toISOString()} className={`trip-day${isToday ? ' is-today' : ''}`}>
+              <button
+                type="button"
+                key={iso}
+                className={`trip-day${isToday ? ' is-today' : ''}`}
+                onClick={() => onNavigate('plan')}
+              >
                 <header className="trip-day-head">
                   <span className="trip-day-num">Tag {index + 1}</span>
                   <span className="trip-day-date">{isToday ? formatDayLong(date) : formatDayShort(date)}</span>
                 </header>
-                <p className="trip-day-empty">Noch nichts geplant</p>
-              </article>
+                {plan ? (
+                  <ul className="trip-day-plan">
+                    {SLOTS.filter((slot) => plan[slot.key]).map((slot) => (
+                      <li key={slot.key}>
+                        <span className="trip-day-plan-emoji">{slotMeta(slot.key).emoji}</span>
+                        {plan[slot.key]}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="trip-day-empty">Noch nichts geplant</p>
+                )}
+              </button>
             )
           })}
         </div>
