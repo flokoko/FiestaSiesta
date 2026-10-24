@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { MoreHorizontal, MapPin, Radar } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName } from '../lib/weather'
 import 'leaflet/dist/leaflet.css'
@@ -297,6 +298,9 @@ export default function WeatherScreen() {
     return 'Extrem'
   }, [weather])
 
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [radarOpen, setRadarOpen] = useState(true)
+
   // ── No location set: prompt ──
   if (!storedLocation && !showLocationInput) {
     return (
@@ -320,7 +324,55 @@ export default function WeatherScreen() {
 
   return (
     <div className="weather-screen">
-      {/* ── Location input overlay ── */}
+      <header className="list-head">
+        <div className="list-head-text">
+          <h1>Wetter</h1>
+          <p>
+            {weather && currentInfo
+              ? `${weather.locationName} · ${Math.round(weather.current.temperature)}° ${currentInfo.desc}`
+              : 'Lädt Wetterdaten …'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="list-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Optionen"
+        >
+          <MoreHorizontal size={20} strokeWidth={2.2} />
+        </button>
+      </header>
+
+      {menuOpen && (
+        <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
+          <div
+            className="list-menu-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Wetter-Optionen"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="more-grab" aria-hidden="true" />
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setShowLocationInput(true); setMenuOpen(false) }}
+            >
+              <MapPin size={17} strokeWidth={2} />
+              <span>Ort ändern</span>
+            </button>
+            <button
+              type="button"
+              className="list-menu-item"
+              onClick={() => { setRadarOpen(v => !v); setMenuOpen(false) }}
+            >
+              <Radar size={17} strokeWidth={2} />
+              <span>{radarOpen ? 'Regenradar ausblenden' : 'Regenradar anzeigen'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {showLocationInput && (
         <div className="weather-screen-location-form">
           <input
@@ -348,7 +400,6 @@ export default function WeatherScreen() {
         </div>
       )}
 
-      {/* ── Error / Loading ── */}
       {error && <p className="weather-screen-error">{error}</p>}
       {loading && !weather && (
         <div className="weather-screen-loading">
@@ -357,36 +408,21 @@ export default function WeatherScreen() {
         </div>
       )}
 
-      {/* ── Weather content ── */}
       {weather && currentInfo && !showLocationInput && (
         <>
-          {/* ── Hero section ── */}
-          <div className="weather-hero">
-            <div className="weather-hero-top">
-              <div className="weather-hero-emoji">{currentInfo.emoji}</div>
-              <div className="weather-hero-temp">
-                {Math.round(weather.current.temperature)}°C
-              </div>
+          <div className="wx-now">
+            <span className="wx-now-emoji">{currentInfo.emoji}</span>
+            <div className="wx-now-body">
+              <span className="wx-now-temp">{Math.round(weather.current.temperature)}°</span>
+              <span className="wx-now-desc">
+                {currentInfo.desc} · gefühlt {Math.round(weather.current.apparentTemperature)}°
+              </span>
             </div>
-            <div className="weather-hero-desc">{currentInfo.desc}</div>
-            <div className="weather-hero-feels">
-              Gefühlt {Math.round(weather.current.apparentTemperature)}°C
-            </div>
-            <div className="weather-hero-location">📍 {weather.locationName}</div>
-            <div className="weather-hero-updated">
-              Aktualisiert: {fmtTime(weather.current.time)}
-            </div>
-            <button
-              className="weather-screen-change-btn"
-              onClick={() => { navigator.vibrate?.(8); setShowLocationInput(true) }}
-            >
-              Ort ändern
-            </button>
+            <span className="wx-now-time">{fmtTime(weather.current.time)}</span>
           </div>
 
-          {/* ── Hourly forecast ── */}
-          <div className="weather-section">
-            <h3 className="weather-section-title">⏱️ Stündlich (24h)</h3>
+          <section className="wx-group">
+            <h2 className="wx-group-title">Stündlich</h2>
             <div className="weather-hourly-scroll">
               {hourlyForecast.map((hour, i) => {
                 const info = getWeatherInfo(hour.weatherCode)
@@ -396,32 +432,62 @@ export default function WeatherScreen() {
                     <span className="weather-hourly-emoji">{info.emoji}</span>
                     <span className="weather-hourly-temp">{Math.round(hour.temperature)}°</span>
                     <span className="weather-hourly-rain">
-                      💧 {hour.precipitationProbability}%
-                    </span>
-                    <span className="weather-hourly-wind">
-                      💨 {Math.round(hour.windSpeed)} km/h
+                      {hour.precipitationProbability > 0 ? `${hour.precipitationProbability}%` : '–'}
                     </span>
                   </div>
                 )
               })}
             </div>
-          </div>
+          </section>
 
-          {/* ── Rain Radar (RainViewer) ── */}
-          {storedLocation && radarError && (
-            <div className="weather-section">
-              <h3 className="weather-section-title">📡 Regenradar</h3>
-              <p className="weather-screen-error">{radarError}</p>
+          <section className="wx-group">
+            <h2 className="wx-group-title">7 Tage</h2>
+            <div className="wx-rows">
+              {dailyForecast.map((day, i) => {
+                const info = getWeatherInfo(day.weatherCode)
+                return (
+                  <div key={i} className="wx-day">
+                    <span className="wx-day-name">
+                      {i === 0 ? 'Heute' : i === 1 ? 'Morgen' : fmtDayLong(day.date)}
+                      <em>{fmtDay(day.date)}</em>
+                    </span>
+                    <span className="wx-day-emoji">{info.emoji}</span>
+                    <span className="wx-day-temps">
+                      {Math.round(day.tempMax)}°<em>{Math.round(day.tempMin)}°</em>
+                    </span>
+                    <span className="wx-day-rain">
+                      {day.precipitationProbability > 0 ? `${day.precipitationProbability}%` : ''}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
+          </section>
+
+          <section className="wx-group">
+            <h2 className="wx-group-title">Details</h2>
+            <div className="wx-rows">
+              <div className="wx-row"><span>Luftfeuchtigkeit</span><b>{weather.current.humidity}%</b></div>
+              <div className="wx-row"><span>Wind</span><b>{Math.round(weather.current.windSpeed)} km/h</b></div>
+              <div className="wx-row"><span>UV-Index</span><b>{weather.current.uvIndex.toFixed(1)} · {uvDesc}</b></div>
+              <div className="wx-row"><span>Sichtweite</span><b>{Math.round(weather.current.visibility / 1000)} km</b></div>
+              <div className="wx-row"><span>Luftdruck</span><b>{Math.round(weather.current.pressure)} hPa</b></div>
+            </div>
+          </section>
+
+          {radarOpen && storedLocation && radarError && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">Regenradar</h2>
+              <p className="weather-screen-error">{radarError}</p>
+            </section>
           )}
-          {storedLocation && !radarError && radarFrames.length > 0 && (
-            <div className="weather-section">
-              <div className="weather-radar-header">
-                <h3 className="weather-section-title" style={{ margin: 0 }}>📡 Regenradar</h3>
-                <div className="weather-radar-controls">
-                  <span className="weather-radar-time">
-                    {fmtRadarTime(radarFrames[radarIndex]?.time ?? 0)}
-                  </span>
+
+          {radarOpen && storedLocation && !radarError && radarFrames.length > 0 && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">
+                Regenradar
+                <span className="wx-radar-controls">
+                  <span className="weather-radar-time">{fmtRadarTime(radarFrames[radarIndex]?.time ?? 0)}</span>
                   <button
                     className="weather-radar-play-btn"
                     onClick={toggleRadar}
@@ -429,8 +495,8 @@ export default function WeatherScreen() {
                   >
                     {radarPlaying ? '⏸' : '▶️'}
                   </button>
-                </div>
-              </div>
+                </span>
+              </h2>
               <div className="weather-radar-map">
                 <MapContainer
                   center={[storedLocation.lat, storedLocation.lon]}
@@ -477,80 +543,12 @@ export default function WeatherScreen() {
                   onChange={handleRadarSlider}
                 />
                 <div className="weather-radar-timeline-labels">
-                  <span className="weather-radar-timeline-label">
-                    {fmtRadarTime(radarFrames[0]?.time ?? 0)}
-                  </span>
-                  <span className="weather-radar-timeline-label">
-                    {fmtRadarTime(radarFrames[radarFrames.length - 1]?.time ?? 0)}
-                  </span>
+                  <span className="weather-radar-timeline-label">{fmtRadarTime(radarFrames[0]?.time ?? 0)}</span>
+                  <span className="weather-radar-timeline-label">{fmtRadarTime(radarFrames[radarFrames.length - 1]?.time ?? 0)}</span>
                 </div>
               </div>
-            </div>
+            </section>
           )}
-
-          {/* ── Daily forecast ── */}
-          <div className="weather-section">
-            <h3 className="weather-section-title">📅 7-Tage-Vorhersage</h3>
-            <div className="weather-daily-list">
-              {dailyForecast.map((day, i) => {
-                const info = getWeatherInfo(day.weatherCode)
-                return (
-                  <div key={i} className="weather-daily-card">
-                    <div className="weather-daily-day">
-                      <span className="weather-daily-dayname">
-                        {i === 0 ? 'Heute' : i === 1 ? 'Morgen' : fmtDayLong(day.date)}
-                      </span>
-                      <span className="weather-daily-sub">{fmtDay(day.date)}</span>
-                    </div>
-                    <div className="weather-daily-emoji">{info.emoji}</div>
-                    <div className="weather-daily-desc">{info.desc}</div>
-                    <div className="weather-daily-temps">
-                      <span className="weather-daily-max">{Math.round(day.tempMax)}°</span>
-                      <span className="weather-daily-min">{Math.round(day.tempMin)}°</span>
-                    </div>
-                    <div className="weather-daily-rain">💧 {day.precipitationProbability}%</div>
-                    <div className="weather-daily-wind">💨 {Math.round(day.windSpeed)} km/h</div>
-                    <div className="weather-daily-sun">
-                      🌅 {fmtTime(day.sunrise)} · 🌇 {fmtTime(day.sunset)}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ── Details grid ── */}
-          <div className="weather-section">
-            <h3 className="weather-section-title">📊 Details</h3>
-            <div className="weather-details-grid">
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">Luftfeuchtigkeit</span>
-                <span className="weather-detail-value">{weather.current.humidity}%</span>
-              </div>
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">Windgeschwindigkeit</span>
-                <span className="weather-detail-value">{Math.round(weather.current.windSpeed)} km/h</span>
-              </div>
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">UV-Index</span>
-                <span className="weather-detail-value">
-                  {weather.current.uvIndex.toFixed(1)} · {uvDesc}
-                </span>
-              </div>
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">Sichtweite</span>
-                <span className="weather-detail-value">{Math.round(weather.current.visibility / 1000)} km</span>
-              </div>
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">Luftdruck</span>
-                <span className="weather-detail-value">{Math.round(weather.current.pressure)} hPa</span>
-              </div>
-              <div className="weather-detail-card">
-                <span className="weather-detail-label">Gefühlt</span>
-                <span className="weather-detail-value">{Math.round(weather.current.apparentTemperature)}°C</span>
-              </div>
-            </div>
-          </div>
         </>
       )}
     </div>
