@@ -1,18 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Fiesta Siesta">
   <defs>
     <clipPath id="r"><rect x="0" y="0" width="512" height="512" rx="112"/></clipPath>
-    <linearGradient id="wall" x1="0" y1="0" x2="0.25" y2="1">
-      <stop offset="0%" stop-color="#FEF6E6"/>
-      <stop offset="100%" stop-color="#F0DCBA"/>
+    <linearGradient id="wall" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="#FDEFCB"/>
+      <stop offset="100%" stop-color="#EFCE85"/>
     </linearGradient>
-    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#7C4B31"/>
-      <stop offset="100%" stop-color="#552E1C"/>
-    </linearGradient>
-    <linearGradient id="jamon" x1="0.1" y1="0" x2="0.9" y2="1">
-      <stop offset="0%" stop-color="#A9663C"/>
-      <stop offset="45%" stop-color="#8E4C2B"/>
-      <stop offset="100%" stop-color="#66301C"/>
+    <linearGradient id="pig" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#4A2C22"/>
+      <stop offset="100%" stop-color="#1A0E0A"/>
     </linearGradient>
     <linearGradient id="vino" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#E8543F"/>
@@ -21,41 +16,37 @@
     </linearGradient>
   </defs>
   <g clip-path="url(#r)">
-    <rect width="512" height="512" fill="#F8D264"/>
-    <rect width="512" height="512" fill="url(#wall)" opacity="0.55"/>
-    <rect width="512" height="86" fill="#B0181E"/>
-    <rect y="436" width="512" height="76" fill="url(#wood)"/>
-    <rect y="436" width="512" height="7" fill="#8C5A3A"/>
-    <ellipse cx="182" cy="440" rx="50" ry="10" fill="#3A1E10" opacity="0.35"/>
-    <ellipse cx="348" cy="424" rx="54" ry="11" fill="#3A1E10" opacity="0.35"/>
+    <rect width="512" height="512" fill="url(#wall)"/>
+    <ellipse cx="252" cy="458" rx="212" ry="30" fill="#C39348" opacity="0.4"/>
 
-    <g transform="rotate(-16 172 300) translate(16 14)">
-    <g>
-      <path d="M126 176 C118 214 120 254 128 296 C136 340 146 384 158 426 L188 422 C186 382 192 342 202 302 C212 260 218 216 214 178 Z" fill="url(#jamon)"/>
-      <path d="M126 176 C118 214 120 254 128 296 C136 340 146 384 158 426 L188 422 C186 382 192 342 202 302 C212 260 218 216 214 178 Z" fill="none" stroke="#5A2A17" stroke-width="7" stroke-linejoin="round"/>
-      <!-- Schwarte -->
-      <path d="M130 200 C142 240 150 300 158 356 C163 388 167 408 172 422 L158 424 C146 384 134 332 128 288 C124 250 124 220 128 196 Z" fill="#7C3E22" opacity="0.45"/>
-      <!-- Schnittfläche -->
-      <ellipse cx="170" cy="176" rx="46" ry="17" fill="#F3D6B4"/>
-      <ellipse cx="170" cy="176" rx="38" ry="13" fill="#E8836C"/>
-      <ellipse cx="170" cy="176" rx="22" ry="7" fill="#F4A991" opacity="0.9"/>
-      <path d="M140 176 C152 182 188 182 200 176" stroke="#FBEFD6" stroke-width="4" fill="none" opacity="0.8"/>
-      <!-- Fuß -->
-      <path d="M156 422 L190 418 L184 452 L162 454 Z" fill="#241510"/>
-      <path d="M156 422 L190 418 L188 428 L158 432 Z" fill="#F3D6B4" opacity="0.75"/>
-    </g>
-
-    </g>
     <!-- Sangria -->
-    <g transform="translate(344 416) scale(1.1) translate(-344 -416)">
-      <path d="M304 212 L384 212 L375 320 C372 348 358 362 344 362 C330 362 316 348 313 320 Z" fill="#FFF6E0" opacity="0.5" stroke="#FFF8E7" stroke-width="6"/>
-      <path d="M313 236 L375 236 L368 318 C365 342 354 354 344 354 C334 354 323 342 320 318 Z" fill="url(#vino)"/>
-      <ellipse cx="344" cy="236" rx="32" ry="9" fill="#F2715B"/>
-      <circle cx="358" cy="270" r="14" fill="#F2A03B"/>
-      <circle cx="358" cy="270" r="9" fill="#FBCB74"/>
-      <path d="M304 212 L384 212 L375 320 C372 348 358 362 344 362 C330 362 316 348 313 320 Z" fill="none" stroke="#FFF6E0" stroke-width="8" stroke-linejoin="round"/>
-      <rect x="338" y="362" width="13" height="48" rx="6" fill="#FFF6E0"/>
-      <ellipse cx="344" cy="416" rx="42" ry="12" fill="#FFF6E0"/>
+    <g>
+      <path d="M402 296 L478 296 L470 386 C467 412 454 424 440 424 C426 424 413 412 410 386 Z" fill="#FFF6E0" opacity="0.55" stroke="#FFF8E7" stroke-width="7"/>
+      <path d="M410 320 L471 320 L464 384 C461 406 450 416 440 416 C430 416 419 406 416 384 Z" fill="url(#vino)"/>
+      <ellipse cx="440" cy="320" rx="31" ry="9" fill="#F2715B"/>
+      <circle cx="454" cy="350" r="13" fill="#F2A03B"/>
+      <circle cx="454" cy="350" r="8" fill="#FBCB74"/>
+      <rect x="434" y="424" width="13" height="42" rx="6" fill="#FFF8E7"/>
+      <ellipse cx="440" cy="470" rx="40" ry="11" fill="#FFF8E7"/>
+    </g>
+
+    <g fill="url(#pig)">
+      <rect x="142" y="368" width="38" height="88" rx="18"/>
+      <rect x="226" y="368" width="38" height="88" rx="18"/>
+      <ellipse cx="196" cy="298" rx="126" ry="90"/>
+      <g transform="rotate(-7 304 290)">
+        <circle cx="304" cy="290" r="78"/>
+        <path d="M250 250 C246 226 254 208 270 200 C274 220 278 238 284 252 Z" fill="#2A1710"/>
+        <path d="M272 242 C266 212 276 190 296 182 C302 204 308 226 314 246 Z"/>
+        <ellipse cx="372" cy="304" rx="38" ry="33" fill="#553229"/>
+      </g>
+      <!-- Ringelschwanz -->
+      <path d="M74 282 C50 274 42 252 56 240 C70 230 84 240 80 252" stroke="#2A1710" stroke-width="13" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="rotate(-7 304 290)">
+      <ellipse cx="384" cy="298" rx="8" ry="11" fill="#120806"/>
+      <ellipse cx="364" cy="298" rx="8" ry="11" fill="#120806"/>
+      <circle cx="330" cy="266" r="9" fill="#FDEFCB"/>
     </g>
   </g>
 </svg>
