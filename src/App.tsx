@@ -22,6 +22,7 @@ import TripScreen from './components/TripScreen'
 import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
+import BristolGate from './components/BristolGate'
 
 function TabLoader() {
   return (
@@ -442,6 +443,15 @@ export default function App() {
             />
           </Suspense>
         )}
+        {tab === 'bristol' && !bristolEnabled && (
+          <BristolGate
+            onEnable={() => {
+              localStorage.setItem('bristol_modus_enabled', 'true')
+              window.dispatchEvent(new CustomEvent('bristol-modus-change'))
+              setBristolEnabled(true)
+            }}
+          />
+        )}
         {tab === 'bristol' && bristolEnabled && (
           <Suspense fallback={<TabLoader />}>
             <BristolScreen
@@ -479,7 +489,7 @@ export default function App() {
         )}
       </main>
 
-      <BottomNav tab={tab} onNavigate={setTab} bristolEnabled={bristolEnabled} />
+      <BottomNav tab={tab} onNavigate={setTab} />
 
       <MoreSheet
         open={moreOpen}

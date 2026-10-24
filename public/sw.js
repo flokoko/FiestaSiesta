@@ -3,7 +3,7 @@
 const CACHE_NAME = 'fiesta-siesta-v0.2.0';
 
 // Install: skipWaiting to activate immediately
-self.addEventListener('install', (e) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 

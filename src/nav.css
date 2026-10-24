@@ -754,3 +754,68 @@
   color: var(--text-primary);
   cursor: pointer;
 }
+
+/* ── Bristol-Einschalt-Karte ─────────────────────────────────────── */
+.bristol-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58vh;
+  padding: 8px;
+}
+
+.bristol-gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  text-align: center;
+  padding: 22px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--card-bg-solid);
+  max-width: 340px;
+}
+
+.bristol-gate-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--sand);
+  color: #8A6A4E;
+}
+
+[data-theme="dark"] .bristol-gate-icon { color: #D8B591; }
+
+.bristol-gate-card h1 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.bristol-gate-card p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.bristol-gate-btn {
+  margin-top: 4px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.bristol-gate-card small {
+  font-size: 10px;
+  color: var(--text-muted);
+}

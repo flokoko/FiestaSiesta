@@ -24,12 +24,13 @@ const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
 interface BottomNavProps {
   tab: TabView
   onNavigate: (tab: TabView) => void
-  bristolEnabled: boolean
 }
 
-export default function BottomNav({ tab, onNavigate, bristolEnabled }: BottomNavProps) {
+export default function BottomNav({ tab, onNavigate }: BottomNavProps) {
   const activeDomain = DOMAIN_OF[tab] ?? tab
-  const items = ITEMS.filter(i => i.key !== 'bristol' || bristolEnabled)
+  // Bristol bleibt immer sichtbar — Flo will es als Domäne im Schnellzugriff.
+  // Ist der Modus aus, zeigt der Screen eine Einschalt-Karte.
+  const items = ITEMS
 
   return (
     <nav className="bottom-nav" aria-label="Hauptnavigation">
