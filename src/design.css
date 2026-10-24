@@ -3497,3 +3497,85 @@ body {
     radial-gradient(55% 42% at 0% 92%, #1E2A33 0%, rgba(30, 42, 51, 0) 56%),
     linear-gradient(180deg, #0F0D12 0%, #0A0910 100%);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Performance & Kanten: Blur nur auf den Glas-Ebenen, Karten transluzent
+   (viele geblurte Karten kosten GPU und hinterlassen in Chromium weiße
+   Schmierspuren an den Radien)
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-2: rgba(255, 255, 255, 0.62);
+}
+
+#root .today-chips,
+#root .today-empty,
+#root .today-tiles,
+#root .trip-hub,
+#root .trip-day,
+#root .lists-card,
+#root .dashboard-cards,
+#root .set-rows,
+#root .wx-rows,
+#root .dash-notes-list,
+#root .expense-list,
+#root .money-debts-list,
+#root .money-debts-empty,
+#root .packlist-items,
+#root .cat-items,
+#root .bring-group,
+#root .plan-slot,
+#root .expense-form,
+#root .dash-note-form,
+#root .dash-add-btn,
+#root .dash-install-banner,
+#root .dash-bristol-row,
+#root .weather-widget,
+#root .bristol-widget,
+#root .list-empty,
+#root .bring-empty,
+#root .expense-empty,
+#root .dash-notes-empty,
+#root .more-tile,
+#root .cat-chip,
+#root .plan-day-title,
+#root .bring-filter-btn,
+#root .bring-subtab,
+#root .plan-vote,
+#root .settings-inline-input,
+#root .settings-cat-icon-input,
+#root .settings-cat-name-input,
+#root .weather-screen-location-input,
+#root .weather-location-input,
+#root .expense-input,
+#root .expense-select,
+#root .plan-input,
+#root .packlist-input-name,
+#root .packlist-input-qty,
+#root .dash-note-input,
+#root .dash-note-textarea,
+#root .dash-notes-search,
+#root .join-input,
+#root .list-search-input,
+#root .bring-search-input {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  isolation: isolate;
+}
+
+/* Echte Glasebenen behalten den Blur */
+#root .app-header,
+#root .bottom-nav,
+#root .more-sheet,
+#root .list-menu-sheet,
+#root .today-hero,
+#root .trip-hero,
+#root .money-hero,
+#root .note-head,
+#root .lists-head,
+#root .wx-now,
+#root .join-card,
+#root .toast {
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
