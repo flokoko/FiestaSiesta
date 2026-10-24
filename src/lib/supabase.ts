@@ -11,11 +11,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Fester Join-Code für die Liste (wird für RLS und login_participant benötigt).
 // 'SIESTA26' ist der öffentliche Join-Code (steht im Login-Formular) und hartcodiert
-// in der DB (lists.join_code) — für FiestaSiesta vom HOST per SQL angelegt; die App
-// nutzt dasselbe Supabase-Projekt wie Bella Siestarella, Isolation über RLS via
-// x-join-code-Header. Der Fallback ist KEIN Sicherheitsrisiko — ohne ihn
-// wäre LIST_JOIN_CODE undefined → login_participant erhält nur p_name/p_password
-// → PGRST202 "Could not find the function login_participant(p_name, p_password)".
+// in der DB (lists.join_code) — für FiestaSiesta inzwischen im EIGENEN Projekt
+// aqmisgetzatbrvchbrkf (kein Shared-DB mehr mit Bella). Der Fallback ist KEIN
+// Sicherheitsrisiko — ohne ihn wäre LIST_JOIN_CODE undefined → login_participant
+// erhält nur p_name/p_password → PGRST202 "Could not find the function
+// login_participant(p_name, p_password)".
 const LIST_JOIN_CODE = import.meta.env.VITE_JOIN_CODE || 'SIESTA26'
 
 // Module-level variable for the current join code (used for RLS)

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Supabase Edge Function: send-push
-// Bella Mozzarella PWA — Web Push notification sender
+// Fiesta Siesta PWA — Web Push notification sender
 // ═══════════════════════════════════════════════════════════════════
 //
 // MANUAL SETUP STEPS:
@@ -19,7 +19,7 @@
 //      VAPID_SUBJECT       = mailto:you@example.com
 //
 // 4. Deploy the Edge Function:
-//      supabase functions deploy send-push --project-ref qmlovitzrupolqitwobv
+//      supabase functions deploy send-push --project-ref aqmisgetzatbrvchbrkf
 //
 // 5. Run the SQL migration (sql/push_subscriptions_migration.sql)
 //    in the Supabase Dashboard SQL Editor.
@@ -146,8 +146,8 @@ Deno.serve(async (req: Request) => {
   const payload = JSON.stringify({
     title,
     body: messageBody ?? '',
-    icon: '/BellaMozzarella/icon-192.png',
-    tag: tag ?? 'bella-mozzarella',
+    icon: '/FiestaSiesta/icon-192.png',
+    tag: tag ?? 'fiesta-siesta',
     data: data ?? {},
   })
 
