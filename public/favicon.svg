@@ -1,41 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Fiesta Siesta">
   <defs>
     <clipPath id="r"><rect x="0" y="0" width="512" height="512" rx="112"/></clipPath>
-    <linearGradient id="sky" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#FBD867"/>
-      <stop offset="45%" stop-color="#EF8B3C"/>
-      <stop offset="100%" stop-color="#B31F1C"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#13A88F"/>
+      <stop offset="55%" stop-color="#0C6E63"/>
+      <stop offset="100%" stop-color="#06403B"/>
     </linearGradient>
-    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#186158"/>
-      <stop offset="100%" stop-color="#0A3833"/>
+    <linearGradient id="straw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F9EBC4"/>
+      <stop offset="100%" stop-color="#DFC084"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="55%" stop-color="#FFF3CF" stop-opacity="0.38"/>
-      <stop offset="100%" stop-color="#FFF3CF" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E0CFB2"/>
+      <stop offset="100%" stop-color="#BEAA88"/>
+    </linearGradient>
   </defs>
-
   <g clip-path="url(#r)">
     <rect width="512" height="512" fill="url(#sky)"/>
-
-    <!-- Sonne -->
-    <circle cx="238" cy="204" r="168" fill="url(#glow)"/>
-    <circle cx="238" cy="204" r="106" fill="#FFF3CF"/>
-
-    <!-- Meer -->
-    <path d="M0 392 C76 372 138 396 214 390 C300 383 366 362 442 374 C472 379 494 386 512 382 L512 512 L0 512 Z" fill="url(#sea)"/>
-
-    <!-- Insel (spanisches Gelb) -->
-    <path d="M296 392 C306 348 336 330 372 330 C410 330 440 348 452 392 Z" fill="#F1BF00"/>
-
-    <!-- Palme -->
-    <g fill="none" stroke="#0A3833" stroke-width="17" stroke-linecap="round">
-      <path d="M374 336 C371 300 368 274 365 252"/>
-      <path d="M365 252 C338 236 306 240 286 260"/>
-      <path d="M365 252 C344 222 318 206 292 202"/>
-      <path d="M365 252 C392 224 420 218 444 232"/>
-      <path d="M365 252 C392 260 418 274 430 294"/>
+    <!-- Ohren -->
+    <g fill="url(#fur)" transform="rotate(-22 168 156)">
+      <ellipse cx="168" cy="156" rx="30" ry="104"/>
     </g>
+    <g fill="#A98F6E" transform="rotate(-22 168 156)">
+      <ellipse cx="168" cy="166" rx="13" ry="66"/>
+    </g>
+    <g fill="url(#fur)" transform="rotate(22 344 156)">
+      <ellipse cx="344" cy="156" rx="30" ry="104"/>
+    </g>
+    <g fill="#A98F6E" transform="rotate(22 344 156)">
+      <ellipse cx="344" cy="166" rx="13" ry="66"/>
+    </g>
+    <!-- Kopf -->
+    <path d="M182 286 C182 250 214 226 256 226 C298 226 330 250 330 286 L330 392 C330 428 296 448 256 448 C216 448 182 428 182 392 Z" fill="url(#fur)"/>
+    <!-- Maul -->
+    <ellipse cx="256" cy="404" rx="60" ry="40" fill="#F2E5CB"/>
+    <ellipse cx="236" cy="402" rx="8" ry="13" fill="#8A7458"/>
+    <ellipse cx="276" cy="402" rx="8" ry="13" fill="#8A7458"/>
+    <!-- Sonnenbrille -->
+    <g fill="#25150F">
+      <rect x="184" y="284" width="70" height="52" rx="19"/>
+      <rect x="258" y="284" width="70" height="52" rx="19"/>
+      <rect x="246" y="301" width="20" height="12" rx="6"/>
+    </g>
+    <!-- Sombrero -->
+    <ellipse cx="256" cy="232" rx="216" ry="58" fill="url(#straw)"/>
+    <ellipse cx="256" cy="232" rx="216" ry="58" fill="none" stroke="#C9A96F" stroke-width="5"/>
+    <path d="M190 232 C190 154 208 122 256 122 C304 122 322 154 322 232 Z" fill="#F6E4BB"/>
+    <path d="M192 202 C216 214 296 214 320 202 L320 226 C296 238 216 238 192 226 Z" fill="#B3241D"/>
   </g>
 </svg>
