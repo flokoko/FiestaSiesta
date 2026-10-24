@@ -69,6 +69,11 @@ export function planFor(list: TripProposal[]): TripProposal | null {
 
 /** Google-Maps-Link zum Ort (mit Reise-Region als Kontext) */
 export function mapsUrl(place: string): string {
-  const query = `${place}, Las Palmas, Gran Canaria`
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+  const lower = place.toLowerCase()
+  const parts = [place]
+  if (!lower.includes('gran canaria')) {
+    if (!lower.includes('las palmas')) parts.push('Las Palmas')
+    parts.push('Gran Canaria')
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`
 }
