@@ -69,7 +69,17 @@ export default function MoreSheet({
         <div className="more-head">
           <h2>Mehr</h2>
           <div className="more-head-right">
-            <span>{userName} · v{APP_VERSION}</span>
+            <span className="more-user">{userName} · v{APP_VERSION}</span>
+            {/* Abmelden gehört in den Kopf: unten lag es direkt über der Bottom-Nav
+                und wurde beim Tippen auf die Leiste versehentlich getroffen. */}
+            <button
+              type="button"
+              className="more-leave more-leave-top"
+              onClick={() => { onLeave(); onClose() }}
+              aria-label="Abmelden"
+            >
+              <LogOut size={14} strokeWidth={2} /> <span>Abmelden</span>
+            </button>
             <button type="button" className="more-close" onClick={onClose} aria-label="Schließen">
               <X size={16} strokeWidth={2.2} />
             </button>
@@ -85,10 +95,6 @@ export default function MoreSheet({
             </button>
           ))}
         </div>
-
-        <button type="button" className="more-leave" onClick={() => { onLeave(); onClose() }}>
-          <LogOut size={15} strokeWidth={2} /> Abmelden
-        </button>
       </div>
     </div>
   )

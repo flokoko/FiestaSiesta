@@ -221,7 +221,6 @@ body::before {
   right: 0;
   bottom: 0;
   height: 1px;
-  background: var(--line);
 }
 
 #root .header-top {
@@ -315,7 +314,6 @@ body::before {
 
 #root .bottom-nav-item.active {
   color: var(--accent);
-  background: var(--accent-soft);
   font-weight: 700;
 }
 
@@ -380,12 +378,7 @@ body::before {
 #root .lists-head::after {
   content: '';
   position: absolute;
-  left: -50px;
-  bottom: -80px;
-  width: 200px;
-  height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 214, 150, 0.28), rgba(255, 214, 150, 0) 65%);
   pointer-events: none;
 }
 
@@ -414,7 +407,6 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
   margin: 0;
 }
 
@@ -438,13 +430,11 @@ body::before {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.86);
 }
 
 #root .today-sub-soft {
   margin-top: 3px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.62);
 }
 
 /* Kennzahlen-Karte */
@@ -781,11 +771,8 @@ body::before {
 #root .expense-btn-cancel,
 #root .plan-btn,
 #root .dash-btn-cancel {
-  background: var(--surface-3);
-  border: none;
   border-radius: 14px;
   color: var(--ink);
-  box-shadow: none;
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
@@ -794,11 +781,8 @@ body::before {
 }
 
 #root .more-leave {
-  background: var(--accent-soft);
-  border: none;
   border-radius: 14px;
   color: var(--accent);
-  box-shadow: none;
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
@@ -879,10 +863,7 @@ body::before {
 #root .trip-day {
   width: 100%;
   text-align: left;
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
   padding: 14px 16px;
   cursor: pointer;
   color: var(--ink);
@@ -973,7 +954,6 @@ body::before {
   font-weight: 500;
   letter-spacing: -0.01em;
   text-transform: none;
-  color: rgba(255, 255, 255, 0.82);
   max-width: 34ch;
   line-height: 1.45;
 }
@@ -986,10 +966,7 @@ body::before {
   width: 100%;
   margin: 10px 0 0;
   padding: 16px;
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
   text-align: left;
   cursor: pointer;
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
@@ -1007,7 +984,6 @@ body::before {
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -1088,7 +1064,6 @@ body::before {
 #root .money-hero-total {
   font-family: var(--font-display);
   margin: 8px 0 0;
-  font-size: 40px;
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.045em;
@@ -1101,12 +1076,10 @@ body::before {
   margin-top: 12px;
   padding: 7px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
   font-family: var(--font-ui);
   font-size: 12.5px;
   font-weight: 600;
   color: #fff;
-  border: none;
 }
 
 #root .money-debts {
@@ -1124,12 +1097,9 @@ body::before {
 #root .money-debts-empty {
   margin: 0;
   padding: 16px;
-  background: var(--surface);
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
   font-size: 13px;
   color: var(--ink-3);
-  border: none;
   text-align: center;
 }
 
@@ -1211,11 +1181,8 @@ body::before {
 
 #root .money-toggle-btn.active,
 #root .expense-toggle-btn.active {
-  background: var(--surface);
   color: var(--ink);
   font-weight: 700;
-  box-shadow: var(--shadow-1);
-  border: none;
 }
 
 /* Ausgaben */
@@ -1330,10 +1297,7 @@ body::before {
 }
 
 #root .expense-form {
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-2);
   padding: 16px;
   margin-top: 8px;
 }
@@ -1459,12 +1423,6 @@ body::before {
 
 #root .cat-chip:active {
   transform: scale(0.96);
-}
-
-#root .cat-chip.active {
-  background: var(--ink);
-  color: var(--surface);
-  box-shadow: var(--shadow-2);
 }
 
 #root .cat-chip b {
@@ -1692,10 +1650,7 @@ body::before {
   width: 100%;
   margin: 0;
   padding: 15px 18px;
-  background: var(--accent-grad);
-  border: none;
   border-radius: 18px;
-  box-shadow: var(--shadow-accent);
   color: #fff;
   font-family: var(--font-ui);
   font-size: 14px;
@@ -1883,8 +1838,6 @@ body::before {
 
 #root .plan-day-title {
   flex: 0 0 auto;
-  background: var(--surface);
-  border: none;
   border-radius: 999px;
   padding: 9px 13px;
   font-family: var(--font-ui);
@@ -1893,21 +1846,16 @@ body::before {
   letter-spacing: -0.01em;
   text-transform: none;
   color: var(--ink-2);
-  box-shadow: var(--shadow-1);
 }
 
 #root .plan-day-title.active {
-  background: var(--ink);
   color: var(--surface);
   border: none;
-  box-shadow: var(--shadow-2);
 }
 
 #root .plan-slot {
   margin-top: 20px;
-  background: var(--surface);
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
   padding: 4px 16px 8px;
 }
 
@@ -1956,11 +1904,8 @@ body::before {
 }
 
 #root .plan-vote {
-  background: var(--surface-2);
-  border: none;
   border-radius: 999px;
   color: var(--ink-2);
-  box-shadow: none;
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 600;
@@ -2114,10 +2059,8 @@ body::before {
 }
 
 #root .set-toggle {
-  border: none;
   margin: 0;
   padding: 3px;
-  background: var(--surface-3);
   border-radius: 999px;
 }
 
@@ -2609,10 +2552,7 @@ body::before {
   width: 100%;
   margin-top: 8px;
   padding: 13px 0;
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-1);
-  box-shadow: var(--shadow-1);
   color: var(--accent);
   font-family: var(--font-ui);
   font-size: 13.5px;
@@ -2713,19 +2653,13 @@ body::before {
 }
 
 #root .dash-note-form {
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-2);
   padding: 14px;
   margin-top: 8px;
 }
 
 #root .dash-install-banner {
-  background: var(--surface);
-  border: none;
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
   color: var(--ink-2);
   font-family: var(--font-ui);
   font-size: 13px;
@@ -2826,10 +2760,7 @@ body::before {
   align-items: flex-start;
   gap: 6px;
   padding: 14px;
-  background: var(--surface-2);
-  border: none;
   border-radius: var(--r-1);
-  box-shadow: none;
   text-align: left;
   cursor: pointer;
   transition: background 0.25s var(--ease), transform 0.25s var(--ease);
@@ -2848,7 +2779,6 @@ body::before {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -3058,8 +2988,6 @@ body::before {
 }
 
 #root .plan-slot .plan-empty {
-  background: none;
-  box-shadow: none;
   border-radius: 0;
   padding: 16px 0;
   font-size: 12.5px;
@@ -3192,15 +3120,6 @@ body::before {
   color: rgba(255, 255, 255, 0.85);
 }
 
-#root .today-sub,
-#root .trip-range {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-#root .today-sub-soft {
-  color: rgba(255, 255, 255, 0.66);
-}
-
 #root .money-hero-balance {
   background: rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(14px) saturate(140%);
@@ -3221,8 +3140,6 @@ body::before {
 
 #root .bottom-nav {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
-  backdrop-filter: blur(34px) saturate(190%);
-  -webkit-backdrop-filter: blur(34px) saturate(190%);
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-hi),
@@ -3778,4 +3695,91 @@ body::before {
 #root .expense-list:not(:has(*)),
 #root .bring-group:not(:has(*)) {
   display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Bugfixes aus dem Nutzer-Feedback (v0.22)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Dark Mode: Sheets waren zu durchsichtig (82 % von --surface war im
+   Dunkeln fast nichts), der Inhalt darunter schien durch und der Tag war
+   nicht mehr lesbar. Sheets bekommen eine eigene, deckende Fläche. */
+:root[data-theme='dark'] #root .more-sheet,
+:root[data-theme='dark'] #root .list-menu-sheet {
+  background: rgba(26, 23, 31, 0.95);
+  backdrop-filter: blur(40px) saturate(170%);
+  -webkit-backdrop-filter: blur(40px) saturate(170%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme='dark'] #root .more-tile {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme='dark'] #root .more-head-right span,
+:root[data-theme='dark'] #root .more-tile-hint {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* 2. Aktive Chips (Reiseplan-Tage, Kategorie-Chips, Bring-Filter) hatten
+   im Dark Mode weiße Schrift auf weißer Fläche: die Füllung ist dort
+   `--ink` (fast weiß), die Schrift kam aber weiter aus `var(--surface)`.
+   Jetzt gibt es pro Theme eine passende Schriftfarbe. */
+#root .plan-day-title.active,
+#root .cat-chip.active,
+#root .bring-filter-btn.active,
+#root .bring-subtab.active {
+  color: #FFFFFF;
+}
+
+:root[data-theme='dark'] #root .plan-day-title.active,
+:root[data-theme='dark'] #root .cat-chip.active,
+:root[data-theme='dark'] #root .bring-filter-btn.active,
+:root[data-theme='dark'] #root .bring-subtab.active {
+  background: #F2EEF6;
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #17141A;
+}
+
+/* 3. Abmelden sitzt jetzt im Sheet-Kopf statt über der Bottom-Nav. */
+#root .more-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#root .more-head-right .more-user {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .more-head-right .more-leave {
+  width: auto;
+  margin: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  min-height: 34px;
+}
+
+#root .more-head-right .more-leave span {
+  font-size: 11.5px;
+}
+
+/* Notizen: leere Liste nicht als Glasstreifen, Eingabefelder klarer abgesetzt */
+#root .dash-notes-list:not(:has(*)) {
+  display: none;
+}
+
+#root .dash-note-form .dash-note-input,
+#root .dash-note-form .dash-note-textarea {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--glass-edge);
 }
