@@ -39,3 +39,9 @@ export const BRISTOL_EMOJIS: Record<number, string> = {
 }
 
 export const BRISTOL_VALUES = [1, 2, 3, 4, 5, 6, 7, 13]
+/**
+ * Schriftfarbe auf einem Farbchip: die hellen Werte (Gelb, Limette, Tomate)
+ * tragen weiße Schrift nicht (unter 3:1). Dort dunkle Tinte.
+ */
+const LIGHT_VALUES = new Set([4, 5, 6, 7])
+export const bristolInk = (value: number) => (LIGHT_VALUES.has(value) ? '#241A05' : '#FFFFFF')

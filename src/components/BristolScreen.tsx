@@ -14,6 +14,7 @@ import {
   BRISTOL_COLORS,
   BRISTOL_EMOJIS,
   BRISTOL_VALUES,
+  bristolInk,
 } from '../lib/bristolConstants'
 import { spanishSuccess } from '../lib/espanaFlair'
 import './BristolScreen.css'
@@ -635,98 +636,115 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         </div>
       </header>
 
-      {/* ── Hero: Entry for selected date ── */}
-      <div className="bristol-hero">
-        <div className="bristol-hero-label">Dein Wert</div>
-        <div className="bristol-hero-date-row">
-          <input
-            type="date"
-            className="bristol-hero-date-input"
-            value={selectedDate}
-            max={today}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-          {selectedDate !== today && (
-            <button
-              className="bristol-hero-today-btn"
-              onClick={() => setSelectedDate(today)}
-            >
-              Heute
-            </button>
-          )}
+      {/* ── Hero: der Wert des gewählten Tags ── */}
+      <div
+        className="bv-hero"
+        style={{ '--tint': BRISTOL_COLORS[myEntriesForSelectedDate.at(-1)?.value ?? 4] } as React.CSSProperties}
+      >
+        <div className="bv-hero-top">
+          <span className="bv-kicker">
+            {selectedDate === today ? 'Dein Wert heute' : 'Dein Wert'}
+          </span>
+          <div className="bv-date">
+            <input
+              type="date"
+              lang="de"
+              className="bv-date-input"
+              value={selectedDate}
+              max={today}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              aria-label="Tag wählen"
+            />
+            {selectedDate !== today && (
+              <button className="bv-today" onClick={() => setSelectedDate(today)}>
+                Heute
+              </button>
+            )}
+          </div>
         </div>
+
         {myEntriesForSelectedDate.length > 0 ? (
-          <div className="bristol-hero-entry-list">
+          <div className="bv-entries">
             {myEntriesForSelectedDate.map(e => (
-              <div key={e.id} className="bristol-hero-entry-item">
+              <div key={e.id} className="bv-entry">
                 <span
-                  className="bristol-hero-entry-dot"
-                  style={{ background: BRISTOL_COLORS[e.value] }}
+                  className="bv-entry-disc"
+                  style={{ '--tint': BRISTOL_COLORS[e.value] } as React.CSSProperties}
                 >
                   {BRISTOL_EMOJIS[e.value]}
                 </span>
-                <span className="bristol-hero-entry-time">
-                  {e.entry_time ? new Date(e.entry_time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                <span className="bv-entry-text">
+                  <span className="bv-entry-adj">{BRISTOL_ADJECTIVES[e.value]}</span>
+                  <span className="bv-entry-time">
+                    {e.entry_time
+                      ? new Date(e.entry_time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+                      : 'ohne Uhrzeit'}
+                  </span>
                 </span>
-                <span className="bristol-hero-entry-val">{e.value}</span>
-                <span className="bristol-hero-entry-adj">{BRISTOL_ADJECTIVES[e.value]}</span>
+                <span className="bv-entry-val">{e.value}</span>
               </div>
             ))}
             {selectedDate === today && !maxEntriesReached && (
-              <span className="bristol-hero-change-hint">Tippe unten für einen weiteren Eintrag</span>
+              <p className="bv-hero-hint">Noch einer? Tippe unten auf die Skala.</p>
             )}
             {maxEntriesReached && (
-              <span className="bristol-hero-max-hint">Max. 5 Einträge pro Tag erreicht</span>
+              <p className="bv-hero-hint">Max. 5 Einträge pro Tag — für mehr erst im Verlauf löschen.</p>
             )}
           </div>
         ) : (
-          <div className="bristol-hero-prompt">
-            <span className="bristol-hero-question">❓</span>
-            <span>Noch kein Eintrag für diesen Tag</span>
+          <div className="bv-hero-empty">
+            <span className="bv-hero-empty-line">Noch nichts eingetragen.</span>
+            <span className="bv-hero-empty-joke">
+              Der Darm schweigt noch — die Skala unten wartet geduldig.
+            </span>
           </div>
         )}
       </div>
 
-      {/* ── Value Picker (Grid) ── */}
-      <div className="bristol-picker">
-        <div className="bristol-picker-label">
-          Bristol-Skala 1–7 + Plasma 💩
-          {unlocked14 && <span className="bristol-picker-unlocked-hint"> · Mega-Plasma 💥 freigeschaltet!</span>}
+      {/* ── Skala ── */}
+      <div className="bv-picker">
+        <div className="bv-picker-head">
+          <span className="bv-kicker">Bristol-Skala</span>
+          <span className="bv-picker-note">
+            {unlocked14 ? '1–7 · Plasma · Mega-Plasma' : '1–7 · plus Plasma'}
+          </span>
         </div>
-        <div className="bristol-picker-grid">
+        <div className="bv-scale">
           {BRISTOL_VALUES.map(v => (
             <button
               key={v}
-              className={`bristol-picker-btn ${v === 13 ? 'bristol-picker-btn-bonus' : ''}`}
-              style={{ '--bristol-color': BRISTOL_COLORS[v] } as React.CSSProperties}
+              className={`bv-scale-btn${v === 13 ? ' is-bonus' : ''}`}
+              data-value={v}
+              style={{ '--tint': BRISTOL_COLORS[v] } as React.CSSProperties}
               disabled={submitting || maxEntriesReached}
               onClick={() => handleSubmitEntry(v)}
             >
-              <span className="bristol-picker-emoji">{BRISTOL_EMOJIS[v]}</span>
-              <span className="bristol-picker-num">{v}</span>
-              <span className="bristol-picker-adj">{BRISTOL_ADJECTIVES[v]}</span>
+              <span className="bv-scale-emoji">{BRISTOL_EMOJIS[v]}</span>
+              <span className="bv-scale-num">{v}</span>
+              <span className="bv-scale-adj">{BRISTOL_ADJECTIVES[v]}</span>
             </button>
           ))}
           {unlocked14 && (
             <button
-              className="bristol-picker-btn bristol-picker-btn-bonus bristol-picker-btn-mega"
-              style={{ '--bristol-color': BRISTOL_COLORS[14] } as React.CSSProperties}
+              className="bv-scale-btn is-bonus is-mega"
+              data-value={14}
+              style={{ '--tint': BRISTOL_COLORS[14] } as React.CSSProperties}
               disabled={submitting || maxEntriesReached}
               onClick={() => handleSubmitEntry(14)}
             >
-              <span className="bristol-picker-emoji">{BRISTOL_EMOJIS[14]}</span>
-              <span className="bristol-picker-num">14</span>
-              <span className="bristol-picker-adj">{BRISTOL_ADJECTIVES[14]}</span>
+              <span className="bv-scale-emoji">{BRISTOL_EMOJIS[14]}</span>
+              <span className="bv-scale-num">14</span>
+              <span className="bv-scale-adj">{BRISTOL_ADJECTIVES[14]}</span>
             </button>
           )}
         </div>
         {maxEntriesReached && (
-          <p className="bristol-picker-lock-hint">
+          <p className="bv-picker-hint">
             Max. 5 Einträge pro Tag erreicht — lösche einen Eintrag im Verlauf, um einen neuen hinzuzufügen.
           </p>
         )}
         {!unlocked14 && (
-          <p className="bristol-picker-lock-hint">
+          <p className="bv-picker-hint">
             🔒 Tippe 3× hintereinander Plasma 💩, um Mega-Plasma 💥 freizuschalten.
           </p>
         )}
@@ -784,7 +802,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
               <span className="bristol-stat-label">Einträge</span>
             </div>
             <div className="bristol-stat-item">
-              <span className="bristol-stat-num">{stats.avg.toFixed(1)}</span>
+              <span className="bristol-stat-num">{stats.avg.toFixed(1).replace('.', ',')}</span>
               <span className="bristol-stat-label">Ø Wert</span>
             </div>
             <div className="bristol-stat-item">
@@ -804,7 +822,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           {/* Distribution */}
           <div className="bristol-chart-box">
             <div className="bristol-chart-label">Verteilung</div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={168}>
               <BarChart data={distributionData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
@@ -828,7 +846,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           {/* Trend */}
           <div className="bristol-chart-box">
             <div className="bristol-chart-label">Trend (14 Tage)</div>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={168}>
               <LineChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
@@ -844,7 +862,6 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
                   formatter={(val) => val !== null ? [`Ø ${val}`, 'Durchschnitt'] : ['—', '']}
                   labelFormatter={(label) => label}
                 />
-                <Legend wrapperStyle={{ fontSize: '0.75rem', marginTop: '4px' }} />
                 <Line
                   type="monotone"
                   dataKey="avg"
@@ -865,6 +882,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
             <div className="bristol-intraday-date-row">
               <input
                 type="date"
+                lang="de"
                 className="bristol-hero-date-input"
                 value={intradayDate}
                 max={today}
@@ -879,14 +897,28 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
                 </button>
               )}
             </div>
-            {intradayData.length === 0 ? (
-              <p className="bristol-empty-state">Keine Einträge für diesen Tag.</p>
+            {intradayData.length < 2 ? (
+              <p className="bristol-empty-state">
+                Für eine Tageskurve braucht es mindestens zwei Einträge.
+              </p>
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={intradayData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+              <ResponsiveContainer width="100%" height={150}>
+                <LineChart data={intradayData} margin={{ top: 6, right: 10, bottom: 0, left: -22 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                  <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[1, unlocked14 ? 14 : 13]} ticks={unlocked14 ? [1, 3, 5, 7, 9, 11, 13, 14] : [1, 3, 5, 7, 9, 11, 13]} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="time"
+                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
+                    axisLine={false}
+                    tickLine={false}
+                    padding={{ left: 14, right: 14 }}
+                  />
+                  <YAxis
+                    domain={[0, (dataMax: number) => Math.max(unlocked14 ? 14 : 8, Math.ceil(dataMax) + 1)]}
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: 'var(--card-bg-solid)',
@@ -896,16 +928,18 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
                       boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '0.75rem', marginTop: '4px' }} />
+                  <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: 2 }} iconSize={8} />
                   {intradayParticipants.map((name, i) => (
                     <Line
                       key={name}
                       type="monotone"
                       dataKey={name}
                       stroke={intradayColors[i % intradayColors.length]}
-                      strokeWidth={2}
-                      dot={{ r: 3, strokeWidth: 0 }}
-                      activeDot={{ r: 5 }}
+                      strokeWidth={2.4}
+                      /* gefüllte Punkte: bei einem Eintrag pro Person gibt es keine
+                         Linie, nur den Punkt — weiß gefüllt war er unsichtbar */
+                      dot={{ r: 4.5, strokeWidth: 0, fill: intradayColors[i % intradayColors.length] }}
+                      activeDot={{ r: 6.5 }}
                       connectNulls
                     />
                   ))}
@@ -1173,7 +1207,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
                     </div>
                   ) : (
                     <>
-                      <span className="bristol-history-badge" style={{ background: BRISTOL_COLORS[e.value] }}>
+                      <span className="bristol-history-badge" style={{ background: BRISTOL_COLORS[e.value], color: bristolInk(e.value) }}>
                         {e.value}
                       </span>
                       <span className="bristol-history-adj">{BRISTOL_ADJECTIVES[e.value]}</span>

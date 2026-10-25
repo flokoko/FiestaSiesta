@@ -93,6 +93,7 @@ import './App.css'
 import './nav.css'
 import './design.css'
 import './design-expense.css'
+import './design-bristol.css'
 
 // ── Confetti helper: spanische Flagge (Rot-Gelb-Rot) ─────────────────
 async function fireConfetti() {
