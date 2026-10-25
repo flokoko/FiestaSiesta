@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy, type ReactNode } from 'react'
-import { ArrowLeft, WifiOff } from 'lucide-react'
+import { ArrowLeft, Loader2, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
@@ -51,8 +51,8 @@ import BristolGate from './components/BristolGate'
 
 function TabLoader() {
   return (
-    <div className="tab-loader">
-      <span className="tab-loader-emoji">🏖️</span>
+    <div className="tab-loader" role="status" aria-label="Wird geladen">
+      <Loader2 size={18} strokeWidth={2} className="spin" aria-hidden="true" />
       <span className="tab-loader-text">Lädt…</span>
     </div>
   )

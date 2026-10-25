@@ -4151,3 +4151,18 @@ body::before {
   font: inherit;
   font-weight: 600;
 }
+
+/* ── Spinner (v0.34) ─────────────────────────────────────────────────── */
+/* .spin lag nur in SettingsScreen.css (Lazy-Chunk) — der TabLoader in App.tsx
+   braucht ihn auch beim ersten Screen-Wechsel. */
+@keyframes fiesta-spin {
+  to { transform: rotate(360deg); }
+}
+
+#root .spin {
+  animation: fiesta-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .spin { animation: none; }
+}

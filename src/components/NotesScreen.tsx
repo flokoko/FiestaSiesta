@@ -253,7 +253,7 @@ export default function NotesScreen({
           )}
 
           {notes.length > 0 && filteredNotes.length === 0 && (
-            <p className="dash-notes-empty">Keine Notizen gefunden für „{searchQuery}”</p>
+            <p className="dash-notes-empty">Keine Notizen gefunden für „{searchQuery}“</p>
           )}
 
           <div className="dash-notes-list">

@@ -32,15 +32,6 @@
   font-size: 10.5px;
 }
 
-/* Reiseplan-Tageskarten: ganze Karte klickbar */
-.trip-day {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-
 .trip-day-plan {
   margin: 6px 0 0;
   padding: 0;
