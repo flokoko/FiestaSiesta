@@ -898,6 +898,15 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       return data?.error || 'Fehler beim Umbenennen.'
     }
 
+    // Die RPC legt einen neuen Participant an (neue id, is_admin übernommen).
+    // Ohne das Nachziehen von participant_id scheitert restore_participant_session
+    // beim nächsten Reload und change_participant_password danach.
+    const newParticipantId = (data as { participant_id?: string } | null)?.participant_id
+    if (newParticipantId) {
+      localStorage.setItem('participant_id', newParticipantId)
+      setParticipantId(newParticipantId)
+    }
+
     localStorage.setItem('user_name', trimmed)
     setUserName(trimmed)
     fetchAll(list.id, true)
