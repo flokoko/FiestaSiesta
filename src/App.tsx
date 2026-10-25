@@ -227,6 +227,28 @@ export default function App() {
     return changeParticipantPassword(participantId, oldPassword, newPassword)
   }
 
+  const handleChangeAdminPassword = async (
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<{ success?: boolean; error?: string }> => {
+    if (!list) return { error: 'Keine Liste geladen' }
+    const { data, error } = await supabase.rpc('change_admin_password', {
+      p_list_id: list.id,
+      p_old_password: oldPassword,
+      p_new_password: newPassword,
+    })
+    if (error) {
+      return { error: error.message }
+    }
+    if (data?.error) {
+      return { error: data.error }
+    }
+    if (data?.success) {
+      toast('Admin-Passwort geändert!', 'success')
+    }
+    return data as { success?: boolean; error?: string }
+  }
+
   const handleUnlockAdmin = async (password: string): Promise<boolean> => {
     if (!list) return false
     // Serverseitige Prüfung via RPC — Passwort bleibt auf dem Server
@@ -486,6 +508,7 @@ export default function App() {
               onSetAdminPassword={handleSetAdminPassword}
               onUnlockAdmin={handleUnlockAdmin}
               onChangeOwnPassword={handleChangeOwnPassword}
+              onChangeAdminPassword={handleChangeAdminPassword}
             />
           </Suspense>
         )}

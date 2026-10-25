@@ -38,6 +38,7 @@ interface SettingsScreenProps {
   onSetAdminPassword: (password: string) => void
   onUnlockAdmin: (password: string) => Promise<boolean>
   onChangeOwnPassword: (oldPassword: string, newPassword: string) => Promise<{ success?: boolean; error?: string }>
+  onChangeAdminPassword: (oldPassword: string, newPassword: string) => Promise<{ success?: boolean; error?: string }>
 }
 
 export default function SettingsScreen({
@@ -56,6 +57,7 @@ export default function SettingsScreen({
   onSetAdminPassword,
   onUnlockAdmin,
   onChangeOwnPassword,
+  onChangeAdminPassword,
 }: SettingsScreenProps) {
   const { toast, confirm } = useToast()
   const [theme, setThemeState] = useState<ThemeMode>('auto')
@@ -183,9 +185,17 @@ export default function SettingsScreen({
 
   const handleDeleteParticipant = (p: Participant) => {
     confirm(`Teilnehmer "${p.name}" entfernen?`, async () => {
-      const { error } = await supabase.from('participants').delete().eq('id', p.id)
+      const { data, error } = await supabase.rpc('delete_participant', {
+        p_list_id: listId,
+        p_name: p.name,
+      })
       if (error) {
         toast(`Fehler: ${error.message}`, 'error')
+        return
+      }
+      if (data?.error) {
+        // Server blockiert das Löschen (offene Geldbezüge) — Text direkt zeigen
+        toast(data.error, 'error')
         return
       }
       navigator.vibrate?.(10)
@@ -237,11 +247,10 @@ export default function SettingsScreen({
       setAdminPwError('Neues Passwort muss mindestens 3 Zeichen lang sein.')
       return
     }
-    const result = await onChangeOwnPassword(oldPw, newPw)
+    const result = await onChangeAdminPassword(oldPw, newPw)
     if (result.error) {
       setAdminPwError(result.error)
     } else {
-      toast('Passwort geändert!', 'success')
       setAdminOldPw('')
       setAdminNewPw('')
       setShowChangeAdminPw(false)
