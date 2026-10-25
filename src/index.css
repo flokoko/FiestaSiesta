@@ -115,30 +115,13 @@ body::before {
   z-index: 0;
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: 
-    radial-gradient(2px 2px at 10% 20%, rgba(170, 21, 27, 0.15) 0%, transparent 100%),
-    radial-gradient(2px 2px at 30% 60%, rgba(170, 21, 27, 0.12) 0%, transparent 100%),
-    radial-gradient(3px 3px at 50% 10%, rgba(170, 21, 27, 0.1) 0%, transparent 100%),
-    radial-gradient(2px 2px at 70% 40%, rgba(212, 160, 23, 0.1) 0%, transparent 100%),
-    radial-gradient(2px 2px at 90% 70%, rgba(170, 21, 27, 0.12) 0%, transparent 100%),
-    radial-gradient(3px 3px at 20% 80%, rgba(170, 21, 27, 0.1) 0%, transparent 100%),
-    radial-gradient(2px 2px at 60% 90%, rgba(212, 160, 23, 0.08) 0%, transparent 100%),
-    radial-gradient(2px 2px at 80% 15%, rgba(170, 21, 27, 0.1) 0%, transparent 100%);
-  animation: particleFloat 8s ease-in-out infinite alternate;
-}
+/* Bella-Rest, in v0.28 entfernt: eine bildschirmfüllende, feste Partikel-Ebene,
+   die per particleFloat (8 s, infinite) dauerhaft Transform+Opacity animierte.
+   Sie zwang jede Fläche mit backdrop-filter (Kopf, Nav, Hero) zur Neuaufnahme
+   des Hintergrunds — auf dem Gerät Dauerlast und sichtbares Flimmern.
+   Die Aurora lebt in body::before (design.css). */
 
 /* ── Keyframe Animations ──────────────────────────────────────────── */
-@keyframes particleFloat {
-  0% { transform: translateY(0) scale(1); opacity: 0.6; }
-  50% { transform: translateY(-20px) scale(1.1); opacity: 1; }
-  100% { transform: translateY(0) scale(1); opacity: 0.6; }
-}
 
 #root {
   min-height: 100vh;
