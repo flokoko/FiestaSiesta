@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Home, Map, ListChecks, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
 import type { TabView } from '../types'
 
@@ -37,14 +38,57 @@ export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomN
   const activeDomain = DOMAIN_OF[tab] ?? tab
   const items = ITEMS
 
+  const navRef = useRef<HTMLElement>(null)
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([])
+  // „Mehr" steht hinter den vier Domänen; bei offenem Blatt wandert die Pille dorthin.
+  const activeIndex = moreOpen ? items.length : items.findIndex(({ key }) => key === activeDomain)
+
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+  // Erst nach dem ersten Messen animieren — sonst fährt die Pille beim
+  // Seitenaufbau sichtbar von links herein.
+  const [gliding, setGliding] = useState(false)
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = activeIndex >= 0 ? itemRefs.current[activeIndex] : null
+      if (!el) return
+      setPill({ left: el.offsetLeft, width: el.offsetWidth })
+    }
+
+    measure()
+    const raf = requestAnimationFrame(() => setGliding(true))
+
+    // Breite kann sich nach dem Font-Tausch oder bei Rotation ändern.
+    const ro = new ResizeObserver(measure)
+    if (navRef.current) ro.observe(navRef.current)
+    document.fonts?.ready.then(measure).catch(() => {})
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [activeIndex])
+
   return (
-    <nav className="bottom-nav" aria-label="Hauptnavigation">
-      {items.map(({ key, label, icon: Icon }) => {
+    <nav
+      className={`bottom-nav${gliding ? ' is-gliding' : ''}`}
+      aria-label="Hauptnavigation"
+      ref={navRef}
+    >
+      {pill && (
+        <span
+          className="bottom-nav-pill"
+          aria-hidden="true"
+          style={{ transform: `translate3d(${pill.left}px, 0, 0)`, width: `${pill.width}px` }}
+        />
+      )}
+      {items.map(({ key, label, icon: Icon }, index) => {
         const isActive = !moreOpen && activeDomain === key
         return (
           <button
             key={key}
             type="button"
+            ref={(el) => { itemRefs.current[index] = el }}
             className={`bottom-nav-item${isActive ? ' active' : ''}`}
             onClick={() => onNavigate(key)}
             aria-current={isActive ? 'page' : undefined}
@@ -56,6 +100,7 @@ export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomN
       })}
       <button
         type="button"
+        ref={(el) => { itemRefs.current[items.length] = el }}
         className={`bottom-nav-item${moreOpen ? ' active' : ''}`}
         onClick={onMore}
         aria-expanded={moreOpen}

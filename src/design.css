@@ -183,12 +183,6 @@ body::before {
 
 #root .app-main {
   padding: 4px var(--pad) 112px;
-  animation: aireIn 0.45s var(--ease);
-}
-
-@keyframes aireIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Typografie ───────────────────────────────────────────────────── */
@@ -3802,4 +3796,107 @@ body::before {
 #root .toast-info {
   background: var(--toast-bg);
   color: var(--toast-ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STUFE 4 (v0.24): Bewegung beim Seitenwechsel
+
+   Der Wechsel läuft auf .screen-swap in App.tsx (key={tab}), damit die
+   Animation bei JEDEM Tab-Wechsel neu startet. data-dir kommt aus
+   src/lib/navTransition.ts: forward = tiefer in den Baum, back = zurück.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Kein horizontaler Scrollbalken durch den Slide (clip statt hidden:
+   hidden macht <body> zum Scroll-Container und bricht position:sticky). */
+#root .app {
+  overflow-x: clip;
+}
+
+#root .screen-swap {
+  animation: screenForward 0.44s var(--ease) both;
+}
+
+#root .screen-swap[data-dir='back'] {
+  animation-name: screenBack;
+}
+
+#root .screen-swap[data-dir='side'] {
+  animation-name: screenCross;
+}
+
+@keyframes screenForward {
+  from { opacity: 0; transform: translate3d(20px, 10px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes screenBack {
+  from { opacity: 0; transform: translate3d(-20px, 10px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes screenCross {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.99); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* Zurück-Pfeil erscheint mit dem Screen, nicht davor */
+#root .header-back {
+  animation: headerBackIn 0.34s var(--ease) both;
+}
+
+@keyframes headerBackIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Gleitende Pille in der Bottom-Nav ────────────────────────────────
+   Messung in BottomNav.tsx (offsetLeft/offsetWidth), Bewegung per
+   Transform auf dem Compositor. Sitzt HINTER den Items. */
+#root .bottom-nav {
+  overflow: hidden;
+}
+
+#root .bottom-nav-pill {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  z-index: 0;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+  pointer-events: none;
+  transform-origin: center;
+  /* Ohne .is-gliding keine Transition → kein Einflug beim ersten Messen. */
+  transition: none;
+}
+
+#root .bottom-nav.is-gliding .bottom-nav-pill {
+  transition:
+    transform 0.42s cubic-bezier(0.34, 1.28, 0.64, 1),
+    width 0.42s var(--ease);
+}
+
+#root .bottom-nav-item {
+  position: relative;
+  z-index: 1;
+}
+
+/* Aktives Item: kurzer Impuls, damit der Wechsel sich „anfasst" */
+#root .bottom-nav-item.active svg {
+  animation: navPop 0.42s var(--ease);
+}
+
+@keyframes navPop {
+  0% { transform: scale(0.88); }
+  55% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .screen-swap,
+  #root .header-back,
+  #root .bottom-nav-item.active svg {
+    animation: none;
+  }
 }

@@ -3,6 +3,7 @@ import { ArrowLeft, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
+import { screenDirection, type ScreenDirection } from './lib/navTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import NotesScreen from './components/NotesScreen'
@@ -96,8 +97,29 @@ export default function App() {
   } = useListData()
 
   // ── Tab state ──────────────────────────────────────────────────────
-  const [tab, setTab] = useState<TabView>('home')
+  const [tab, setTabState] = useState<TabView>('home')
   const [moreOpen, setMoreOpen] = useState(false)
+
+  // Übergangsrichtung für den Screen-Wechsel (v0.24): vorwärts wenn es
+  // tiefer in den Baum geht, rückwärts beim Zurück-Pfeil / leichterem Tab.
+  // Bewusst im Callback statt im Render: unter StrictMode rendert React
+  // zweimal, eine Ref-Mutation im Render käme beim zweiten Lauf als
+  // „gleicher Tab" an und die Richtung wäre immer 'side'.
+  const [screenDir, setScreenDir] = useState<ScreenDirection>('side')
+  const tabRef = useRef<TabView>('home')
+  const setTab = useCallback((next: TabView) => {
+    const prev = tabRef.current
+    if (prev !== next) {
+      tabRef.current = next
+      setScreenDir(screenDirection(prev, next))
+    }
+    setTabState(next)
+  }, [])
+
+  // Jeder Tab beginnt oben — sonst landet man beim Wechsel mitten im Inhalt.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
+  }, [tab])
 
   // ── PWA update available banner ─────────────────────────────────────
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -356,6 +378,7 @@ export default function App() {
       )}
 
       <main className="app-main">
+        <div className="screen-swap" key={tab} data-dir={screenDir}>
         {tab === 'home' && (
           <TodayScreen
             userName={userName}
@@ -502,6 +525,7 @@ export default function App() {
             />
           </Suspense>
         )}
+        </div>
       </main>
 
       <BottomNav
