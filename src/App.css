@@ -6,26 +6,6 @@
   flex-direction: column;
 }
 
-/* ── SiestaScene-Hintergrund (nur auf der Join-Seite) ── */
-.siesta-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.siesta-bg canvas {
-  display: block;
-  pointer-events: none !important;
-}
-
-.siesta-bg [style*="pointer-events"] {
-  pointer-events: none !important;
-}
-
 .app-header {
   position: sticky;
   top: 0;

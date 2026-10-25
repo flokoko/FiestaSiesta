@@ -7,27 +7,35 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
-  background: transparent;
+  /* Statt der 3D-Kugeln (Bella-Erbe, hatte mit Spanien nichts zu tun):
+     warme Sonne über dem Horizont. Ruhige Fläche, das Objekt bleibt die Karte. */
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(241, 191, 0, 0.34), transparent 72%),
+    radial-gradient(120% 55% at 50% 104%, rgba(200, 96, 84, 0.16), transparent 68%),
+    linear-gradient(180deg, #FDF6E8 0%, #FBEDE1 52%, #F5DFD8 100%);
 }
 
-/* SiestaScene Canvas wrapper — must not participate in flex layout */
-.join-screen > div:first-child {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.join-screen canvas {
+/* Bandera als schmale Binde am unteren Rand — der einzige „spanische“ Akzent
+   außerhalb der Karte. */
+.join-screen::after {
+  content: '';
   position: fixed;
-  top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
+  height: 16px;
   z-index: 0;
   pointer-events: none;
+  background: linear-gradient(180deg,
+    #AA151B 0 25%, #F1BF00 25% 75%, #AA151B 75% 100%);
+  opacity: 0.9;
+}
+
+:root[data-theme='dark'] .join-screen {
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(241, 191, 0, 0.16), transparent 72%),
+    radial-gradient(120% 55% at 50% 104%, rgba(170, 21, 27, 0.22), transparent 68%),
+    linear-gradient(180deg, #17131A 0%, #1D1519 55%, #241619 100%);
 }
 
 .join-card {

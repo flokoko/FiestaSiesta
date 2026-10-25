@@ -8,8 +8,6 @@ import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import NotesScreen from './components/NotesScreen'
 import { spanishSuccess } from './lib/espanaFlair'
-const importSiestaScene = () => import('./components/SiestaScene')
-const SiestaScene = lazy(importSiestaScene)
 import { useListData } from './hooks/useListData'
 
 // Code splitting: lazy-load screens that aren't needed on first paint.
@@ -135,6 +133,23 @@ async function fireConfetti() {
   navigator.vibrate?.([100, 50, 100, 50, 200])
 }
 
+/**
+ * Startbild, solange eine gespeicherte Sitzung geprüft wird. Ohne das blitzt bei
+ * jedem Öffnen der Login auf, obwohl man angemeldet ist: userName/list sind in
+ * den ersten Momenten null. Gleiches Markup wie in index.html, damit der Wechsel
+ * von der statischen Seite in die App unsichtbar ist.
+ */
+function BootSplash() {
+  return (
+    <div className="boot-splash" role="status" aria-label="Fiesta Siesta wird geladen">
+      <span className="boot-flag" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+      <span className="boot-name">Fiesta Siesta</span>
+    </div>
+  )
+}
+
 export default function App() {
   const { toast } = useToast()
 
@@ -142,7 +157,7 @@ export default function App() {
     userName, list, participantId, shoppingItems, bringItems, categories,
     notes, expenses, expenseSplits, expenseQuotas, participants, adminUnlocked,
     isAdmin, shoppingCategories, bringCategories, knownPersons, userBalance,
-    expenseTotal, checkedCount, isLoading, isOnline, queueLength, flushQueue,
+    expenseTotal, checkedCount, isLoading, isOnline, queueLength, flushQueue, restoringSession,
     setList, setAdminUnlocked,
     fetchAll,
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
@@ -407,15 +422,12 @@ export default function App() {
   const bringBrought = bringItems.filter(i => i.is_brought).length
 
 
+  if (restoringSession) return <BootSplash />
+
   return (
     <>
       {!userName || !list ? (
         <>
-          <div className="siesta-bg">
-            <Suspense fallback={null}>
-              <SiestaScene fullscreen />
-            </Suspense>
-          </div>
           <JoinScreen onJoin={handleJoin} />
         </>
       ) : (

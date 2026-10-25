@@ -75,6 +75,13 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const [participants, setParticipants] = useState<Participant[]>([])
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  // true, solange eine gespeicherte Sitzung wiederhergestellt wird. Ohne das
+  // rendert App zuerst den Login (userName/list sind null) und der Nutzer sieht
+  // bei jedem Start kurz den Anmelde-Screen, obwohl er angemeldet ist.
+  const [restoringSession, setRestoringSession] = useState(() => {
+    if (typeof localStorage === 'undefined') return false
+    return !!localStorage.getItem('participant_id') && !!localStorage.getItem('user_name')
+  })
 
   // ── Fetch guard for realtime sync debounce ─────────────────────────
   const isFetchingRef = useRef(false)
@@ -551,8 +558,14 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     const savedName = localStorage.getItem('user_name')
     const savedParticipantId = localStorage.getItem('participant_id')
     if (savedName && savedParticipantId) {
+      // Sicherheitsnetz: hängt die Wiederherstellung (offline, langsames Netz),
+      // kommt nach 4 s der Login statt eines ewigen Splashs.
+      const guard = window.setTimeout(() => setRestoringSession(false), 4000)
       restoreParticipantSession(savedParticipantId).then((result) => {
-        if (result.error || !result.list_id) return
+        if (result.error || !result.list_id) {
+          setRestoringSession(false)
+          return
+        }
         setUserName(result.participant_name)
         setParticipantId(result.participant_id)
         setIsLoading(true)
@@ -564,6 +577,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
             .single()
         )
           .then(({ data, error }) => {
+            setRestoringSession(false)
             if (error || !data) {
               // List was deleted or query failed — clean up session and stop loading
               setIsLoading(false)
@@ -579,8 +593,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
           })
           .catch(() => {
             setIsLoading(false)
+            setRestoringSession(false)
           })
+          .finally(() => window.clearTimeout(guard))
       })
+    } else {
+      setRestoringSession(false)
     }
   }, [fetchAll])
 
@@ -929,6 +947,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     participants,
     adminUnlocked,
     isLoading,
+    restoringSession,
     undoState,
     // offline
     isOnline,

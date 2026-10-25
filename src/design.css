@@ -3824,15 +3824,15 @@ body::before {
   /* Nur opacity auf dem Pane (kein transform!): ein transform hier macht den
      Pane zum Containing-Block für die schwebenden „+“-Pillen. Start bei 72 %,
      nicht bei 0 — sonst blitzt der Aurora-Hintergrund durch. */
-  animation: paneSettle 0.2s var(--ease) backwards;
+  animation: paneSettle 0.34s var(--ease) backwards;
 }
 
 /* Der Inhalt setzt sich mit: die direkten Kinder steigen 8 px auf und kommen
    aus 55 % Deckkraft. Kurz und klein gehalten (0.26 s, max. 50 ms Versatz) —
    das wirkt als „einlaufen“, nicht als Neuaufbau. */
 #root .screen-pane[data-state='active'] > * > * {
-  animation: paneItemIn 0.26s var(--ease) backwards;
-  animation-delay: 0.05s;
+  animation: paneItemIn 0.44s var(--ease) backwards;
+  animation-delay: 0.09s;
 }
 
 #root .screen-pane[data-dir='back'] > * > * {
@@ -3840,11 +3840,11 @@ body::before {
 }
 
 #root .screen-pane[data-state='active'] > * > *:nth-child(1) { animation-delay: 0s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.025s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.05s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.045s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.09s; }
 
 @keyframes paneSettle {
-  from { opacity: 0.72; }
+  from { opacity: 0.78; }
   to { opacity: 1; }
 }
 
@@ -3853,12 +3853,12 @@ body::before {
    würde es ersetzen und die Pille während der 260 ms aus der Mitte schieben.
    `translate` und `transform` werden kombiniert, nicht ersetzt. */
 @keyframes paneItemIn {
-  from { opacity: 0.55; translate: 0 8px; }
+  from { opacity: 0.62; translate: 0 10px; }
   to { opacity: 1; translate: 0 0; }
 }
 
 @keyframes paneItemBack {
-  from { opacity: 0.55; translate: 0 -6px; }
+  from { opacity: 0.62; translate: 0 -8px; }
   to { opacity: 1; translate: 0 0; }
 }
 

@@ -236,3 +236,52 @@ body::before {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Startbild ────────────────────────────────────────────────────────
+   Ersetzt den Login-Blitz beim Öffnen, wenn die Sitzung noch gespeichert ist.
+   Markup identisch mit dem statischen Platzhalter in index.html: React tauscht
+   nur den Inhalt von #root, die Fläche springt dadurch nicht. */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(241, 191, 0, 0.30), transparent 72%),
+    radial-gradient(120% 55% at 50% 104%, rgba(200, 96, 84, 0.16), transparent 68%),
+    linear-gradient(180deg, #FDF6E8 0%, #FBEDE1 52%, #F5DFD8 100%);
+}
+
+.boot-flag {
+  display: flex;
+  flex-direction: column;
+  width: 74px;
+  height: 50px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 26px rgba(170, 21, 27, 0.22);
+}
+
+.boot-flag > span:nth-child(1) { flex: 1; background: #AA151B; }
+.boot-flag > span:nth-child(2) { flex: 2; background: #F1BF00; }
+.boot-flag > span:nth-child(3) { flex: 1; background: #AA151B; }
+
+.boot-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #6E6874;
+}
+
+:root[data-theme='dark'] .boot-splash {
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(241, 191, 0, 0.14), transparent 72%),
+    radial-gradient(120% 55% at 50% 104%, rgba(170, 21, 27, 0.22), transparent 68%),
+    linear-gradient(180deg, #17131A 0%, #1D1519 55%, #241619 100%);
+}
+
+:root[data-theme='dark'] .boot-name { color: #9A93AB; }
