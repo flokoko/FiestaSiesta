@@ -14,6 +14,7 @@ import type {
 import { supabase, restoreParticipantSession } from '../lib/supabase'
 import { useOfflineQueue } from './useOfflineQueue'
 import { useRealtimeSync } from './useRealtimeSync'
+import { useToast } from '../context/ToastContext'
 import { logError } from '../lib/logger'
 import { readCache, writeCache, clearCacheForList } from '../lib/readCache'
 import {
@@ -33,9 +34,31 @@ import {
 import { spanishPhrase } from '../lib/espanaFlair'
 import { publishActivity, markOwnAction, consumeOwnAction } from '../lib/activityBus'
 
+/** Undo-Stufe: gelöschte Items + Listentyp + Ablauf-Timer */
+interface UndoEntry {
+  id: number
+  items: ListItem[]
+  listType: ListType
+  timeout: ReturnType<typeof setTimeout> | null
+}
+
+/** Items wieder an der Originalposition einsortieren (nicht vorne anhängen):
+ * Reihenfolge wie beim Fetch — sort_order, dann created_at. */
+function insertSortedBySortOrder(prev: ListItem[], restored: ListItem[]): ListItem[] {
+  return [
+    ...prev.filter((i) => !restored.some((r) => r.id === i.id)),
+    ...restored,
+  ].sort(
+    (a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at),
+  )
+}
+
 export function useListData({ onActivity }: { onActivity?: (msg: string) => void } = {}) {
   // ── Offline queue ──────────────────────────────────────────────────
   const { isOnline, enqueue, flushQueue, queueLength } = useOfflineQueue()
+
+  // ── Toast (App-Mechanismus aus dem ToastContext) ───────────────────
+  const { toast } = useToast()
 
   // ── State ──────────────────────────────────────────────────────────
   const [userName, setUserName] = useState<string | null>(null)
@@ -60,8 +83,14 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const pendingRealtimeTablesRef = useRef<Set<string>>(new Set())
   const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ── Race guard for atomic expense+splits fetch ─────────────────────
-  const fetchSeq = useRef(0)
+  // ── Race guards für alle Fetches: ein Zähler pro Zustands-Slot ─────
+  // Ein älterer Response darf einen neueren nie überschreiben (z. B. wenn
+  // ein langsamer Request nach einem frischen Refetch eintrifft).
+  const fetchSeqsRef = useRef<Record<string, number>>({})
+  const claimFetchSeq = useCallback((key: string) => {
+    fetchSeqsRef.current[key] = (fetchSeqsRef.current[key] ?? 0) + 1
+    return fetchSeqsRef.current[key]
+  }, [])
 
   // ── Track previous shopping items for push notifications ───────────
   const prevShoppingItemsRef = useRef<ListItem[]>([])
@@ -72,14 +101,19 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const userNameRef = useRef<string | null>(userName)
   userNameRef.current = userName
 
-  // ── Undo state for delete operations ───────────────────────────────
-  const [undoState, setUndoState] = useState<{
-    items: ListItem[]
-    timeout: ReturnType<typeof setTimeout> | null
-  } | null>(null)
+  // ── Undo-Stack für Löschaktionen (max. 5 Stufen, älteste fallen raus) ─
+  // undoStackRef als Spiegel, damit withUndo/undoDelete stabile Callbacks
+  // bleiben und App den obersten Eintrag als `undoState` bekommt.
+  const [undoStack, setUndoStack] = useState<UndoEntry[]>([])
+  const undoStackRef = useRef<UndoEntry[]>([])
+  const undoSeqRef = useRef(0)
+  /** Kompatibel nach außen: der oberste (neueste) Undo-Eintrag */
+  const undoState = undoStack.length > 0 ? undoStack[undoStack.length - 1] : null
 
   // ── Fetch functions ────────────────────────────────────────────────
   const fetchItems = useCallback(async (listId: string, listType: ListType) => {
+    const seqKey = listType === 'shopping' ? 'items:shopping' : 'items:bring'
+    const mySeq = claimFetchSeq(seqKey)
     const { data, error: err } = await supabase
       .from('items')
       .select('*')
@@ -90,14 +124,18 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     if (err) {
       logError('fetchItems error:', err)
       // Offline fallback: show cached data so lists stay visible
-      const table = listType === 'shopping' ? 'shopping_items' : 'bring_items'
-      const cached = readCache<ListItem[]>(listId, table)
-      if (cached) {
-        if (listType === 'shopping') setShoppingItems(cached)
-        else setBringItems(cached)
+      if (mySeq === fetchSeqsRef.current[seqKey]) {
+        const table = listType === 'shopping' ? 'shopping_items' : 'bring_items'
+        const cached = readCache<ListItem[]>(listId, table)
+        if (cached) {
+          if (listType === 'shopping') setShoppingItems(cached)
+          else setBringItems(cached)
+        }
       }
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current[seqKey]) return
     const items = (data || []) as ListItem[]
     // Write to read cache for offline access
     writeCache(listId, listType === 'shopping' ? 'shopping_items' : 'bring_items', items)
@@ -192,9 +230,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       prevBringItemsRef.current = items
       setBringItems(items)
     }
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchCategories = useCallback(async (listId: string) => {
+    const mySeq = claimFetchSeq('categories')
     const { data, error: err } = await supabase
       .from('categories')
       .select('*')
@@ -202,16 +241,21 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       .order('sort_order', { ascending: true })
     if (err) {
       logError('fetchCategories error:', err)
-      const cached = readCache<ItemCategory[]>(listId, 'categories')
-      if (cached) setCategories(cached)
+      if (mySeq === fetchSeqsRef.current['categories']) {
+        const cached = readCache<ItemCategory[]>(listId, 'categories')
+        if (cached) setCategories(cached)
+      }
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current['categories']) return
     const catData = (data || []) as ItemCategory[]
     writeCache(listId, 'categories', catData)
     setCategories(catData)
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchNotes = useCallback(async (listId: string) => {
+    const mySeq = claimFetchSeq('notes')
     const { data, error: err } = await supabase
       .from('notes')
       .select('*')
@@ -221,17 +265,21 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       .order('created_at', { ascending: true })
     if (err) {
       logError('fetchNotes error:', err)
-      const cached = readCache<QuickNote[]>(listId, 'notes')
-      if (cached) setNotes(cached)
+      if (mySeq === fetchSeqsRef.current['notes']) {
+        const cached = readCache<QuickNote[]>(listId, 'notes')
+        if (cached) setNotes(cached)
+      }
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current['notes']) return
     const noteData = (data || []) as QuickNote[]
     writeCache(listId, 'notes', noteData)
     setNotes(noteData)
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchExpenses = useCallback(async (listId: string) => {
-    const mySeq = ++fetchSeq.current
+    const mySeq = claimFetchSeq('expenses')
 
     const { data, error: err } = await supabase
       .from('expenses')
@@ -242,7 +290,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     if (err) {
       logError('fetchExpenses error:', err)
       // Offline fallback: show cached data for both tables
-      if (mySeq === fetchSeq.current) {
+      if (mySeq === fetchSeqsRef.current['expenses']) {
         const cachedExp = readCache<Expense[]>(listId, 'expenses')
         if (cachedExp) setExpenses(cachedExp)
         const cachedSplits = readCache<ExpenseSplit[]>(listId, 'expense_splits')
@@ -271,15 +319,16 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     }
 
     // Race guard: only apply if this is still the latest call
-    if (mySeq === fetchSeq.current) {
+    if (mySeq === fetchSeqsRef.current['expenses']) {
       writeCache(listId, 'expenses', expData)
       writeCache(listId, 'expense_splits', splits)
       setExpenses(expData)
       setExpenseSplits(splits)
     }
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchParticipants = useCallback(async (listId: string) => {
+    const mySeq = claimFetchSeq('participants')
     const { data, error: err } = await supabase
       .from('participants')
       .select('*')
@@ -287,16 +336,21 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       .order('name', { ascending: true })
     if (err) {
       logError('fetchParticipants error:', err)
-      const cached = readCache<Participant[]>(listId, 'participants')
-      if (cached) setParticipants(cached)
+      if (mySeq === fetchSeqsRef.current['participants']) {
+        const cached = readCache<Participant[]>(listId, 'participants')
+        if (cached) setParticipants(cached)
+      }
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current['participants']) return
     const partData = (data || []) as Participant[]
     writeCache(listId, 'participants', partData)
     setParticipants(partData)
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchExpenseQuotas = useCallback(async (listId: string) => {
+    const mySeq = claimFetchSeq('expense_quotas')
     const { data, error: err } = await supabase
       .from('expense_quotas')
       .select('*')
@@ -307,10 +361,13 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       logError('fetchExpenseQuotas error:', err)
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current['expense_quotas']) return
     setExpenseQuotas((data || []) as ExpenseQuota[])
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchSettlements = useCallback(async (listId: string) => {
+    const mySeq = claimFetchSeq('settlements')
     const { data, error: err } = await supabase
       .from('settlements')
       .select('*')
@@ -321,8 +378,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       logError('fetchSettlements error:', err)
       return
     }
+    // Race guard: ein älterer Response darf einen neueren nie überschreiben
+    if (mySeq !== fetchSeqsRef.current['settlements']) return
     setSettlements((data || []) as Settlement[])
-  }, [])
+  }, [claimFetchSeq])
 
   const fetchAll = useCallback(async (listId: string, force = false) => {
     // Guard against overlapping fetches — Mutation-Refetches können mit force=true
@@ -345,6 +404,26 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       setIsLoading(false)
     }
   }, [fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements])
+
+  // ── Ausfallsicherung gegen stilles Realtime ─────────────────────────
+  // Wenn der Tab wieder sichtbar wird oder das Netz zurückkommt, frisch
+  // nachladen: Realtime liefert ggf. keine Events (z. B. nach Suspend oder
+  // offline Phase). Ohne force → kein Ladebalken, der Guard verhindert
+  // Doppel-Fetches.
+  useEffect(() => {
+    if (!list) return
+    const refetch = () => { fetchAll(list.id) }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refetch()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', refetch)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', refetch)
+    }
+  }, [list, fetchAll])
+
   // ── Realtime sync (replaces adaptive polling) ──────────────────────
   // ref keeps latest onActivity without re-creating handleRealtimeChange
   const onActivityRef = useRef(onActivity)
@@ -557,28 +636,44 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [isOnline, enqueue, list, fetchItems])
 
   // ── Undo helper ─────────────────────────────────────────────────────
-  const withUndo = useCallback((items: ListItem[], doAction: () => void) => {
-    // Clear previous undo timeout
-    if (undoState?.timeout) {
-      clearTimeout(undoState.timeout)
+  // Undo-Stack (max. 5 Stufen): mehrere Löschungen hintereinander übernehmen
+  // sich gegenseitig nicht mehr — jede Stufe hat ihren eigenen Ablauf-Timer
+  // (5 s wie bisher), `undoDelete` nimmt die oberste (neueste) Stufe vom Stack.
+  const withUndo = useCallback((items: ListItem[], listType: ListType, doAction: () => void) => {
+    const id = ++undoSeqRef.current
+    const entry: UndoEntry = {
+      id,
+      items,
+      listType,
+      // Eigener Ablauf-Timer je Stufe
+      timeout: setTimeout(() => {
+        if (undoStackRef.current.some(e => e.id === id)) {
+          const next = undoStackRef.current.filter(e => e.id !== id)
+          undoStackRef.current = next
+          setUndoStack(next)
+        }
+      }, 5000),
     }
-    // Store items for undo
-    const timeout = setTimeout(() => {
-      setUndoState(null)
-    }, 5000)
-    setUndoState({ items, timeout })
+    // Max. 5 Stufen — bei Überlauf fallen die ältesten Stufen raus
+    const base = undoStackRef.current.length >= 5
+      ? undoStackRef.current.slice(undoStackRef.current.length - 4)
+      : undoStackRef.current
+    const next = [...base, entry]
+    undoStackRef.current = next
+    setUndoStack(next)
     // Execute the action
     doAction()
-  }, [undoState])
+  }, [])
 
   const deleteShoppingItem = useCallback((item: ListItem) => {
-    withUndo([item], () => {
+    withUndo([item], 'shopping', () => {
       setShoppingItems(prev => prev.filter(i => i.id !== item.id))
       if (isOnline) {
         supabase.from('items').delete().eq('id', item.id).then(({ error }) => {
           if (error) {
             logError('deleteShoppingItem error:', error)
-            setShoppingItems(prev => [item, ...prev])
+            // Rollback an der Originalposition (sort_order), nicht vorne
+            setShoppingItems(prev => insertSortedBySortOrder(prev, [item]))
           }
           if (list) fetchItems(list.id, 'shopping')
         })
@@ -589,21 +684,30 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [withUndo, isOnline, enqueue, list, fetchItems])
 
   const undoDelete = useCallback(() => {
-    if (!undoState) return
-    if (undoState.timeout) clearTimeout(undoState.timeout)
+    const entry = undoStackRef.current[undoStackRef.current.length - 1]
+    if (!entry) return
+    if (entry.timeout) clearTimeout(entry.timeout)
+    // Oberste (neueste) Stufe vom Stack nehmen — ältere Stufen bleiben machbar
+    const next = undoStackRef.current.slice(0, -1)
+    undoStackRef.current = next
+    setUndoStack(next)
+    // Items an ihrer ursprünglichen sort_order-Position wieder einfügen
+    if (entry.listType === 'shopping') {
+      setShoppingItems(prev => insertSortedBySortOrder(prev, entry.items))
+    } else {
+      setBringItems(prev => insertSortedBySortOrder(prev, entry.items))
+    }
     // Re-insert the deleted items
-    for (const item of undoState.items) {
+    for (const item of entry.items) {
       if (isOnline) {
         supabase.from('items').insert(item as unknown as Record<string, unknown>).then(() => {
-          if (list) fetchItems(list.id, 'shopping')
+          if (list) fetchItems(list.id, entry.listType)
         })
       } else {
         enqueue({ type: 'insert', table: 'items', payload: item as unknown as Record<string, unknown> })
       }
     }
-    setShoppingItems(prev => [...undoState.items, ...prev])
-    setUndoState(null)
-  }, [undoState, isOnline, enqueue, list, fetchItems])
+  }, [isOnline, enqueue, list, fetchItems])
 
   const toggleBringItem = useCallback((item: ListItem) => {
     const nextBrought = !item.is_brought
@@ -632,7 +736,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       supabase.from('items').delete().eq('id', item.id).then(({ error }) => {
         if (error) {
           logError('deleteBringItem error:', error)
-          setBringItems(prev => [item, ...prev])
+          // Rollback an der Originalposition (sort_order), nicht vorne
+          setBringItems(prev => insertSortedBySortOrder(prev, [item]))
         }
         if (list) fetchItems(list.id, 'bring')
       })
@@ -661,13 +766,22 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       })
     }
     if (isOnline) {
-      await supabase.rpc('batch_reorder_items', { item_ids: newOrder })
+      try {
+        const { error } = await supabase.rpc('batch_reorder_items', { item_ids: newOrder })
+        if (error) throw error
+      } catch (e) {
+        logError('reorderItems error:', e)
+        // Rollback: Serverstand neu laden statt die optimistische Reihenfolge stehen zu lassen
+        toast('Reihenfolge konnte nicht gespeichert werden.', 'error')
+        if (list) fetchItems(list.id, listType)
+        return
+      }
     } else {
       enqueue({ type: 'rpc', table: '', payload: { item_ids: newOrder }, rpcName: 'batch_reorder_items' })
     }
     // Refetch only the affected list type (not all 8 tables)
     if (list) fetchItems(list.id, listType)
-  }, [list, fetchItems, isOnline, enqueue])
+  }, [list, fetchItems, isOnline, enqueue, toast])
 
   const reorderNotes = useCallback(async (newOrder: string[]) => {
     if (!list) return
@@ -680,12 +794,21 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       }).filter(Boolean)
     })
     if (isOnline) {
-      await supabase.rpc('batch_reorder_notes', { note_ids: newOrder })
+      try {
+        const { error } = await supabase.rpc('batch_reorder_notes', { note_ids: newOrder })
+        if (error) throw error
+      } catch (e) {
+        logError('reorderNotes error:', e)
+        // Rollback: Serverstand neu laden statt die optimistische Reihenfolge stehen zu lassen
+        toast('Reihenfolge konnte nicht gespeichert werden.', 'error')
+        if (list) fetchNotes(list.id)
+        return
+      }
     } else {
       enqueue({ type: 'rpc', table: '', payload: { note_ids: newOrder }, rpcName: 'batch_reorder_notes' })
     }
     if (list) fetchNotes(list.id)
-  }, [list, fetchNotes, isOnline, enqueue])
+  }, [list, fetchNotes, isOnline, enqueue, toast])
 
   const toggleNoteFavorite = useCallback(async (noteId: string) => {
     if (!list) return
@@ -703,7 +826,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
   const knownPersons = useMemo(() => deriveKnownPersons(userName, participants), [userName, participants])
 
-  const userBalance = useMemo(() => deriveUserBalance(expenses, expenseSplits, userName), [expenses, expenseSplits, userName])
+  const userBalance = useMemo(
+    () => deriveUserBalance(expenses, expenseSplits, settlements, userName),
+    [expenses, expenseSplits, settlements, userName],
+  )
 
   const expenseTotal = useMemo(() => deriveExpenseTotal(expenses), [expenses])
 
@@ -728,6 +854,13 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [fetchAll])
 
   const handleLeave = useCallback(() => {
+    // Laufenden Realtime-Debounce stoppen und Pending-Tabellen leeren —
+    // nach dem Listenwechsel darf kein alter Timer mehr Daten schreiben.
+    if (realtimeDebounceRef.current) {
+      clearTimeout(realtimeDebounceRef.current)
+      realtimeDebounceRef.current = null
+    }
+    pendingRealtimeTablesRef.current.clear()
     if (list) clearCacheForList(list.id)
     localStorage.removeItem('user_name')
     localStorage.removeItem('participant_id')
@@ -744,7 +877,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     setSettlements([])
     setParticipants([])
     setAdminUnlocked(false)
-    setUndoState(null)
+    undoStackRef.current = []
+    setUndoStack([])
     prevShoppingItemsRef.current = []
     prevBringItemsRef.current = []
     resetNotifyBuffer()

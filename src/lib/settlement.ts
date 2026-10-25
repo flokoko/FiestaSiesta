@@ -216,8 +216,10 @@ export function calculateShareAmounts(
 
 /**
  * Calculate share amounts from quota percentages.
- * Same rounding logic as calculateShareAmounts: floor to cents,
- * remainder goes to the largest quota holders (by absolute cents).
+ * Same rounding logic as calculateShareAmounts: floor to cents. Rest-Cents
+ * verteilen sich zuerst nach dem größten Bruchteil-Verlust, danach reihum an
+ * die Personen mit Quote > 0 — die Shares summieren sich IMMER exakt auf
+ * den Betrag (auch bei Quotensumme ≠ 100 %; kein stiller Centverlust).
  */
 export function calculateQuotaShares(
   quotas: ExpenseQuota[],
@@ -269,15 +271,40 @@ export function calculateQuotaShares(
   let remainder = totalCents - distributed
 
   if (remainder > 0) {
-    // Sort by who lost the most to flooring (highest raw value before floor)
+    // 1. Rest-Cents nach größtem Bruchteil-Verlust verteilen — wer beim
+    //    Ab-Runden am meisten verloren hat (höchster raw-Wert vor dem Floor),
+    //    bekommt sie zuerst.
     const fractionalLoss = participants.map((p, i) => {
       const pct = percentMap.get(p) ?? 0
       const raw = (totalCents * pct) / 100
       return { person_name: p, loss: raw - rawCents[i].cents, idx: i }
     })
     fractionalLoss.sort((a, b) => b.loss - a.loss)
-    for (let i = 0; i < remainder && i < fractionalLoss.length; i++) {
-      rawCents[fractionalLoss[i].idx].cents += 1
+    for (const f of fractionalLoss) {
+      if (remainder <= 0) break
+      rawCents[f.idx].cents += 1
+      remainder -= 1
+    }
+    // 2. Falls dann noch Rest übrig ist (Quotensumme < 100 %, alle Bruchteile
+    //    schon verteilt): reihum an die Personen mit Quote > 0 — kein stiller
+    //    Cent-Verlust, die Shares summieren sich exakt auf den Betrag.
+    let turn = 0
+    while (remainder > 0) {
+      rawCents[turn % rawCents.length].cents += 1
+      turn += 1
+      remainder -= 1
+    }
+  } else if (remainder < 0) {
+    // Quotensumme > 100 %: Überschuss reihum abziehen, keine Person unter 0.
+    // distributed > totalCents ⇒ mindestens eine Person hat Cent → terminiert.
+    let turn = 0
+    while (remainder < 0 && rawCents.some(r => r.cents > 0)) {
+      const idx = turn % rawCents.length
+      if (rawCents[idx].cents > 0) {
+        rawCents[idx].cents -= 1
+        remainder += 1
+      }
+      turn += 1
     }
   }
 

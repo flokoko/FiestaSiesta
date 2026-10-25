@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
@@ -32,6 +32,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
     return isoDay(days[0])
   })
+  // ── Doppelklick-Sperre je proposal_id: keine parallelen Vote-Inserts/Deletes
+  const votingRef = useRef<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     const [p, v] = await Promise.all([
@@ -95,32 +97,61 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const handleVote = async (proposal: TripProposal) => {
-    const own = votes.find((v) => v.proposal_id === proposal.id && v.voter === userName)
-    navigator.vibrate?.(8)
-    setBusyId(proposal.id)
-    const { error } = own
-      ? await supabase.from('trip_votes').delete().eq('id', own.id)
-      : await supabase.from('trip_votes').insert({
-          list_id: listId,
-          proposal_id: proposal.id,
-          voter: userName,
-        })
-    setBusyId(null)
-    if (error) {
-      toast(`Fehler: ${error.message}`, 'error')
-      return
+    // Ref-Sperre: Doppelklick darf nicht zwei Insert/Delete parallel laufen lassen
+    if (votingRef.current.has(proposal.id)) return
+    votingRef.current.add(proposal.id)
+    try {
+      const own = votes.find((v) => v.proposal_id === proposal.id && v.voter === userName)
+      navigator.vibrate?.(8)
+      setBusyId(proposal.id)
+      const { error } = own
+        ? await supabase.from('trip_votes').delete().eq('id', own.id)
+        : await supabase.from('trip_votes').insert({
+            list_id: listId,
+            proposal_id: proposal.id,
+            voter: userName,
+          })
+      setBusyId(null)
+      if (error) {
+        toast(`Fehler: ${error.message}`, 'error')
+        return
+      }
+      void load()
+    } finally {
+      votingRef.current.delete(proposal.id)
     }
-    void load()
   }
 
   const handleConfirm = (proposal: TripProposal) => {
     confirm(`„${proposal.title}" als Plan übernehmen?`, async () => {
+      // Pro day+slot ist nur EINE Bestätigung erlaubt (partial unique index in
+      // sql/111_trip_plan_place_confirm.sql). Vor dem Setzen eine evtl.
+      // bestehende Bestätigung desselben day+slot zurücksetzen, dann die
+      // neue setzen; die 23505 fängt den Rennfall mit einem anderen Client ab.
+      const { error: clearError } = await supabase
+        .from('trip_proposals')
+        .update({ confirmed_at: null, confirmed_by: null })
+        .eq('list_id', listId)
+        .eq('day', proposal.day)
+        .eq('slot', proposal.slot)
+        .neq('id', proposal.id)
+        .not('confirmed_at', 'is', null)
+      if (clearError) {
+        toast(`Fehler: ${clearError.message}`, 'error')
+        void load()
+        return
+      }
       const { error } = await supabase
         .from('trip_proposals')
         .update({ confirmed_at: new Date().toISOString(), confirmed_by: userName })
         .eq('id', proposal.id)
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        if (error.code === '23505') {
+          toast('Es ist bereits ein Plan für diese Zeit übernommen.', 'error')
+        } else {
+          toast(`Fehler: ${error.message}`, 'error')
+        }
+        void load()
         return
       }
       navigator.vibrate?.([10, 40, 10])

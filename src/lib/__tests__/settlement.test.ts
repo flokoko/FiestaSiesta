@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeMatrix, computeSettlementProposals, type SettlementTxn } from '../settlement'
-import type { Expense, ExpenseSplit, Settlement } from '../../types'
+import { computeMatrix, computeSettlementProposals, calculateQuotaShares, type SettlementTxn } from '../settlement'
+import type { Expense, ExpenseSplit, ExpenseQuota, Settlement } from '../../types'
 
 const makeExpense = (id: string, paidBy: string, amount = 100): Expense => ({
   id,
@@ -140,5 +140,74 @@ describe('computeSettlementProposals', () => {
       { from: 'Carol', to: 'Alice', amount: 40 },
       { from: 'Bob', to: 'Alice', amount: 10 },
     ])
+  })
+})
+
+describe('calculateQuotaShares', () => {
+  const makeQuota = (personName: string, percent: number): ExpenseQuota => ({
+    id: `q-${personName}`,
+    list_id: 'list',
+    category: 'c',
+    person_name: personName,
+    percent,
+    created_at: '2026-01-01T00:00:00Z',
+  })
+
+  it('verteilt den vollen Betrag, auch wenn die Quotensumme unter 100 % liegt', () => {
+    // 50 % + 30 % = 80 % — die Rest-Cents bleiben im Topf, nichts geht verloren.
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 50), makeQuota('Bob', 30)],
+      ['Alice', 'Bob'],
+      137,
+    )
+    const total = shares.reduce((s, r) => s + r.share_amount, 0)
+    expect(Math.round(total * 100)).toBe(13700)
+  })
+
+  it('gibt den ersten Rest-Cent der Person mit dem größten Bruchteil-Verlust', () => {
+    // 1 Cent bei 50 % / 30 %: raw 0.5 / 0.3 → Alice lost am meisten beim Floor.
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 50), makeQuota('Bob', 30)],
+      ['Alice', 'Bob'],
+      0.01,
+    )
+    expect(shares).toEqual([
+      { person_name: 'Alice', share_amount: 0.01 },
+      { person_name: 'Bob', share_amount: 0 },
+    ])
+  })
+
+  it('schließt Personen mit 0 % Quote aus, verliert aber keinen Betrag', () => {
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 50), makeQuota('Bob', 30), makeQuota('Carol', 0)],
+      ['Alice', 'Bob', 'Carol'],
+      89.99,
+    )
+    const total = shares.reduce((s, r) => s + r.share_amount, 0)
+    expect(Math.round(total * 100)).toBe(8999)
+    expect(shares.some(s => s.person_name === 'Carol')).toBe(false)
+  })
+
+  it('zieht bei Quotensumme über 100 % den Überschuss wieder ab', () => {
+    // 80 % + 80 % auf 10 €: die Shares dürfen NICHT zusammen 16 € ergeben.
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 80), makeQuota('Bob', 80)],
+      ['Alice', 'Bob'],
+      10,
+    )
+    const total = shares.reduce((s, r) => s + r.share_amount, 0)
+    expect(Math.round(total * 100)).toBe(1000)
+  })
+
+  it('behält die exakte Gleichverteilung bei (≈ gleiche Quoten)', () => {
+    // 33.33 / 33.33 / 33.34 wird als gleich behandelt → exakter Equal-Split.
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 33.33), makeQuota('Bob', 33.33), makeQuota('Carol', 33.34)],
+      ['Alice', 'Bob', 'Carol'],
+      1000,
+    )
+    const total = shares.reduce((s, r) => s + r.share_amount, 0)
+    expect(Math.round(total * 100)).toBe(100000)
+    expect(Math.max(...shares.map(s => s.share_amount)) - Math.min(...shares.map(s => s.share_amount))).toBeLessThanOrEqual(0.01)
   })
 })

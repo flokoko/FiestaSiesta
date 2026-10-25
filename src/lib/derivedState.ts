@@ -15,7 +15,9 @@ import type {
   Expense,
   ExpenseSplit,
   Participant,
+  Settlement,
 } from '../types'
+import { computeOpenBalances } from './settlement'
 
 /** Categories filtered for a specific list_type */
 export function deriveCategoriesByType(
@@ -36,16 +38,26 @@ export function deriveKnownPersons(
   return Array.from(names).sort((a, b) => a.localeCompare(b))
 }
 
-/** Net balance for a specific user: total paid minus total share */
+/**
+ * Offener Saldo für einen Nutzer — EINE Wahrheit für Home/Notizen/Geld-Tab:
+ * bezahlt − Anteil, abzüglich beglichener Zahlungen (computeOpenBalances aus
+ * settlement.ts, damit der Betrag identisch mit dem Geld-Tab ist). Auf Cent
+ * gerundet.
+ */
 export function deriveUserBalance(
   expenses: Expense[],
   expenseSplits: ExpenseSplit[],
+  settlements: Settlement[],
   userName: string | null,
 ): number {
   if (!userName) return 0
   const paid = expenses.filter(e => e.paid_by === userName).reduce((s, e) => s + e.amount, 0)
   const share = expenseSplits.filter(s => s.person_name === userName).reduce((s, s2) => s + s2.share_amount, 0)
-  return paid - share
+  const open = computeOpenBalances(
+    { [userName]: paid - share },
+    settlements.map(s => ({ from: s.payer, to: s.payee, amount: s.amount })),
+  )
+  return Math.round((open[userName] ?? 0) * 100) / 100
 }
 
 /** Total of all expenses */

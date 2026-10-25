@@ -162,14 +162,20 @@ export default function ExpenseScreen({
   // ── Delete ──
   const handleDelete = (expense: Expense) => {
     confirm(`"${expense.description}" wirklich löschen?`, async () => {
-      const { error: splitError } = await supabase.from('expense_splits').delete().eq('expense_id', expense.id)
-      if (splitError) {
-        toast(`Fehler beim Löschen der Aufteilung: ${splitError.message}`, 'error')
-        return
-      }
+      // Erst die Ausgabe selbst löschen — schlägt das fehl, bleibt der alte
+      // Stand konsistent. (Die DB cascade't die Splits über ON DELETE CASCADE
+      // mit; der Split-Delete danach ist Best-Effort für Schemas ohne Cascade.)
       const { error } = await supabase.from('expenses').delete().eq('id', expense.id)
       if (error) {
         toast(`Fehler beim Löschen: ${error.message}`, 'error')
+        onExpensesChange()
+        return
+      }
+      const { error: splitError } = await supabase.from('expense_splits').delete().eq('expense_id', expense.id)
+      if (splitError) {
+        toast(`Fehler beim Löschen der Aufteilung: ${splitError.message}`, 'error')
+        // Ausgabe ist weg, Splits evtl. nicht → Refetch statt inkonsistenter UI
+        onExpensesChange()
         return
       }
       navigator.vibrate?.(10)
