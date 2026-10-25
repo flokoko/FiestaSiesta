@@ -94,16 +94,18 @@ async function executeOp(op: QueuedOp): Promise<void> {
     const { error } = await supabase.from(op.table).insert(op.payload)
     if (error) throw error
   } else if (op.type === 'update') {
-    const { error } = await supabase
-      .from(op.table)
-      .update(op.payload)
-      .eq(op.filterColumn!, op.filterValue!)
+    // filterValue als Array = Sammel-Update (eine Runde statt N): 30 abgehakte
+    // Gruppen-Artikel waren vorher 30 Requests à ≥1 RTT.
+    const query = supabase.from(op.table).update(op.payload)
+    const { error } = Array.isArray(op.filterValue)
+      ? await query.in(op.filterColumn!, op.filterValue)
+      : await query.eq(op.filterColumn!, op.filterValue!)
     if (error) throw error
   } else if (op.type === 'delete') {
-    const { error } = await supabase
-      .from(op.table)
-      .delete()
-      .eq(op.filterColumn!, op.filterValue!)
+    const query = supabase.from(op.table).delete()
+    const { error } = Array.isArray(op.filterValue)
+      ? await query.in(op.filterColumn!, op.filterValue)
+      : await query.eq(op.filterColumn!, op.filterValue!)
     if (error) throw error
   }
 }

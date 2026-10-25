@@ -112,7 +112,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
             voter: userName,
           })
       setBusyId(null)
-      if (error) {
+      // 23505 = unique(proposal_id, voter): der eigene Vote war schon gesetzt
+      // (verzögertes Realtime/Echo). Ergebnis stimmt, also keinen Fehler zeigen.
+      if (error && error.code !== '23505') {
         toast(`Fehler: ${error.message}`, 'error')
         return
       }

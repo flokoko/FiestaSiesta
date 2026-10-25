@@ -6,7 +6,8 @@ import { supabase, changeParticipantPassword } from './lib/supabase'
 import { screenDirection, type ScreenDirection } from './lib/navTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
-import NotesScreen from './components/NotesScreen'
+const importNotesScreen = () => import('./components/NotesScreen')
+const NotesScreen = lazy(importNotesScreen)
 import { spanishSuccess } from './lib/espanaFlair'
 import { useListData } from './hooks/useListData'
 
@@ -38,6 +39,7 @@ const SCREEN_CHUNKS_EAGER = [
   importTripPlanScreen,
   importSettingsScreen,
   importExpenseScreen,
+  importNotesScreen,
 ]
 const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen]
 import TodayScreen from './components/TodayScreen'
@@ -160,7 +162,6 @@ export default function App() {
     isAdmin, shoppingCategories, bringCategories, knownPersons, userBalance,
     expenseTotal, checkedCount, isLoading, isOnline, queueLength, flushQueue, restoringSession,
     setList, setAdminUnlocked,
-    fetchAll,
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
     toggleShoppingItem, deleteShoppingItem, undoDelete, batchToggleShoppingItems, toggleBringItem, deleteBringItem, reorderItems, reorderNotes, toggleNoteFavorite,
     handleJoin, handleLeave, handleRename,
@@ -310,14 +311,13 @@ export default function App() {
           toast('Einige Änderungen konnten nicht synchronisiert werden.', 'error')
         } else if (success > 0) {
           toast(`${spanishSuccess()} Synchronisiert!`, 'success')
-          // Full refetch after successful sync — single fetchAll with force=true
-          if (list) {
-            fetchAll(list.id, true)
-          }
+          // Kein zusätzliches fetchAll hier: der verzögerte 'online'-Refetch in
+          // useListData holt die geflushten Ops mit, ein zweiter Komplett-Fetch
+          // wäre bei Rückkehr ins Netz nur ein Burst von 8 Tabellen-Abfragen.
         }
       })
     }
-  }, [isOnline, queueLength, fetchAll, flushQueue, toast, list])
+  }, [isOnline, queueLength, flushQueue, toast])
 
   // ── Confetti when all shopping items are checked off ───────────────
   const prevAllCheckedRef = useRef(false)

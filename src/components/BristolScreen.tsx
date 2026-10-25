@@ -17,7 +17,7 @@ import {
   bristolInk,
 } from '../lib/bristolConstants'
 import { spanishSuccess } from '../lib/espanaFlair'
-import { isoDay, todayIso } from '../lib/date'
+import { addDaysIso, isoDay, todayIso } from '../lib/date'
 import './BristolScreen.css'
 
 interface BristolScreenProps {
@@ -73,6 +73,10 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
       .from('bristol_entries')
       .select('*')
       .eq('list_id', listId)
+      // Nur die letzten 90 Tage: Reise ist eine Woche, Statistik/Verlauf brauchen
+      // nicht die Ewigkeit — vorher wuchs Payload und Chart-Knotenzahl unbegrenzt.
+      .gte('entry_date', addDaysIso(todayIso(), -90))
+      .limit(500)
       .order('entry_time', { ascending: false })
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })

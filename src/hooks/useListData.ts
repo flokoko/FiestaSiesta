@@ -556,16 +556,85 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [userName])
 
   // ── Auto-restore session ───────────────────────────────────────────
+  // Hält die aktuelle Liste lokal, damit die App auch ohne jede Verbindung
+  // starten kann (siehe Offline-Zweig unten).
+  useEffect(() => {
+    try {
+      if (list) localStorage.setItem('fs_current_list', JSON.stringify(list))
+    } catch {
+      // localStorage voll — der Offline-Start fällt dann auf den Login zurück
+    }
+  }, [list])
+
+  /**
+   * Sitzung ohne Netz aus dem lokalen Spiegel aufbauen. Genau der Urlaubsfall:
+   * installierte PWA, kein Empfang, aber alle Tabellen liegen als Read-Cache
+   * (readCache) auf dem Gerät. Vorher landete man stattdessen im Login-Screen,
+   * der selbst einen RPC braucht — die App war offline komplett unbenutzbar.
+   */
+  const hydrateFromCache = useCallback((listId: string) => {
+    const cached = <T,>(table: string, set: (value: T) => void) => {
+      const value = readCache<T>(listId, table)
+      if (value) set(value)
+    }
+    cached<ListItem[]>('shopping_items', setShoppingItems)
+    cached<ListItem[]>('bring_items', setBringItems)
+    cached<ItemCategory[]>('categories', setCategories)
+    cached<QuickNote[]>('notes', setNotes)
+    cached<Expense[]>('expenses', setExpenses)
+    cached<ExpenseSplit[]>('expense_splits', setExpenseSplits)
+    cached<Participant[]>('participants', setParticipants)
+  }, [])
+
   useEffect(() => {
     const savedName = localStorage.getItem('user_name')
     const savedParticipantId = localStorage.getItem('participant_id')
-    if (savedName && savedParticipantId) {
-      // Sicherheitsnetz: hängt die Wiederherstellung (offline, langsames Netz),
-      // kommt nach 4 s der Login statt eines ewigen Splashs.
-      const guard = window.setTimeout(() => setRestoringSession(false), 4000)
-      restoreParticipantSession(savedParticipantId).then((result) => {
+    if (!savedName || !savedParticipantId) {
+      setRestoringSession(false)
+      return
+    }
+
+    let cancelled = false
+    // Sicherheitsnetz: hängt die Wiederherstellung (offline, langsames Netz),
+    // kommt nach 6 s die App statt eines ewigen Splashs.
+    const guard = window.setTimeout(() => {
+      if (!cancelled) setRestoringSession(false)
+    }, 6000)
+
+    /** Offline-Start versuchen; false = kein lokaler Listen-Spiegel vorhanden. */
+    const startOffline = (): boolean => {
+      let cachedList: ShoppingList | null = null
+      try {
+        const raw = localStorage.getItem('fs_current_list')
+        if (raw) cachedList = JSON.parse(raw) as ShoppingList
+      } catch {
+        cachedList = null
+      }
+      if (!cachedList) return false
+      setUserName(savedName)
+      setParticipantId(savedParticipantId)
+      setList(cachedList)
+      hydrateFromCache(cachedList.id)
+      setIsLoading(false)
+      setRestoringSession(false)
+      return true
+    }
+
+    // Ohne Netz nicht erst 12 s auf den Timeout warten.
+    if (!navigator.onLine && startOffline()) {
+      window.clearTimeout(guard)
+      return () => {
+        cancelled = true
+        window.clearTimeout(guard)
+      }
+    }
+
+    restoreParticipantSession(savedParticipantId)
+      .then((result) => {
+        if (cancelled) return
         if (result.error || !result.list_id) {
-          setRestoringSession(false)
+          // Netz-/Serverfehler: lokal weiterarbeiten statt Login zu zeigen.
+          if (!startOffline()) setRestoringSession(false)
           return
         }
         setUserName(result.participant_name)
@@ -579,30 +648,38 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
             .single()
         )
           .then(({ data, error }) => {
+            if (cancelled) return
             setRestoringSession(false)
             if (error || !data) {
-              // List was deleted or query failed — clean up session and stop loading
               setIsLoading(false)
+              // Liste wirklich gelöscht (kein Netzfehler) → Sitzung verwerfen
               if (!error) {
-                // Only clean up localStorage if the list genuinely doesn't exist
                 localStorage.removeItem('user_name')
                 localStorage.removeItem('participant_id')
+                localStorage.removeItem('fs_current_list')
               }
               return
             }
             setList(data as ShoppingList)
-            fetchAll(result.list_id)
+            fetchAll(result.list_id, true)
           })
           .catch(() => {
+            if (cancelled) return
             setIsLoading(false)
-            setRestoringSession(false)
+            if (!startOffline()) setRestoringSession(false)
           })
           .finally(() => window.clearTimeout(guard))
       })
-    } else {
-      setRestoringSession(false)
+      .catch(() => {
+        if (cancelled) return
+        if (!startOffline()) setRestoringSession(false)
+      })
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(guard)
     }
-  }, [fetchAll])
+  }, [fetchAll, hydrateFromCache])
 
   // ── Optimistic update helpers ──────────────────────────────────────
   // NOTE: refetch happens AFTER the server write completes, not immediately,
@@ -626,10 +703,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
         if (list) fetchItems(list.id, 'shopping')
       })
     } else {
-      // Enqueue one op per item for offline (Supabase RLS needs per-row)
-      for (const item of items) {
-        enqueue({ type: 'update', table: 'items', payload: { is_checked: checked }, filterColumn: 'id', filterValue: item.id })
-      }
+      // EIN Op mit .in(id-Liste): beim Flush ein Request statt einer pro Artikel.
+      enqueue({ type: 'update', table: 'items', payload: { is_checked: checked }, filterColumn: 'id', filterValue: ids })
     }
   }, [isOnline, enqueue, list, fetchItems])
 
@@ -869,12 +944,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     // ersten Ladevorgang der neuen Liste nicht verschlucken (leere Listen bis
     // zum nächsten Realtime-Event). Die seq-Guards verwerfen die alte Antwort.
     fetchAll(l.id, true)
-    const { data: fullList } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('id', l.id)
-      .single()
-    if (fullList) setList(fullList as ShoppingList)
+    // Kein extra Listen-Query: JoinScreen hat `l` bereits vollständig geladen,
+    // ein zweiter Roundtrip auf dem Anmelde-Pfad bringt nichts.
   }, [fetchAll])
 
   const handleLeave = useCallback(() => {
@@ -891,6 +962,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     if (list) clearCacheForList(list.id)
     localStorage.removeItem('user_name')
     localStorage.removeItem('participant_id')
+    localStorage.removeItem('fs_current_list')
     setUserName(null)
     setList(null)
     setParticipantId(null)

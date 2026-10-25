@@ -22,7 +22,7 @@ const TABLES_WITHOUT_LIST_ID: ReadonlySet<TableName> = new Set(['expense_splits'
 
 const DEFAULT_TABLES: TableName[] = [
   'items', 'categories', 'notes', 'expenses', 'expense_splits', 'expense_quotas',
-  'participants', 'bristol_entries', 'settlements',
+  'participants', 'settlements',
 ]
 
 export function useRealtimeSync({ listId, onTableChange, channelSuffix = '', tables: onlyTables }: UseRealtimeSyncOptions) {
