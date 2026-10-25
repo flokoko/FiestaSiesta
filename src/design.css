@@ -3803,84 +3803,24 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   SEITENWECHSEL (v0.26): ein Pane, ein Einblender — kein Überlappen
+   SEITENWECHSEL (v0.27): harter Schnitt, keine Seiten-Animation
 
-   Erkenntnis aus v0.25: alter und neuer Screen GLEICHZEITIG halbtransparent
-   übereinander zu legen ergibt Doppelbilder und einen sichtbaren Helligkeits-
-   bogen (zwei Fades summieren sich nicht linear) — auf dem Gerät liest sich
-   das als Flackern. Deshalb jetzt: beim Wechsel verschwindet der alte Pane
-   sofort (display:none), der neue blendet kurz ein. Nie zwei Screens sichtbar.
+   Historie: v0.25 blendete alt und neu gleichzeitig über (Doppelbilder,
+   Helligkeitsbogen), v0.26 nahm einen Einblender über der ganzen Fläche — beides
+   wurde auf dem Gerät als Flackern gesehen. Jetzt: der Wechsel selbst ist
+   unsichtbar schnell. Bewegung bleibt nur an Kleinteilen (Nav-Pille,
+   Kopfzeile), die nicht die ganze Seite neu zeichnen.
 
-   Panes:  .screen-pane[data-state=active|idle]  (idle = display:none, bleibt
-           gemountet → kein Remount, kein neuer Chunk-Load)
-   fresh:  erster Besuch → volle Staffel; Rückkehr → nur ein Hauch Einblender
+   Panes: .screen-pane[data-state=active|idle]; idle = display:none, bleibt aber
+   gemountet (kein Remount, kein Chunk-Load, Zustand bleibt).
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Kein horizontaler Scrollbalken durch den Slide (clip statt hidden:
-   hidden macht <body> zum Scroll-Container und bricht position:sticky). */
-#root .app {
-  overflow-x: clip;
-}
-
-#root .screen-stack {
-  position: relative;
-}
-
-/* Versteckte Panes: display:none. Ein absolut positionierter, unsichtbarer
-   Screen würde die Dokumenthöhe aufblähen (man könnte in leeren Raum scrollen),
-   deshalb bewusst raus aus dem Layout. */
 #root .screen-pane[data-state='idle'] {
   display: none;
 }
 
 #root .screen-pane[data-state='active'] {
   position: relative;
-  z-index: 1;
-  animation: paneSoftIn 0.16s var(--ease) backwards;
-}
-
-/* Erster Besuch: der Screen baut sich sichtbar auf */
-#root .screen-pane[data-state='active'][data-fresh='true'] {
-  animation: paneFadeIn 0.24s var(--ease) backwards;
-}
-
-@keyframes paneSoftIn {
-  from { opacity: 0.45; }
-  to { opacity: 1; }
-}
-
-@keyframes paneFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* ── Stufe 1: der Inhalt läuft gestaffelt ein (nur beim ersten Besuch) ──
-   Direkte Kinder des Screen-Wrappers (Hero, Chips, Karten, Abschnitte)
-   steigen nacheinander auf. Die Richtung trägt diese Staffel: vorwärts
-   steigt der Inhalt von unten auf, zurück fällt er von oben ein. */
-#root .screen-pane[data-fresh='true'] > * > * {
-  animation: paneItemRise 0.32s var(--ease) backwards;
-  animation-delay: 0.1s;
-}
-
-#root .screen-pane[data-fresh='true'][data-dir='back'] > * > * {
-  animation-name: paneItemDrop;
-}
-
-#root .screen-pane[data-fresh='true'] > * > *:nth-child(1) { animation-delay: 0.02s; }
-#root .screen-pane[data-fresh='true'] > * > *:nth-child(2) { animation-delay: 0.04s; }
-#root .screen-pane[data-fresh='true'] > * > *:nth-child(3) { animation-delay: 0.06s; }
-#root .screen-pane[data-fresh='true'] > * > *:nth-child(4) { animation-delay: 0.08s; }
-#root .screen-pane[data-fresh='true'] > * > *:nth-child(5) { animation-delay: 0.1s; }
-
-@keyframes paneItemRise {
-  from { opacity: 0.6; transform: translate3d(0, 12px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-
-@keyframes paneItemDrop {
-  from { opacity: 0.6; transform: translate3d(0, -8px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 /* ── Stufe 3: Kopfzeile zieht mit ─────────────────────────────────────
@@ -3978,8 +3918,6 @@ body::before {
 /* Reduzierte Bewegung: keine Seiten-/Staffel-Animationen, der scheidende
    Pane verschwindet sofort (sonst läge er 380 ms über dem neuen Inhalt). */
 @media (prefers-reduced-motion: reduce) {
-  #root .screen-pane,
-  #root .screen-pane > * > *,
   #root .bottom-nav-item.active svg {
     animation: none;
   }
@@ -3994,4 +3932,30 @@ body::before {
 @keyframes tabLoaderIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ── Toast-Kontrast (Fix v0.27) ───────────────────────────────────────
+   Der Toast hat eine dunkle Fläche (--toast-bg), aber die Nachricht holte
+   ihre Farbe aus --text-primary — im hellen Theme also fast schwarz auf
+   fast schwarz (unlesbar, z. B. „Push-Benachrichtigungen aktiviert!“).
+   Schrift, Icon und Schließen folgen jetzt der Toast-Fläche. */
+#root .toast .toast-message {
+  color: var(--toast-ink);
+}
+
+#root .toast .toast-icon,
+#root .toast .toast-close {
+  color: var(--toast-ink);
+  opacity: 0.78;
+}
+
+#root .toast-success .toast-icon { color: #7BE0B4; opacity: 1; }
+#root .toast-error .toast-icon { color: #FF9AA2; opacity: 1; }
+#root .toast-confirm .toast-icon { color: var(--gold); opacity: 1; }
+#root .toast .toast-close:hover { opacity: 1; }
+
+/* Abbrechen-Button im Bestätigungs-Toast: heller Rand auf dunkler Fläche */
+#root .toast .toast-btn-cancel {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--toast-ink);
 }

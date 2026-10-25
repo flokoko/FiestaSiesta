@@ -3,7 +3,6 @@ import { ArrowLeft, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
-import { screenDirection, type ScreenDirection } from './lib/navTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import NotesScreen from './components/NotesScreen'
@@ -60,26 +59,20 @@ function TabLoader() {
 
 /**
  * Ein Screen als „Pane“: bleibt nach dem ersten Besuch gemountet und wird nur
- * versteckt. Das ist der Anti-Flacker: kein Remount, kein Neuladen der
- * Lazy-Chunks, keine verlorenen Formular-/Filter-Zustände.
+ * versteckt. Das ist der Kern gegen das Flackern: kein Remount, kein erneuter
+ * Chunk-Load, keine verlorenen Formular-/Filter-Zustände.
  *
- * Bewusst KEIN gleichzeitiges Überblenden von altem und neuem Screen: zwei
- * halbtransparente Screens übereinander ergeben Doppelbilder und je nach
- * Inhalt ein sichtbares Aufhellen — das liest sich als Flackern. Es ist immer
- * genau ein Pane sichtbar; der Wechsel ist ein kurzes Einblenden.
+ * Bewusst OHNE Animation: jeder Ein-/Überblender über der ganzen Seite wurde
+ * auf dem Gerät als Flackern wahrgenommen. Der Wechsel ist ein harter Schnitt;
+ * Bewegung gibt es nur an Kleinteilen (Nav-Pille, Kopfzeile).
  */
 function ScreenPane({
   id,
   active,
-  fresh,
-  direction,
   children,
 }: {
   id: TabView
   active: boolean
-  /** erster Besuch → volle Eintritts-Animation mit gestaffeltem Inhalt */
-  fresh: boolean
-  direction: ScreenDirection
   children: ReactNode
 }) {
   return (
@@ -87,8 +80,6 @@ function ScreenPane({
       className="screen-pane"
       data-tab={id}
       data-state={active ? 'active' : 'idle'}
-      data-fresh={fresh ? 'true' : 'false'}
-      data-dir={direction}
       aria-hidden={active ? undefined : true}
     >
       {children}
@@ -161,37 +152,17 @@ export default function App() {
   const [tab, setTabState] = useState<TabView>('home')
   const [moreOpen, setMoreOpen] = useState(false)
 
-  // Übergangsrichtung für den Screen-Wechsel (v0.24): vorwärts wenn es
-  // tiefer in den Baum geht, rückwärts beim Zurück-Pfeil / leichterem Tab.
-  // Bewusst im Callback statt im Render: unter StrictMode rendert React
-  // zweimal, eine Ref-Mutation im Render käme beim zweiten Lauf als
-  // „gleicher Tab" an und die Richtung wäre immer 'side'.
-  const [screenDir, setScreenDir] = useState<ScreenDirection>('side')
   const tabRef = useRef<TabView>('home')
   // Besuchte Screens bleiben gemountet (Pane-Ansatz) — nur der erste Besuch
-  // mountet wirklich, danach wird ausschließlich ein- und ausgeblendet.
+  // mountet wirklich, danach wird nur noch ein- und ausgeblendet.
   const [visited, setVisited] = useState<ReadonlySet<TabView>>(() => new Set<TabView>(['home']))
-  // Nur der jeweils erste Besuch bekommt die volle Staffel; Rückkehr ist
-  // sofort da (der Screen war ja nur versteckt und ist fertig aufgebaut).
-  const seenRef = useRef<Set<TabView>>(new Set<TabView>())
-  const [freshTab, setFreshTab] = useState(true)
 
   const setTab = useCallback((next: TabView) => {
     const prev = tabRef.current
     if (prev === next) return
     tabRef.current = next
-    setScreenDir(screenDirection(prev, next))
-    const firstVisit = !seenRef.current.has(next)
-    if (firstVisit) seenRef.current.add(next)
-    setFreshTab(firstVisit)
     setVisited((v) => (v.has(next) ? v : new Set(v).add(next)))
     setTabState(next)
-  }, [])
-
-  // „Heute“ ist beim Start schon da: als gesehen markieren, damit die
-  // Rückkehr dorthin nicht erneut die Staffel abspielt.
-  useEffect(() => {
-    seenRef.current.add('home')
   }, [])
 
   // Lazy-Chunks im Idle vorladen: der erste Besuch eines Tabs zeigt sonst den
@@ -218,8 +189,14 @@ export default function App() {
   }, [list?.id])
 
   // Jeder Tab beginnt oben — sonst landet man beim Wechsel mitten im Inhalt.
+  // `html { scroll-behavior: smooth }` würde den Sprung animieren (sieht aus
+  // wie ein Ruckeln), deshalb kurz auf hart schalten.
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
+    const html = document.documentElement
+    const previous = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    window.scrollTo(0, 0)
+    html.style.scrollBehavior = previous
   }, [tab])
 
   // ── PWA update available banner ─────────────────────────────────────
@@ -489,12 +466,7 @@ export default function App() {
       <main className="app-main">
         <div className="screen-stack">
           {visited.has('home') && (
-            <ScreenPane
-              id="home"
-              active={tab === 'home'}
-              fresh={tab === 'home' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="home" active={tab === 'home'}>
           <TodayScreen
             userName={userName}
             listName={list.name}
@@ -510,22 +482,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('trip') && (
-            <ScreenPane
-              id="trip"
-              active={tab === 'trip'}
-              fresh={tab === 'trip' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="trip" active={tab === 'trip'}>
           <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
             </ScreenPane>
           )}
           {visited.has('plan') && (
-            <ScreenPane
-              id="plan"
-              active={tab === 'plan'}
-              fresh={tab === 'plan' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="plan" active={tab === 'plan'}>
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
               listId={list.id}
@@ -537,12 +499,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('lists') && (
-            <ScreenPane
-              id="lists"
-              active={tab === 'lists'}
-              fresh={tab === 'lists' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="lists" active={tab === 'lists'}>
           <ListsScreen
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
@@ -553,12 +510,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('notes') && (
-            <ScreenPane
-              id="notes"
-              active={tab === 'notes'}
-              fresh={tab === 'notes' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="notes" active={tab === 'notes'}>
           <NotesScreen
             listId={list.id}
             userName={userName}
@@ -571,12 +523,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('list') && (
-            <ScreenPane
-              id="list"
-              active={tab === 'list'}
-              fresh={tab === 'list' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="list" active={tab === 'list'}>
           <Suspense fallback={<TabLoader />}>
             <ListScreen
               items={shoppingItems}
@@ -595,12 +542,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bring') && (
-            <ScreenPane
-              id="bring"
-              active={tab === 'bring'}
-              fresh={tab === 'bring' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="bring" active={tab === 'bring'}>
           <Suspense fallback={<TabLoader />}>
             <BringScreen
               items={bringItems}
@@ -618,12 +560,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('expenses') && (
-            <ScreenPane
-              id="expenses"
-              active={tab === 'expenses'}
-              fresh={tab === 'expenses' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="expenses" active={tab === 'expenses'}>
           <Suspense fallback={<TabLoader />}>
             <ExpenseScreen
               expenses={expenses}
@@ -646,12 +583,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bristol') && (
-            <ScreenPane
-              id="bristol"
-              active={tab === 'bristol'}
-              fresh={tab === 'bristol' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="bristol" active={tab === 'bristol'}>
               {!bristolEnabled && (
           <BristolGate
             onEnable={() => {
@@ -673,24 +605,14 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('weather') && (
-            <ScreenPane
-              id="weather"
-              active={tab === 'weather'}
-              fresh={tab === 'weather' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="weather" active={tab === 'weather'}>
           <Suspense fallback={<TabLoader />}>
             <WeatherScreen />
           </Suspense>
             </ScreenPane>
           )}
           {visited.has('settings') && (
-            <ScreenPane
-              id="settings"
-              active={tab === 'settings'}
-              fresh={tab === 'settings' && freshTab}
-              direction={screenDir}
-            >
+            <ScreenPane id="settings" active={tab === 'settings'}>
           <Suspense fallback={<TabLoader />}>
             <SettingsScreen
               userName={userName}
