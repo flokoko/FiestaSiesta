@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Trash2, ShoppingBasket, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X } from 'lucide-react'
 import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
@@ -12,6 +12,7 @@ import CategoryManager from './CategoryManager'
 import { SkeletonCatHeader, SkeletonItemRow } from './Skeleton'
 
 import { useDragReorder } from '../hooks/useDragReorder'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import './ListScreen.css'
 
 interface ListScreenProps {
@@ -234,6 +235,9 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
   const [catsOpen, setCatsOpen] = useState(false)
   const [activeCat, setActiveCat] = useState<string | null>(null)
 
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
+
   const toggleHideChecked = () => {
     navigator.vibrate?.(8)
     const next = !hideChecked
@@ -330,7 +334,9 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
           <Search size={15} strokeWidth={2} />
           <input
             type="text"
+            className="list-search-input"
             placeholder="Artikel suchen…"
+            aria-label="Artikel suchen"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             autoFocus
@@ -351,6 +357,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
             type="button"
             className={`cat-chip${activeCat === null ? ' active' : ''}`}
             onClick={() => { setActiveCat(null); navigator.vibrate?.(6) }}
+            aria-pressed={activeCat === null}
           >
             Alle <b>{items.length}</b>
           </button>
@@ -361,6 +368,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
               className={`cat-chip${activeCat === c.name ? ' active' : ''}`}
               onClick={() => { setActiveCat(activeCat === c.name ? null : c.name); navigator.vibrate?.(6) }}
               style={activeCat === c.name ? { borderColor: c.color, background: c.bg, color: c.color } : undefined}
+              aria-pressed={activeCat === c.name}
             >
               {c.name} <b>{c.open}</b>
             </button>
@@ -453,6 +461,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
       {menuOpen && (
         <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
           <div
+            ref={menuRef}
             className="list-menu-sheet"
             role="dialog"
             aria-modal="true"

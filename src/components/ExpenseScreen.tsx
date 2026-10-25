@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight } from 'lucide-react'
 import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory, Settlement } from '../types'
 import { supabase } from '../lib/supabase'
@@ -12,6 +12,7 @@ import ExpenseList from './ExpenseList'
 import ExpenseSettlement from './ExpenseSettlement'
 import ExpenseMatrix from './ExpenseMatrix'
 import ExpenseQuotaManager from './ExpenseQuotaManager'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import './ExpenseScreen.css'
 
 interface ExpenseScreenProps {
@@ -65,6 +66,9 @@ export default function ExpenseScreen({
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
 
   // ── Saldo-Logik: erst was offen ist, dann die Details ──
   const balances = useMemo(() => computeBalances(expenses, expenseSplits), [expenses, expenseSplits])
@@ -256,9 +260,11 @@ export default function ExpenseScreen({
         )}
       </section>
 
-      <div className="money-toggle">
+      <div className="money-toggle" role="tablist" aria-label="Bereich">
         <button
           type="button"
+          role="tab"
+          aria-selected={section === 'expenses'}
           className={`money-toggle-btn${section === 'expenses' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('expenses') }}
         >
@@ -266,13 +272,15 @@ export default function ExpenseScreen({
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={section === 'settlement'}
           className={`money-toggle-btn${section === 'settlement' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('settlement') }}
         >
           <Receipt size={15} strokeWidth={2} /> Abrechnung
         </button>
         {(section === 'matrix' || section === 'quotas') && (
-          <button type="button" className="money-toggle-btn active" onClick={() => setSection('expenses')}>
+          <button type="button" role="tab" aria-selected={true} className="money-toggle-btn active" onClick={() => setSection('expenses')}>
             {section === 'matrix' ? <Table2 size={15} strokeWidth={2} /> : <Percent size={15} strokeWidth={2} />}
             {section === 'matrix' ? 'Matrix' : 'Quoten'}
           </button>
@@ -284,7 +292,9 @@ export default function ExpenseScreen({
           <Search size={15} strokeWidth={2} />
           <input
             type="text"
+            className="expense-search-input"
             placeholder="Ausgabe suchen…"
+            aria-label="Ausgaben suchen"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             autoFocus
@@ -386,6 +396,7 @@ export default function ExpenseScreen({
       {menuOpen && (
         <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
           <div
+            ref={menuRef}
             className="list-menu-sheet"
             role="dialog"
             aria-modal="true"

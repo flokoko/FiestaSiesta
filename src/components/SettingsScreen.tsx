@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, Palette, Sun, Moon, Pencil, Crown, Lock, KeyRound, Bell, BellOff, Loader2,
   MoreHorizontal, X, Settings2, Info, LogOut, Copy, Activity, Plus,
@@ -17,6 +17,7 @@ import {
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import { APP_VERSION } from '../version'
 import { spanishMotto } from '../lib/espanaFlair'
 
@@ -89,6 +90,9 @@ export default function SettingsScreen({
   const [menuOpen, setMenuOpen] = useState(false)
   const [catsOpen, setCatsOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
+
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
 
   const { updateCategory, deleteCategory, addCategory } = useCategories(onCategoriesChange)
   const debouncedUpdateCategory = useDebouncedCallback(updateCategory, 400)
@@ -297,6 +301,7 @@ export default function SettingsScreen({
               className="settings-cat-name-input"
               type="text"
               value={localCatNames[cat.id] ?? cat.name}
+              aria-label={`Kategorie "${cat.name}" umbenennen`}
               onChange={(e) => {
                 setLocalCatNames(prev => ({ ...prev, [cat.id]: e.target.value }))
                 debouncedUpdateCategory(cat.id, { name: e.target.value })
@@ -346,6 +351,7 @@ export default function SettingsScreen({
       {menuOpen && (
         <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
           <div
+            ref={menuRef}
             className="list-menu-sheet"
             role="dialog"
             aria-modal="true"
@@ -392,6 +398,7 @@ export default function SettingsScreen({
                 type="button"
                 className={`money-toggle-btn${theme === 'auto' ? ' active' : ''}`}
                 onClick={() => handleThemeChange('auto')}
+                aria-pressed={theme === 'auto'}
               >
                 Auto
               </button>
@@ -399,6 +406,7 @@ export default function SettingsScreen({
                 type="button"
                 className={`money-toggle-btn${theme === 'light' ? ' active' : ''}`}
                 onClick={() => handleThemeChange('light')}
+                aria-pressed={theme === 'light'}
               >
                 <Sun size={13} strokeWidth={2} /> Hell
               </button>
@@ -406,6 +414,7 @@ export default function SettingsScreen({
                 type="button"
                 className={`money-toggle-btn${theme === 'dark' ? ' active' : ''}`}
                 onClick={() => handleThemeChange('dark')}
+                aria-pressed={theme === 'dark'}
               >
                 <Moon size={13} strokeWidth={2} /> Dunkel
               </button>
@@ -419,6 +428,7 @@ export default function SettingsScreen({
                 type="button"
                 className={`money-toggle-btn${!bristolEnabled ? ' active' : ''}`}
                 onClick={() => { navigator.vibrate?.(8); setBristolEnabled(false) }}
+                aria-pressed={!bristolEnabled}
               >
                 Aus
               </button>
@@ -426,6 +436,7 @@ export default function SettingsScreen({
                 type="button"
                 className={`money-toggle-btn${bristolEnabled ? ' active' : ''}`}
                 onClick={() => { navigator.vibrate?.(8); setBristolEnabled(true) }}
+                aria-pressed={bristolEnabled}
               >
                 An
               </button>
@@ -457,6 +468,7 @@ export default function SettingsScreen({
                 className="settings-inline-input"
                 type="text"
                 value={newName}
+                aria-label="Neuer Name"
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                 autoFocus
@@ -486,6 +498,7 @@ export default function SettingsScreen({
                 className="settings-inline-input"
                 type="password"
                 placeholder="Altes Passwort"
+                aria-label="Altes Passwort"
                 value={ownOldPw}
                 onChange={(e) => setOwnOldPw(e.target.value)}
                 autoFocus
@@ -494,6 +507,7 @@ export default function SettingsScreen({
                 className="settings-inline-input"
                 type="password"
                 placeholder="Neues Passwort"
+                aria-label="Neues Passwort"
                 value={ownNewPw}
                 onChange={(e) => setOwnNewPw(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleOwnPasswordChange()}
@@ -557,6 +571,7 @@ export default function SettingsScreen({
                   className="settings-inline-input"
                   type="text"
                   placeholder="Name"
+                  aria-label="Name des neuen Teilnehmers"
                   value={newParticipantName}
                   onChange={(e) => setNewParticipantName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddParticipant()}
@@ -591,6 +606,7 @@ export default function SettingsScreen({
                   className="settings-inline-input"
                   type="password"
                   placeholder="Admin-Passwort"
+                  aria-label="Admin-Passwort"
                   value={adminPasswordInput}
                   onChange={(e) => setAdminPasswordInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
@@ -603,6 +619,7 @@ export default function SettingsScreen({
                   className="settings-inline-input"
                   type="password"
                   placeholder="Admin-Passwort festlegen"
+                  aria-label="Neues Admin-Passwort"
                   value={newAdminPassword}
                   onChange={(e) => setNewAdminPassword(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSavePassword()}
@@ -627,6 +644,7 @@ export default function SettingsScreen({
                   className="settings-inline-input"
                   type="password"
                   placeholder="Altes Admin-Passwort"
+                  aria-label="Altes Admin-Passwort"
                   value={adminOldPw}
                   onChange={(e) => setAdminOldPw(e.target.value)}
                   autoFocus
@@ -635,6 +653,7 @@ export default function SettingsScreen({
                   className="settings-inline-input"
                   type="password"
                   placeholder="Neues Admin-Passwort"
+                  aria-label="Neues Admin-Passwort"
                   value={adminNewPw}
                   onChange={(e) => setAdminNewPw(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAdminPasswordChange()}

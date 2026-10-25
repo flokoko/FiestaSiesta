@@ -87,8 +87,9 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
         <h1>Fiesta Siesta</h1>
         <p className="join-subtitle">{subtitle}</p>
 
-        <label className="join-label">Dein Name</label>
+        <label className="join-label" htmlFor="join-name">Dein Name</label>
         <input
+          id="join-name"
           className="join-input"
           type="text"
           value={name}
@@ -98,8 +99,9 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
         />
 
-        <label className="join-label">Passwort</label>
+        <label className="join-label" htmlFor="join-password">Passwort</label>
         <input
+          id="join-password"
           className="join-input"
           type="password"
           value={password}

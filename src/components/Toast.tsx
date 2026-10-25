@@ -16,16 +16,15 @@ const ICONS = {
 
 export default function Toast({ toasts, onDismiss }: ToastProps) {
   return (
-    <div className="toast-container" aria-live="polite" aria-atomic="true">
+    <div className="toast-container">
       {toasts.map((t) => {
         const Icon = ICONS[t.type]
         return (
           <div
             key={t.id}
             className={`toast toast-${t.type} ${t.dismissing ? 'toast-dismissing' : ''}`}
-            onClick={() => {
-              if (t.type !== 'confirm') onDismiss(t.id)
-            }}
+            role={t.type === 'info' ? 'status' : 'alert'}
+            aria-atomic={t.type === 'confirm' ? undefined : true}
           >
             <span className="toast-icon">
               <Icon size={20} strokeWidth={2} />

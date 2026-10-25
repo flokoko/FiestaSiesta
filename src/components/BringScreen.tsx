@@ -9,6 +9,8 @@ import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import AddItemForm from './AddItemForm'
 import CategoryManager from './CategoryManager'
 import { useDragReorder } from '../hooks/useDragReorder'
+import { useSheetFocus } from '../hooks/useSheetFocus'
+import { SkeletonItemRow } from './Skeleton'
 import './BringScreen.css'
 
 // ── Packlist item type (not in types/index.ts — local to this screen) ──
@@ -135,6 +137,9 @@ export default function BringScreen({ items, categories, listId, userName, onIte
   const [packLoading, setPackLoading] = useState(false)
   const [newPackName, setNewPackName] = useState('')
   const [newPackQty, setNewPackQty] = useState('')
+
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
 
   // ── Refs ──
   const packChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
@@ -429,9 +434,11 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         <i style={{ width: `${progress}%` }} />
       </div>
 
-      <div className="money-toggle">
+      <div className="money-toggle" role="tablist" aria-label="Bereich">
         <button
           type="button"
+          role="tab"
+          aria-selected={subTab === 'bring'}
           className={`money-toggle-btn${subTab === 'bring' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('bring') }}
         >
@@ -439,6 +446,8 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={subTab === 'packlist'}
           className={`money-toggle-btn${subTab === 'packlist' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('packlist') }}
         >
@@ -449,6 +458,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
       {menuOpen && (
         <div className="list-menu-scrim" role="presentation" onClick={() => setMenuOpen(false)}>
           <div
+            ref={menuRef}
             className="list-menu-sheet"
             role="dialog"
             aria-modal="true"
@@ -489,7 +499,9 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           <Search size={15} strokeWidth={2} />
           <input
             type="text"
+            className="bring-search-input"
             placeholder="Suchen…"
+            aria-label="Mitbringen durchsuchen"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             autoFocus
@@ -531,6 +543,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
                 type="button"
                 className={`cat-chip${filter === key ? ' active' : ''}`}
                 onClick={() => { navigator.vibrate?.(6); setFilter(key) }}
+                aria-pressed={filter === key}
               >
                 {label} <b>{count}</b>
               </button>
@@ -630,14 +643,18 @@ export default function BringScreen({ items, categories, listId, userName, onIte
 
           {/* Loading state */}
           {packLoading && packItems.length === 0 && (
-            <p className="packlist-empty">Lädt…</p>
+            <div className="packlist-items">
+              <SkeletonItemRow />
+              <SkeletonItemRow />
+              <SkeletonItemRow />
+            </div>
           )}
 
           {/* Empty state */}
           {!packLoading && packItems.length === 0 && (
             <p className="packlist-empty">
               🧳 Noch nichts auf der Packliste.<br />
-              Füge oben items hinzu oder übernehme sie aus der Mitbringen-Liste.
+              Noch nichts hier — füge oben etwas hinzu oder übernehme sie aus der Mitbringen-Liste.
             </p>
           )}
 

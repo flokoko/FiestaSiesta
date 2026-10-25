@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useRef } from 'react'
 import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity } from 'lucide-react'
 import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 
 interface MoreSheetProps {
   open: boolean
@@ -16,12 +17,8 @@ interface MoreSheetProps {
 export default function MoreSheet({
   open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
 }: MoreSheetProps) {
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  const sheetRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(sheetRef, open, onClose)
 
   if (!open) return null
 
@@ -61,6 +58,7 @@ export default function MoreSheet({
   return (
     <div className="more-scrim" role="presentation" onClick={onClose}>
       <div
+        ref={sheetRef}
         className="more-sheet"
         role="dialog"
         aria-modal="true"
