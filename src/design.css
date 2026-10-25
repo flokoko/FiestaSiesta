@@ -3803,15 +3803,17 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   STUFE 4–6 (v0.25): Seitenwechsel ohne Flackern
+   SEITENWECHSEL (v0.26): ein Pane, ein Einblender — kein Überlappen
 
-   Struktur (App.tsx): .screen-stack > .screen-pane[data-state]
-   - active  : im Fluss, spielt die Eintritts-Animation
-   - leaving : absolut, überblendet aus (Cross-Fade, kein harter Schnitt)
-   - idle    : display:none — bleibt gemountet, behält Zustand, kein Remount
+   Erkenntnis aus v0.25: alter und neuer Screen GLEICHZEITIG halbtransparent
+   übereinander zu legen ergibt Doppelbilder und einen sichtbaren Helligkeits-
+   bogen (zwei Fades summieren sich nicht linear) — auf dem Gerät liest sich
+   das als Flackern. Deshalb jetzt: beim Wechsel verschwindet der alte Pane
+   sofort (display:none), der neue blendet kurz ein. Nie zwei Screens sichtbar.
 
-   data-dir kommt aus src/lib/navTransition.ts:
-   forward = tiefer in den Baum, back = zurück, side = gleiche Ebene.
+   Panes:  .screen-pane[data-state=active|idle]  (idle = display:none, bleibt
+           gemountet → kein Remount, kein neuer Chunk-Load)
+   fresh:  erster Besuch → volle Staffel; Rückkehr → nur ein Hauch Einblender
    ═══════════════════════════════════════════════════════════════════ */
 
 /* Kein horizontaler Scrollbalken durch den Slide (clip statt hidden:
@@ -3824,31 +3826,27 @@ body::before {
   position: relative;
 }
 
+/* Versteckte Panes: display:none. Ein absolut positionierter, unsichtbarer
+   Screen würde die Dokumenthöhe aufblähen (man könnte in leeren Raum scrollen),
+   deshalb bewusst raus aus dem Layout. */
 #root .screen-pane[data-state='idle'] {
   display: none;
 }
 
 #root .screen-pane[data-state='active'] {
   position: relative;
-  /* Bewusst NUR opacity: ein transform am Pane macht ihn zum Containing-Block
-     für position:fixed — die schwebenden „+“-Pillen (list-addbar/money-addbar)
-     hingen dann am Pane statt am Viewport und sprangen beim Wechsel. */
-  animation: paneFadeIn 0.3s var(--ease) backwards;
+  z-index: 1;
+  animation: paneSoftIn 0.16s var(--ease) backwards;
 }
 
-/* `backwards` statt `both`: nach dem Ende hängt KEIN transform mehr am Element
-   (ein zurückbleibendes translate3d(0,0,0) wäre wieder ein Containing-Block). */
+/* Erster Besuch: der Screen baut sich sichtbar auf */
+#root .screen-pane[data-state='active'][data-fresh='true'] {
+  animation: paneFadeIn 0.24s var(--ease) backwards;
+}
 
-/* Scheidender Screen liegt über der neuen Fläche und blendet aus (Cross-Fade,
-   kein harter Schnitt). Der negative top-Offset kommt inline aus App.tsx
-   (Scroll-Stand von vorher), damit er dort bleibt, wo man ihn gesehen hat. */
-#root .screen-pane[data-state='leaving'] {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  pointer-events: none;
-  animation: paneFadeOut 0.3s var(--ease) backwards;
+@keyframes paneSoftIn {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
 }
 
 @keyframes paneFadeIn {
@@ -3856,39 +3854,32 @@ body::before {
   to { opacity: 1; }
 }
 
-@keyframes paneFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-/* ── Stufe 1: der Inhalt läuft gestaffelt ein ─────────────────────────
+/* ── Stufe 1: der Inhalt läuft gestaffelt ein (nur beim ersten Besuch) ──
    Direkte Kinder des Screen-Wrappers (Hero, Chips, Karten, Abschnitte)
-   steigen nacheinander auf, statt als Block zu erscheinen. Ab dem
-   sechsten Kind gilt ein gemeinsamer, etwas späterer Start.
-   Die Richtung trägt diese Staffel: vorwärts steigt der Inhalt von unten
-   auf, zurück fällt er von oben ein. */
-#root .screen-pane[data-state='active'] > * > * {
-  animation: paneItemRise 0.46s var(--ease) backwards;
-  animation-delay: 0.18s;
+   steigen nacheinander auf. Die Richtung trägt diese Staffel: vorwärts
+   steigt der Inhalt von unten auf, zurück fällt er von oben ein. */
+#root .screen-pane[data-fresh='true'] > * > * {
+  animation: paneItemRise 0.32s var(--ease) backwards;
+  animation-delay: 0.1s;
 }
 
-#root .screen-pane[data-state='active'][data-dir='back'] > * > * {
+#root .screen-pane[data-fresh='true'][data-dir='back'] > * > * {
   animation-name: paneItemDrop;
 }
 
-#root .screen-pane[data-state='active'] > * > *:nth-child(1) { animation-delay: 0.03s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.06s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.09s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(4) { animation-delay: 0.12s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(5) { animation-delay: 0.15s; }
+#root .screen-pane[data-fresh='true'] > * > *:nth-child(1) { animation-delay: 0.02s; }
+#root .screen-pane[data-fresh='true'] > * > *:nth-child(2) { animation-delay: 0.04s; }
+#root .screen-pane[data-fresh='true'] > * > *:nth-child(3) { animation-delay: 0.06s; }
+#root .screen-pane[data-fresh='true'] > * > *:nth-child(4) { animation-delay: 0.08s; }
+#root .screen-pane[data-fresh='true'] > * > *:nth-child(5) { animation-delay: 0.1s; }
 
 @keyframes paneItemRise {
-  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  from { opacity: 0.6; transform: translate3d(0, 12px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes paneItemDrop {
-  from { opacity: 0; transform: translate3d(0, -10px, 0); }
+  from { opacity: 0.6; transform: translate3d(0, -8px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
@@ -3908,14 +3899,17 @@ body::before {
   min-width: 0;
 }
 
+/* Kurz und nacheinander, nicht gleichzeitig: liegen beide halb sichtbar
+   übereinander, entsteht ein Doppelbild im Kopf. Der alte Inhalt geht in
+   0.12 s weg, der neue kommt 40 ms später. */
 #root .header-back,
 #root .header-info {
-  transition: opacity 0.26s var(--ease), transform 0.32s var(--ease);
+  transition: opacity 0.12s var(--ease), transform 0.16s var(--ease);
 }
 
 #root .header-back {
   opacity: 0;
-  transform: translateX(-12px);
+  transform: translateX(-10px);
   pointer-events: none;
 }
 
@@ -3923,12 +3917,18 @@ body::before {
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
+  transition-delay: 0.04s;
+}
+
+#root .header-info {
+  transition-delay: 0.04s;
 }
 
 #root .header-info:not(.is-on) {
   opacity: 0;
-  transform: translateX(12px);
+  transform: translateX(10px);
   pointer-events: none;
+  transition-delay: 0s;
 }
 
 /* ── Gleitende Pille in der Bottom-Nav ────────────────────────────────
@@ -3982,10 +3982,6 @@ body::before {
   #root .screen-pane > * > *,
   #root .bottom-nav-item.active svg {
     animation: none;
-  }
-
-  #root .screen-pane[data-state='leaving'] {
-    display: none;
   }
 }
 

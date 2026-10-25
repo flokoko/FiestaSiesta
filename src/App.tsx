@@ -60,34 +60,36 @@ function TabLoader() {
 
 /**
  * Ein Screen als „Pane“: bleibt nach dem ersten Besuch gemountet und wird nur
- * versteckt. Das ist der eigentliche Anti-Flacker: kein Remount, kein
- * Neuladen der Lazy-Chunks, keine verlorenen Formular-/Filter-Zustände.
- * Beim Wechsel bleibt der alte Pane kurz als `leaving` im DOM, damit aus-
- * und eingehender Screen überblenden statt hart zu schneiden.
+ * versteckt. Das ist der Anti-Flacker: kein Remount, kein Neuladen der
+ * Lazy-Chunks, keine verlorenen Formular-/Filter-Zustände.
+ *
+ * Bewusst KEIN gleichzeitiges Überblenden von altem und neuem Screen: zwei
+ * halbtransparente Screens übereinander ergeben Doppelbilder und je nach
+ * Inhalt ein sichtbares Aufhellen — das liest sich als Flackern. Es ist immer
+ * genau ein Pane sichtbar; der Wechsel ist ein kurzes Einblenden.
  */
 function ScreenPane({
   id,
-  state,
+  active,
+  fresh,
   direction,
-  offset,
   children,
 }: {
   id: TabView
-  state: 'active' | 'leaving' | 'idle'
+  active: boolean
+  /** erster Besuch → volle Eintritts-Animation mit gestaffeltem Inhalt */
+  fresh: boolean
   direction: ScreenDirection
-  offset: number
   children: ReactNode
 }) {
   return (
     <div
       className="screen-pane"
       data-tab={id}
-      data-state={state}
+      data-state={active ? 'active' : 'idle'}
+      data-fresh={fresh ? 'true' : 'false'}
       data-dir={direction}
-      aria-hidden={state === 'active' ? undefined : true}
-      // Der scheidende Pane wird absolut gesetzt; der negative Offset hält ihn
-      // optisch genau dort, wo der Nutzer ihn gesehen hat (Scroll-Reset zu 0).
-      style={state === 'leaving' && offset ? { top: `${-offset}px` } : undefined}
+      aria-hidden={active ? undefined : true}
     >
       {children}
     </div>
@@ -169,25 +171,27 @@ export default function App() {
   // Besuchte Screens bleiben gemountet (Pane-Ansatz) — nur der erste Besuch
   // mountet wirklich, danach wird ausschließlich ein- und ausgeblendet.
   const [visited, setVisited] = useState<ReadonlySet<TabView>>(() => new Set<TabView>(['home']))
-  const [leaving, setLeaving] = useState<TabView | null>(null)
-  const [leaveOffset, setLeaveOffset] = useState(0)
-  const leaveTimer = useRef<number | null>(null)
+  // Nur der jeweils erste Besuch bekommt die volle Staffel; Rückkehr ist
+  // sofort da (der Screen war ja nur versteckt und ist fertig aufgebaut).
+  const seenRef = useRef<Set<TabView>>(new Set<TabView>())
+  const [freshTab, setFreshTab] = useState(true)
 
   const setTab = useCallback((next: TabView) => {
     const prev = tabRef.current
     if (prev === next) return
     tabRef.current = next
     setScreenDir(screenDirection(prev, next))
-    setLeaveOffset(window.scrollY)
-    setLeaving(prev)
-    if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
-    leaveTimer.current = window.setTimeout(() => setLeaving(null), 380)
+    const firstVisit = !seenRef.current.has(next)
+    if (firstVisit) seenRef.current.add(next)
+    setFreshTab(firstVisit)
     setVisited((v) => (v.has(next) ? v : new Set(v).add(next)))
     setTabState(next)
   }, [])
 
-  useEffect(() => () => {
-    if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
+  // „Heute“ ist beim Start schon da: als gesehen markieren, damit die
+  // Rückkehr dorthin nicht erneut die Staffel abspielt.
+  useEffect(() => {
+    seenRef.current.add('home')
   }, [])
 
   // Lazy-Chunks im Idle vorladen: der erste Besuch eines Tabs zeigt sonst den
@@ -417,10 +421,6 @@ export default function App() {
 
   const bringBrought = bringItems.filter(i => i.is_brought).length
 
-  // Welche Rolle hat ein Pane gerade? Genau einer ist aktiv, der vorherige
-  // bleibt für die Dauer des Cross-Fades als `leaving` sichtbar.
-  const paneState = (id: TabView): 'active' | 'leaving' | 'idle' =>
-    id === tab ? 'active' : id === leaving ? 'leaving' : 'idle'
 
   return (
     <>
@@ -489,7 +489,12 @@ export default function App() {
       <main className="app-main">
         <div className="screen-stack">
           {visited.has('home') && (
-            <ScreenPane id="home" state={paneState('home')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="home"
+              active={tab === 'home'}
+              fresh={tab === 'home' && freshTab}
+              direction={screenDir}
+            >
           <TodayScreen
             userName={userName}
             listName={list.name}
@@ -505,12 +510,22 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('trip') && (
-            <ScreenPane id="trip" state={paneState('trip')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="trip"
+              active={tab === 'trip'}
+              fresh={tab === 'trip' && freshTab}
+              direction={screenDir}
+            >
           <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
             </ScreenPane>
           )}
           {visited.has('plan') && (
-            <ScreenPane id="plan" state={paneState('plan')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="plan"
+              active={tab === 'plan'}
+              fresh={tab === 'plan' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
               listId={list.id}
@@ -522,7 +537,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('lists') && (
-            <ScreenPane id="lists" state={paneState('lists')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="lists"
+              active={tab === 'lists'}
+              fresh={tab === 'lists' && freshTab}
+              direction={screenDir}
+            >
           <ListsScreen
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
@@ -533,7 +553,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('notes') && (
-            <ScreenPane id="notes" state={paneState('notes')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="notes"
+              active={tab === 'notes'}
+              fresh={tab === 'notes' && freshTab}
+              direction={screenDir}
+            >
           <NotesScreen
             listId={list.id}
             userName={userName}
@@ -546,7 +571,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('list') && (
-            <ScreenPane id="list" state={paneState('list')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="list"
+              active={tab === 'list'}
+              fresh={tab === 'list' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <ListScreen
               items={shoppingItems}
@@ -565,7 +595,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bring') && (
-            <ScreenPane id="bring" state={paneState('bring')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="bring"
+              active={tab === 'bring'}
+              fresh={tab === 'bring' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <BringScreen
               items={bringItems}
@@ -583,7 +618,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('expenses') && (
-            <ScreenPane id="expenses" state={paneState('expenses')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="expenses"
+              active={tab === 'expenses'}
+              fresh={tab === 'expenses' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <ExpenseScreen
               expenses={expenses}
@@ -606,7 +646,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bristol') && (
-            <ScreenPane id="bristol" state={paneState('bristol')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="bristol"
+              active={tab === 'bristol'}
+              fresh={tab === 'bristol' && freshTab}
+              direction={screenDir}
+            >
               {!bristolEnabled && (
           <BristolGate
             onEnable={() => {
@@ -628,14 +673,24 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('weather') && (
-            <ScreenPane id="weather" state={paneState('weather')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="weather"
+              active={tab === 'weather'}
+              fresh={tab === 'weather' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <WeatherScreen />
           </Suspense>
             </ScreenPane>
           )}
           {visited.has('settings') && (
-            <ScreenPane id="settings" state={paneState('settings')} direction={screenDir} offset={leaveOffset}>
+            <ScreenPane
+              id="settings"
+              active={tab === 'settings'}
+              fresh={tab === 'settings' && freshTab}
+              direction={screenDir}
+            >
           <Suspense fallback={<TabLoader />}>
             <SettingsScreen
               userName={userName}
