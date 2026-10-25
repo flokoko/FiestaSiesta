@@ -5,7 +5,7 @@ import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './
 import { supabase, changeParticipantPassword } from './lib/supabase'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
-import DashboardScreen from './components/DashboardScreen'
+import NotesScreen from './components/NotesScreen'
 import { spanishSuccess } from './lib/espanaFlair'
 const SiestaScene = lazy(() => import('./components/SiestaScene'))
 import { useListData } from './hooks/useListData'
@@ -37,11 +37,6 @@ function TabLoader() {
 import './App.css'
 import './nav.css'
 import './design.css'
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
 
 // ── Confetti helper: spanische Flagge (Rot-Gelb-Rot) ─────────────────
 async function fireConfetti() {
@@ -199,20 +194,6 @@ export default function App() {
     }
   }, [isOnline, queueLength, fetchAll, flushQueue, toast, list])
 
-  // ── beforeinstallprompt: capture for custom install UI ─────────────
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-
-  useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    if (isStandalone) return
-    const handler = (e: Event) => {
-      e.preventDefault()
-      setInstallPrompt(e as BeforeInstallPromptEvent)
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
   // ── Confetti when all shopping items are checked off ───────────────
   const prevAllCheckedRef = useRef(false)
 
@@ -291,13 +272,6 @@ export default function App() {
       return true
     }
     return false
-  }
-
-  const handleInstall = async () => {
-    if (!installPrompt) return
-    installPrompt.prompt()
-    await installPrompt.userChoice
-    setInstallPrompt(null)
   }
 
   // ── Memoized callback wrappers for screen props ─────────────────────
@@ -418,25 +392,14 @@ export default function App() {
           />
         )}
         {tab === 'notes' && (
-          <DashboardScreen
+          <NotesScreen
             listId={list.id}
             userName={userName}
-            listName={list.name}
-            shoppingCount={shoppingItems.length}
-            shoppingChecked={checkedCount}
-            bringCount={bringItems.length}
-            expenseCount={expenses.length}
-            expenseTotal={expenseTotal}
-            userBalance={userBalance}
             notes={notes}
             isLoading={isLoading}
-            onNavigate={setTab}
             onNotesChange={handleNotesChange}
             onReorderNotes={reorderNotes}
             onToggleFavorite={toggleNoteFavorite}
-            installPrompt={installPrompt}
-            onInstall={handleInstall}
-            bristolEnabled={bristolEnabled}
           />
         )}
         {tab === 'list' && (

@@ -1,14 +1,12 @@
 import { useState, useMemo, type ReactNode } from 'react'
-import { ShoppingCart, Backpack, Wallet, Smartphone, StickyNote, Trash2, ExternalLink, ChevronDown, ChevronUp, GripVertical, Star } from 'lucide-react'
-import type { QuickNote, TabView } from '../types'
+import { Trash2, ExternalLink, GripVertical, Star } from 'lucide-react'
+import type { QuickNote } from '../types'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { useDragReorder } from '../hooks/useDragReorder'
-import { SkeletonCard, SkeletonNote } from './Skeleton'
-import WeatherWidget from './WeatherWidget'
-import BristolWidget from './BristolWidget'
-import './DashboardScreen.css'
+import { SkeletonNote } from './Skeleton'
+import './NotesScreen.css'
 
 /** Detect URLs in text and render them as clickable links. */
 function renderTextWithLinks(text: string): ReactNode[] {
@@ -43,74 +41,33 @@ function renderTextWithLinks(text: string): ReactNode[] {
   return result
 }
 
-interface DashboardScreenProps {
+interface NotesScreenProps {
   listId: string
   userName: string
-  listName: string
-  shoppingCount: number
-  shoppingChecked: number
-  bringCount: number
-  expenseCount: number
-  expenseTotal: number
-  userBalance: number
   notes: QuickNote[]
   isLoading?: boolean
-  onNavigate: (tab: TabView) => void
   onNotesChange: () => void
   onReorderNotes: (newOrder: string[]) => void
   onToggleFavorite: (noteId: string) => void
-  installPrompt: BeforeInstallPromptEvent | null
-  onInstall: () => void
-  bristolEnabled: boolean
 }
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-export default function DashboardScreen({
+export default function NotesScreen({
   listId,
   userName,
-  shoppingCount,
-  shoppingChecked,
-  bringCount,
-  expenseCount,
-  expenseTotal,
-  userBalance,
   notes,
   isLoading,
-  onNavigate,
   onNotesChange,
   onReorderNotes,
   onToggleFavorite,
-  installPrompt,
-  onInstall,
-  bristolEnabled,
-}: DashboardScreenProps) {
+}: NotesScreenProps) {
   const { toast, confirm } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
-  const [showForm, setShowForm] = useState(false)
   const [formTitle, setFormTitle] = useState('')
   const [formContent, setFormContent] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editContent, setEditContent] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-
-  // ── Notes collapsible state from localStorage ──
-  const [notesExpanded, setNotesExpanded] = useState(() => {
-    return localStorage.getItem('notes_expanded') === 'true'
-  })
-
-  const toggleNotes = () => {
-    navigator.vibrate?.(8)
-    setNotesExpanded(prev => {
-      const next = !prev
-      localStorage.setItem('notes_expanded', String(next))
-      return next
-    })
-  }
 
   const {
     dragState,
@@ -157,7 +114,6 @@ export default function DashboardScreen({
     }
     setFormTitle('')
     setFormContent('')
-    setShowForm(false)
     onNotesChange()
   }
 
@@ -226,15 +182,8 @@ export default function DashboardScreen({
     onNotesChange()
   }
 
-  const shoppingStatus = shoppingCount > 0 ? `${shoppingChecked}/${shoppingCount} erledigt` : '🥘 Nada auf der Liste!'
-  const bringStatus = bringCount > 0 ? `${bringCount} Items` : '🍷 Nada que llevar!'
-  const expenseStatus = expenseCount > 0
-    ? `${expenseCount} Ausgaben — Du: ${userBalance >= 0 ? 'bekommst' : 'schuldest'} €${Math.abs(userBalance).toFixed(2)}`
-    : '💶 Nada de gastos!'
-  const expenseTotalFmt = expenseTotal.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-
   return (
-    <div className="dashboard-screen">
+    <div className="notes-screen">
       <header className="note-head">
         <div className="note-head-text">
           <h1>Notizen</h1>
@@ -246,94 +195,39 @@ export default function DashboardScreen({
         </div>
       </header>
 
-      {/* ── Weather Widget ── */}
-      <WeatherWidget onNavigate={() => { navigator.vibrate?.(8); onNavigate('weather') }} />
-
-      {/* ── Bristol Widget ── */}
-      {bristolEnabled && (
-        <BristolWidget
-          listId={listId}
-          userName={userName}
-          onNavigate={() => { navigator.vibrate?.(8); onNavigate('bristol') }}
+      {/* ── Neue Notiz: ruhige Glas-Karte, immer sichtbar ── */}
+      <div className="dash-note-form">
+        <input
+          className="dash-note-input"
+          type="text"
+          placeholder="Titel (z.B. Hausadresse)"
+          value={formTitle}
+          onChange={(e) => setFormTitle(e.target.value)}
+          maxLength={200}
         />
-      )}
+        <textarea
+          className="dash-note-textarea"
+          placeholder="Notiz eingeben…"
+          value={formContent}
+          onChange={(e) => setFormContent(e.target.value)}
+          maxLength={200}
+          rows={3}
+        />
+        <div className="dash-note-form-actions">
+          <button className="dash-btn-save" onClick={handleSave} disabled={!formContent.trim()}>
+            Speichern
+          </button>
+        </div>
+      </div>
 
-      {/* ── Feature Cards ── */}
+      {/* ── Notizliste ── */}
       {isLoading ? (
-        <div className="dashboard-cards">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
+        <div className="dash-notes-list">
+          <SkeletonNote />
+          <SkeletonNote />
         </div>
       ) : (
-      <div className="dashboard-cards">
-        <button className="dash-card" onClick={() => { navigator.vibrate?.(8); onNavigate('list') }}>
-          <div className="dash-card-icon"><ShoppingCart size={28} strokeWidth={2} /></div>
-          <div className="dash-card-body">
-            <div className="dash-card-title">Einkaufsliste</div>
-            <div className="dash-card-sub">{shoppingStatus}</div>
-          </div>
-          {shoppingCount > 0 && (
-            <span className="dash-card-badge">{shoppingChecked}/{shoppingCount}</span>
-          )}
-        </button>
-
-        <button className="dash-card" onClick={() => { navigator.vibrate?.(8); onNavigate('bring') }}>
-          <div className="dash-card-icon"><Backpack size={28} strokeWidth={2} /></div>
-          <div className="dash-card-body">
-            <div className="dash-card-title">Mitbringen</div>
-            <div className="dash-card-sub">{bringStatus}</div>
-          </div>
-          {bringCount > 0 && (
-            <span className="dash-card-badge">{bringCount}</span>
-          )}
-        </button>
-
-        <button className="dash-card" onClick={() => { navigator.vibrate?.(8); onNavigate('expenses') }}>
-          <div className="dash-card-icon"><Wallet size={28} strokeWidth={2} /></div>
-          <div className="dash-card-body">
-            <div className="dash-card-title">Ausgaben</div>
-            <div className="dash-card-sub">{expenseStatus}</div>
-          </div>
-          {expenseCount > 0 && (
-            <span className="dash-card-badge">{expenseTotalFmt}</span>
-          )}
-        </button>
-      </div>
-      )}
-
-      {/* ── Install Banner ── */}
-      {installPrompt && (
-        <button className="dash-install-banner" onClick={onInstall}>
-          <span className="dash-install-icon"><Smartphone size={22} strokeWidth={2} /></span>
-          App installieren — für schnelleren Zugriff
-        </button>
-      )}
-
-      {/* ── Quick Notes ── */}
-      <section className="dash-notes-section">
-        <h2
-          className="dash-section-title dash-section-title-clickable"
-          onClick={toggleNotes}
-        >
-          <StickyNote size={18} strokeWidth={2} />
-          Kurznotizen
-          {notes.length > 0 && (
-            <span className="dash-notes-count">{notes.length}</span>
-          )}
-          <span className="dash-notes-chevron">
-            {notesExpanded ? <ChevronUp size={16} strokeWidth={2} /> : <ChevronDown size={16} strokeWidth={2} />}
-          </span>
-        </h2>
-
-        {notesExpanded && (
-          isLoading ? (
-            <div className="dash-notes-list">
-              <SkeletonNote />
-              <SkeletonNote />
-            </div>
-          ) : (
-          <>
+        <>
           {notes.length > 0 && (
             <input
               type="text"
@@ -343,47 +237,13 @@ export default function DashboardScreen({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           )}
-          {!showForm && (
-            <button className="dash-add-btn" onClick={() => setShowForm(true)}>
-              + Notiz hinzufügen
-            </button>
-          )}
 
-          {showForm && (
-            <div className="dash-note-form">
-              <input
-                className="dash-note-input"
-                type="text"
-                placeholder="Titel (z.B. Hausadresse)"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                maxLength={200}
-              />
-              <textarea
-                className="dash-note-textarea"
-                placeholder="Notiz eingeben…"
-                value={formContent}
-                onChange={(e) => setFormContent(e.target.value)}
-                maxLength={200}
-                rows={3}
-              />
-              <div className="dash-note-form-actions">
-                <button className="dash-btn-cancel" onClick={() => { setShowForm(false); setFormTitle(''); setFormContent('') }}>
-                  Abbrechen
-                </button>
-                <button className="dash-btn-save" onClick={handleSave} disabled={!formContent.trim()}>
-                  Speichern
-                </button>
-              </div>
-            </div>
-          )}
-
-          {notes.length === 0 && !showForm && (
+          {notes.length === 0 && (
             <p className="dash-notes-empty">Noch keine Notizen — füge Infos wie die Hausadresse hinzu!</p>
           )}
 
           {notes.length > 0 && filteredNotes.length === 0 && (
-            <p className="dash-notes-empty">Keine Notizen gefunden für „{searchQuery}"</p>
+            <p className="dash-notes-empty">Keine Notizen gefunden für „{searchQuery}”</p>
           )}
 
           <div className="dash-notes-list">
@@ -459,10 +319,8 @@ export default function DashboardScreen({
               )
             })}
           </div>
-          </>
-          )
-        )}
-      </section>
+        </>
+      )}
     </div>
   )
 }

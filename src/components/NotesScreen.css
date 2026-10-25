@@ -1,0 +1,141 @@
+/*
+ * NotesScreen — eigenständiger Notizen-Tab.
+ *
+ * Die gemeinsamen Notiz-Klassen (note-head, dash-note-*, dash-notes-*,
+ * dash-btn-save/cancel) kommen aus src/design.css. Hier stehen NUR die
+ * Regeln, die bisher ausschließlich in DashboardScreen.css existierten
+ * (Karten-Layout, Drag-/Interaktions-Feedback) und nach dessen Entfernung
+ * sonst fehlen würden.
+ */
+
+.notes-screen {
+  padding: 0.5rem 0 1.5rem;
+  animation: fadeIn 0.4s ease;
+}
+
+/* ── Notiz-Karte: Kopfreihe (Griff · Stern · Inhalt · Löschen) ── */
+.dash-note-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.dash-note-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-note-card {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dash-note-card-editing {
+  cursor: default;
+}
+
+.dash-note-title {
+  margin-bottom: 0.15rem;
+}
+
+.dash-note-by {
+  margin-top: 0.2rem;
+}
+
+/* ── Drag-Reorder-Zustände ── */
+.dash-note-dragging {
+  opacity: 0.5;
+}
+
+.dash-note-dragover {
+  transform: translateY(2px);
+}
+
+.dash-note-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  opacity: 0.45;
+  border-radius: 6px;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.dash-note-card:hover .dash-note-drag-handle {
+  opacity: 0.8;
+}
+
+.dash-note-drag-handle:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.dash-note-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* ── Favorit-Stern ── */
+.dash-note-star {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.2s, color 0.2s, transform 0.2s;
+}
+
+.dash-note-card:hover .dash-note-star {
+  opacity: 0.8;
+}
+
+.dash-note-star:hover {
+  opacity: 1;
+  color: var(--gold);
+  transform: scale(1.15);
+}
+
+.dash-note-star:active {
+  transform: scale(0.9);
+}
+
+.dash-note-favorite .dash-note-star {
+  opacity: 1;
+}
+
+/* ── Löschen-Symbol ── */
+.dash-note-delete {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: opacity 0.3s, color 0.3s, transform 0.3s;
+}
+
+.dash-note-card:hover .dash-note-delete {
+  opacity: 0.6;
+}
+
+.dash-note-delete:hover {
+  opacity: 1;
+  color: var(--accent);
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.dash-note-delete:active {
+  transform: scale(0.9) rotate(0deg);
+}
+
+/* ── Links in Notiz-Text ── */
+.dash-note-link-icon {
+  display: inline;
+  margin-left: 1px;
+  vertical-align: middle;
+}
+
+/* ── Gespeicherter Button deaktiviert ── */
+.dash-btn-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
