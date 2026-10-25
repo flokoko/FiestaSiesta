@@ -3821,6 +3821,45 @@ body::before {
 
 #root .screen-pane[data-state='active'] {
   position: relative;
+  /* Nur opacity auf dem Pane (kein transform!): ein transform hier macht den
+     Pane zum Containing-Block für die schwebenden „+“-Pillen. Start bei 72 %,
+     nicht bei 0 — sonst blitzt der Aurora-Hintergrund durch. */
+  animation: paneSettle 0.2s var(--ease) backwards;
+}
+
+/* Der Inhalt setzt sich mit: die direkten Kinder steigen 8 px auf und kommen
+   aus 55 % Deckkraft. Kurz und klein gehalten (0.26 s, max. 50 ms Versatz) —
+   das wirkt als „einlaufen“, nicht als Neuaufbau. */
+#root .screen-pane[data-state='active'] > * > * {
+  animation: paneItemIn 0.26s var(--ease) backwards;
+  animation-delay: 0.05s;
+}
+
+#root .screen-pane[data-dir='back'] > * > * {
+  animation-name: paneItemBack;
+}
+
+#root .screen-pane[data-state='active'] > * > *:nth-child(1) { animation-delay: 0s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.025s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.05s; }
+
+@keyframes paneSettle {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+/* `translate` (eigene Property) statt `transform`: die schwebenden „+“-Pillen
+   haben ein Basis-`transform: translateX(-50%)` — eine transform-Animation
+   würde es ersetzen und die Pille während der 260 ms aus der Mitte schieben.
+   `translate` und `transform` werden kombiniert, nicht ersetzt. */
+@keyframes paneItemIn {
+  from { opacity: 0.55; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes paneItemBack {
+  from { opacity: 0.55; translate: 0 -6px; }
+  to { opacity: 1; translate: 0 0; }
 }
 
 /* ── Stufe 3: Kopfzeile zieht mit ─────────────────────────────────────
@@ -3918,6 +3957,8 @@ body::before {
 /* Reduzierte Bewegung: keine Seiten-/Staffel-Animationen, der scheidende
    Pane verschwindet sofort (sonst läge er 380 ms über dem neuen Inhalt). */
 @media (prefers-reduced-motion: reduce) {
+  #root .screen-pane,
+  #root .screen-pane > * > *,
   #root .bottom-nav-item.active svg {
     animation: none;
   }

@@ -3,6 +3,7 @@ import { ArrowLeft, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
+import { screenDirection, type ScreenDirection } from './lib/navTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import NotesScreen from './components/NotesScreen'
@@ -69,10 +70,12 @@ function TabLoader() {
 function ScreenPane({
   id,
   active,
+  direction,
   children,
 }: {
   id: TabView
   active: boolean
+  direction: ScreenDirection
   children: ReactNode
 }) {
   return (
@@ -80,6 +83,7 @@ function ScreenPane({
       className="screen-pane"
       data-tab={id}
       data-state={active ? 'active' : 'idle'}
+      data-dir={direction}
       aria-hidden={active ? undefined : true}
     >
       {children}
@@ -153,6 +157,9 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false)
 
   const tabRef = useRef<TabView>('home')
+  // Richtung des Wechsels: vorwärts = tiefer in den Baum, zurück = zurück.
+  // Bewusst im Callback statt im Render (StrictMode rendert zweimal).
+  const [screenDir, setScreenDir] = useState<ScreenDirection>('side')
   // Besuchte Screens bleiben gemountet (Pane-Ansatz) — nur der erste Besuch
   // mountet wirklich, danach wird nur noch ein- und ausgeblendet.
   const [visited, setVisited] = useState<ReadonlySet<TabView>>(() => new Set<TabView>(['home']))
@@ -161,6 +168,7 @@ export default function App() {
     const prev = tabRef.current
     if (prev === next) return
     tabRef.current = next
+    setScreenDir(screenDirection(prev, next))
     setVisited((v) => (v.has(next) ? v : new Set(v).add(next)))
     setTabState(next)
   }, [])
@@ -466,7 +474,7 @@ export default function App() {
       <main className="app-main">
         <div className="screen-stack">
           {visited.has('home') && (
-            <ScreenPane id="home" active={tab === 'home'}>
+            <ScreenPane id="home" active={tab === 'home'} direction={screenDir}>
           <TodayScreen
             userName={userName}
             listName={list.name}
@@ -482,12 +490,12 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('trip') && (
-            <ScreenPane id="trip" active={tab === 'trip'}>
+            <ScreenPane id="trip" active={tab === 'trip'} direction={screenDir}>
           <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
             </ScreenPane>
           )}
           {visited.has('plan') && (
-            <ScreenPane id="plan" active={tab === 'plan'}>
+            <ScreenPane id="plan" active={tab === 'plan'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
               listId={list.id}
@@ -499,7 +507,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('lists') && (
-            <ScreenPane id="lists" active={tab === 'lists'}>
+            <ScreenPane id="lists" active={tab === 'lists'} direction={screenDir}>
           <ListsScreen
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
@@ -510,7 +518,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('notes') && (
-            <ScreenPane id="notes" active={tab === 'notes'}>
+            <ScreenPane id="notes" active={tab === 'notes'} direction={screenDir}>
           <NotesScreen
             listId={list.id}
             userName={userName}
@@ -523,7 +531,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('list') && (
-            <ScreenPane id="list" active={tab === 'list'}>
+            <ScreenPane id="list" active={tab === 'list'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <ListScreen
               items={shoppingItems}
@@ -542,7 +550,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bring') && (
-            <ScreenPane id="bring" active={tab === 'bring'}>
+            <ScreenPane id="bring" active={tab === 'bring'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <BringScreen
               items={bringItems}
@@ -560,7 +568,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('expenses') && (
-            <ScreenPane id="expenses" active={tab === 'expenses'}>
+            <ScreenPane id="expenses" active={tab === 'expenses'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <ExpenseScreen
               expenses={expenses}
@@ -583,7 +591,7 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('bristol') && (
-            <ScreenPane id="bristol" active={tab === 'bristol'}>
+            <ScreenPane id="bristol" active={tab === 'bristol'} direction={screenDir}>
               {!bristolEnabled && (
           <BristolGate
             onEnable={() => {
@@ -605,14 +613,14 @@ export default function App() {
             </ScreenPane>
           )}
           {visited.has('weather') && (
-            <ScreenPane id="weather" active={tab === 'weather'}>
+            <ScreenPane id="weather" active={tab === 'weather'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <WeatherScreen />
           </Suspense>
             </ScreenPane>
           )}
           {visited.has('settings') && (
-            <ScreenPane id="settings" active={tab === 'settings'}>
+            <ScreenPane id="settings" active={tab === 'settings'} direction={screenDir}>
           <Suspense fallback={<TabLoader />}>
             <SettingsScreen
               userName={userName}
