@@ -183,6 +183,10 @@ body::before {
 
 #root .app-main {
   padding: 4px var(--pad) 112px;
+  /* App.css animiert .app-main mit pageEnter (transform+translate). Das macht
+     den Pane-Bereich zum Containing-Block für position:fixed und läuft nur
+     beim Mount — hier abschalten, der Übergang liegt auf .screen-pane. */
+  animation: none;
 }
 
 /* ── Typografie ───────────────────────────────────────────────────── */
@@ -3799,11 +3803,15 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   STUFE 4 (v0.24): Bewegung beim Seitenwechsel
+   STUFE 4–6 (v0.25): Seitenwechsel ohne Flackern
 
-   Der Wechsel läuft auf .screen-swap in App.tsx (key={tab}), damit die
-   Animation bei JEDEM Tab-Wechsel neu startet. data-dir kommt aus
-   src/lib/navTransition.ts: forward = tiefer in den Baum, back = zurück.
+   Struktur (App.tsx): .screen-stack > .screen-pane[data-state]
+   - active  : im Fluss, spielt die Eintritts-Animation
+   - leaving : absolut, überblendet aus (Cross-Fade, kein harter Schnitt)
+   - idle    : display:none — bleibt gemountet, behält Zustand, kein Remount
+
+   data-dir kommt aus src/lib/navTransition.ts:
+   forward = tiefer in den Baum, back = zurück, side = gleiche Ebene.
    ═══════════════════════════════════════════════════════════════════ */
 
 /* Kein horizontaler Scrollbalken durch den Slide (clip statt hidden:
@@ -3812,41 +3820,115 @@ body::before {
   overflow-x: clip;
 }
 
-#root .screen-swap {
-  animation: screenForward 0.44s var(--ease) both;
+#root .screen-stack {
+  position: relative;
 }
 
-#root .screen-swap[data-dir='back'] {
-  animation-name: screenBack;
+#root .screen-pane[data-state='idle'] {
+  display: none;
 }
 
-#root .screen-swap[data-dir='side'] {
-  animation-name: screenCross;
+#root .screen-pane[data-state='active'] {
+  position: relative;
+  /* Bewusst NUR opacity: ein transform am Pane macht ihn zum Containing-Block
+     für position:fixed — die schwebenden „+“-Pillen (list-addbar/money-addbar)
+     hingen dann am Pane statt am Viewport und sprangen beim Wechsel. */
+  animation: paneFadeIn 0.3s var(--ease) backwards;
 }
 
-@keyframes screenForward {
-  from { opacity: 0; transform: translate3d(20px, 10px, 0) scale(0.985); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+/* `backwards` statt `both`: nach dem Ende hängt KEIN transform mehr am Element
+   (ein zurückbleibendes translate3d(0,0,0) wäre wieder ein Containing-Block). */
+
+/* Scheidender Screen liegt über der neuen Fläche und blendet aus (Cross-Fade,
+   kein harter Schnitt). Der negative top-Offset kommt inline aus App.tsx
+   (Scroll-Stand von vorher), damit er dort bleibt, wo man ihn gesehen hat. */
+#root .screen-pane[data-state='leaving'] {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  pointer-events: none;
+  animation: paneFadeOut 0.3s var(--ease) backwards;
 }
 
-@keyframes screenBack {
-  from { opacity: 0; transform: translate3d(-20px, 10px, 0) scale(0.985); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+@keyframes paneFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes screenCross {
-  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.99); }
-  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+@keyframes paneFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
-/* Zurück-Pfeil erscheint mit dem Screen, nicht davor */
+/* ── Stufe 1: der Inhalt läuft gestaffelt ein ─────────────────────────
+   Direkte Kinder des Screen-Wrappers (Hero, Chips, Karten, Abschnitte)
+   steigen nacheinander auf, statt als Block zu erscheinen. Ab dem
+   sechsten Kind gilt ein gemeinsamer, etwas späterer Start.
+   Die Richtung trägt diese Staffel: vorwärts steigt der Inhalt von unten
+   auf, zurück fällt er von oben ein. */
+#root .screen-pane[data-state='active'] > * > * {
+  animation: paneItemRise 0.46s var(--ease) backwards;
+  animation-delay: 0.18s;
+}
+
+#root .screen-pane[data-state='active'][data-dir='back'] > * > * {
+  animation-name: paneItemDrop;
+}
+
+#root .screen-pane[data-state='active'] > * > *:nth-child(1) { animation-delay: 0.03s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.06s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.09s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(4) { animation-delay: 0.12s; }
+#root .screen-pane[data-state='active'] > * > *:nth-child(5) { animation-delay: 0.15s; }
+
+@keyframes paneItemRise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes paneItemDrop {
+  from { opacity: 0; transform: translate3d(0, -10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* ── Stufe 3: Kopfzeile zieht mit ─────────────────────────────────────
+   Zurück-Pfeil und Listen-Köpfchen liegen übereinander im selben Grid-
+   Feld und überblenden weich, statt hart umzuspringen. */
+#root .header-slot {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+#root .header-slot > * {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: start;
+  min-width: 0;
+}
+
+#root .header-back,
+#root .header-info {
+  transition: opacity 0.26s var(--ease), transform 0.32s var(--ease);
+}
+
 #root .header-back {
-  animation: headerBackIn 0.34s var(--ease) both;
+  opacity: 0;
+  transform: translateX(-12px);
+  pointer-events: none;
 }
 
-@keyframes headerBackIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
+#root .header-back.is-on {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+#root .header-info:not(.is-on) {
+  opacity: 0;
+  transform: translateX(12px);
+  pointer-events: none;
 }
 
 /* ── Gleitende Pille in der Bottom-Nav ────────────────────────────────
@@ -3893,10 +3975,27 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* Reduzierte Bewegung: keine Seiten-/Staffel-Animationen, der scheidende
+   Pane verschwindet sofort (sonst läge er 380 ms über dem neuen Inhalt). */
 @media (prefers-reduced-motion: reduce) {
-  #root .screen-swap,
-  #root .header-back,
+  #root .screen-pane,
+  #root .screen-pane > * > *,
   #root .bottom-nav-item.active svg {
     animation: none;
   }
+
+  #root .screen-pane[data-state='leaving'] {
+    display: none;
+  }
+}
+
+/* Lazy-Loader erst nach 120 ms einblenden: bei schnellem (vorgewärmtem)
+   Chunk bleibt der Pane kurz leer, statt „🏖️ Lädt…“ aufblitzen zu lassen. */
+#root .tab-loader {
+  animation: tabLoaderIn 0.24s var(--ease) 0.12s both;
+}
+
+@keyframes tabLoaderIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

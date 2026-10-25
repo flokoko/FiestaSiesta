@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy, type ReactNode } from 'react'
 import { ArrowLeft, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
@@ -8,17 +8,40 @@ import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import NotesScreen from './components/NotesScreen'
 import { spanishSuccess } from './lib/espanaFlair'
-const SiestaScene = lazy(() => import('./components/SiestaScene'))
+const importSiestaScene = () => import('./components/SiestaScene')
+const SiestaScene = lazy(importSiestaScene)
 import { useListData } from './hooks/useListData'
 
-// Code splitting: lazy-load screens that aren't needed on first paint
-const ListScreen = lazy(() => import('./components/ListScreen'))
-const BringScreen = lazy(() => import('./components/BringScreen'))
-const ExpenseScreen = lazy(() => import('./components/ExpenseScreen'))
-const SettingsScreen = lazy(() => import('./components/SettingsScreen'))
-const BristolScreen = lazy(() => import('./components/BristolScreen'))
-const WeatherScreen = lazy(() => import('./components/WeatherScreen'))
-const TripPlanScreen = lazy(() => import('./components/TripPlanScreen'))
+// Code splitting: lazy-load screens that aren't needed on first paint.
+// Die Import-Funktionen liegen separat, damit sie sich nach dem Login im
+// Idle vorladen lassen (sonst zeigt der erste Besuch eines Tabs kurz den
+// 🏖️-Loader — genau das wirkt wie „die Seite baut neu“).
+const importListScreen = () => import('./components/ListScreen')
+const importBringScreen = () => import('./components/BringScreen')
+const importExpenseScreen = () => import('./components/ExpenseScreen')
+const importSettingsScreen = () => import('./components/SettingsScreen')
+const importBristolScreen = () => import('./components/BristolScreen')
+const importWeatherScreen = () => import('./components/WeatherScreen')
+const importTripPlanScreen = () => import('./components/TripPlanScreen')
+
+const ListScreen = lazy(importListScreen)
+const BringScreen = lazy(importBringScreen)
+const ExpenseScreen = lazy(importExpenseScreen)
+const SettingsScreen = lazy(importSettingsScreen)
+const BristolScreen = lazy(importBristolScreen)
+const WeatherScreen = lazy(importWeatherScreen)
+const TripPlanScreen = lazy(importTripPlanScreen)
+
+// Leichte Screens direkt nach dem Login, schwere (Bristol ~416 kB, Wetter
+// ~167 kB) erst im Idle — sie liegen sonst unnötig im Mobilfunk-Datenvolumen.
+const SCREEN_CHUNKS_EAGER = [
+  importListScreen,
+  importBringScreen,
+  importTripPlanScreen,
+  importSettingsScreen,
+  importExpenseScreen,
+]
+const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen]
 import TodayScreen from './components/TodayScreen'
 import TripScreen from './components/TripScreen'
 import ListsScreen from './components/ListsScreen'
@@ -31,6 +54,42 @@ function TabLoader() {
     <div className="tab-loader">
       <span className="tab-loader-emoji">🏖️</span>
       <span className="tab-loader-text">Lädt…</span>
+    </div>
+  )
+}
+
+/**
+ * Ein Screen als „Pane“: bleibt nach dem ersten Besuch gemountet und wird nur
+ * versteckt. Das ist der eigentliche Anti-Flacker: kein Remount, kein
+ * Neuladen der Lazy-Chunks, keine verlorenen Formular-/Filter-Zustände.
+ * Beim Wechsel bleibt der alte Pane kurz als `leaving` im DOM, damit aus-
+ * und eingehender Screen überblenden statt hart zu schneiden.
+ */
+function ScreenPane({
+  id,
+  state,
+  direction,
+  offset,
+  children,
+}: {
+  id: TabView
+  state: 'active' | 'leaving' | 'idle'
+  direction: ScreenDirection
+  offset: number
+  children: ReactNode
+}) {
+  return (
+    <div
+      className="screen-pane"
+      data-tab={id}
+      data-state={state}
+      data-dir={direction}
+      aria-hidden={state === 'active' ? undefined : true}
+      // Der scheidende Pane wird absolut gesetzt; der negative Offset hält ihn
+      // optisch genau dort, wo der Nutzer ihn gesehen hat (Scroll-Reset zu 0).
+      style={state === 'leaving' && offset ? { top: `${-offset}px` } : undefined}
+    >
+      {children}
     </div>
   )
 }
@@ -107,14 +166,52 @@ export default function App() {
   // „gleicher Tab" an und die Richtung wäre immer 'side'.
   const [screenDir, setScreenDir] = useState<ScreenDirection>('side')
   const tabRef = useRef<TabView>('home')
+  // Besuchte Screens bleiben gemountet (Pane-Ansatz) — nur der erste Besuch
+  // mountet wirklich, danach wird ausschließlich ein- und ausgeblendet.
+  const [visited, setVisited] = useState<ReadonlySet<TabView>>(() => new Set<TabView>(['home']))
+  const [leaving, setLeaving] = useState<TabView | null>(null)
+  const [leaveOffset, setLeaveOffset] = useState(0)
+  const leaveTimer = useRef<number | null>(null)
+
   const setTab = useCallback((next: TabView) => {
     const prev = tabRef.current
-    if (prev !== next) {
-      tabRef.current = next
-      setScreenDir(screenDirection(prev, next))
-    }
+    if (prev === next) return
+    tabRef.current = next
+    setScreenDir(screenDirection(prev, next))
+    setLeaveOffset(window.scrollY)
+    setLeaving(prev)
+    if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
+    leaveTimer.current = window.setTimeout(() => setLeaving(null), 380)
+    setVisited((v) => (v.has(next) ? v : new Set(v).add(next)))
     setTabState(next)
   }, [])
+
+  useEffect(() => () => {
+    if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
+  }, [])
+
+  // Lazy-Chunks im Idle vorladen: der erste Besuch eines Tabs zeigt sonst den
+  // Loader und wirkt wie ein Neuaufbau. Kleine Screens sind ohnehin im
+  // SW-Precache, hier geht es nur um den Dynamic Import.
+  useEffect(() => {
+    if (!list?.id) return
+    for (const load of SCREEN_CHUNKS_EAGER) void load().catch(() => {})
+    const runIdle = () => {
+      for (const load of SCREEN_CHUNKS_IDLE) void load().catch(() => {})
+    }
+    const run = runIdle
+    type IdleWindow = Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+    const w = window as IdleWindow
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(run, { timeout: 2500 })
+      return () => w.cancelIdleCallback?.(id)
+    }
+    const id = window.setTimeout(run, 1200)
+    return () => window.clearTimeout(id)
+  }, [list?.id])
 
   // Jeder Tab beginnt oben — sonst landet man beim Wechsel mitten im Inhalt.
   useEffect(() => {
@@ -320,6 +417,11 @@ export default function App() {
 
   const bringBrought = bringItems.filter(i => i.is_brought).length
 
+  // Welche Rolle hat ein Pane gerade? Genau einer ist aktiv, der vorherige
+  // bleibt für die Dauer des Cross-Fades als `leaving` sichtbar.
+  const paneState = (id: TabView): 'active' | 'leaving' | 'idle' =>
+    id === tab ? 'active' : id === leaving ? 'leaving' : 'idle'
+
   return (
     <>
       {!userName || !list ? (
@@ -335,12 +437,19 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-top">
-          {backTarget ? (
-            <button className="header-back" onClick={() => setTab(backTarget)}>
+          {/* Beide Zustände bleiben im DOM und blenden über (Stufe 3):
+              der Zurück-Pfeil fährt ein, das Listen-Köpfchen gleitet zur Seite. */}
+          <div className="header-slot">
+            <button
+              type="button"
+              className={`header-back${backTarget ? ' is-on' : ''}`}
+              onClick={() => backTarget && setTab(backTarget)}
+              aria-hidden={!backTarget}
+              tabIndex={backTarget ? undefined : -1}
+            >
               <ArrowLeft size={18} strokeWidth={2} /> Zurück
             </button>
-          ) : (
-            <div className="header-info">
+            <div className={`header-info${backTarget ? '' : ' is-on'}`} aria-hidden={!!backTarget}>
               <span className="header-name">
                 <span className="header-flag">
                   <span className="header-flag-band red"></span>
@@ -353,7 +462,7 @@ export default function App() {
                 {userName}
               </span>
             </div>
-          )}
+          </div>
         </div>
         <div className="header-flag-bar-full">
           <span className="header-flag-red"></span>
@@ -378,8 +487,9 @@ export default function App() {
       )}
 
       <main className="app-main">
-        <div className="screen-swap" key={tab} data-dir={screenDir}>
-        {tab === 'home' && (
+        <div className="screen-stack">
+          {visited.has('home') && (
+            <ScreenPane id="home" state={paneState('home')} direction={screenDir} offset={leaveOffset}>
           <TodayScreen
             userName={userName}
             listName={list.name}
@@ -392,11 +502,15 @@ export default function App() {
             bristolEnabled={bristolEnabled}
             onNavigate={setTab}
           />
-        )}
-        {tab === 'trip' && (
+            </ScreenPane>
+          )}
+          {visited.has('trip') && (
+            <ScreenPane id="trip" state={paneState('trip')} direction={screenDir} offset={leaveOffset}>
           <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
-        )}
-        {tab === 'plan' && (
+            </ScreenPane>
+          )}
+          {visited.has('plan') && (
+            <ScreenPane id="plan" state={paneState('plan')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
               listId={list.id}
@@ -405,8 +519,10 @@ export default function App() {
               onBack={() => setTab('trip')}
             />
           </Suspense>
-        )}
-        {tab === 'lists' && (
+            </ScreenPane>
+          )}
+          {visited.has('lists') && (
+            <ScreenPane id="lists" state={paneState('lists')} direction={screenDir} offset={leaveOffset}>
           <ListsScreen
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
@@ -414,8 +530,10 @@ export default function App() {
             bringBrought={bringBrought}
             onNavigate={setTab}
           />
-        )}
-        {tab === 'notes' && (
+            </ScreenPane>
+          )}
+          {visited.has('notes') && (
+            <ScreenPane id="notes" state={paneState('notes')} direction={screenDir} offset={leaveOffset}>
           <NotesScreen
             listId={list.id}
             userName={userName}
@@ -425,8 +543,10 @@ export default function App() {
             onReorderNotes={reorderNotes}
             onToggleFavorite={toggleNoteFavorite}
           />
-        )}
-        {tab === 'list' && (
+            </ScreenPane>
+          )}
+          {visited.has('list') && (
+            <ScreenPane id="list" state={paneState('list')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <ListScreen
               items={shoppingItems}
@@ -442,8 +562,10 @@ export default function App() {
               onCategoriesChange={handleCategoriesChange}
             />
           </Suspense>
-        )}
-        {tab === 'bring' && (
+            </ScreenPane>
+          )}
+          {visited.has('bring') && (
+            <ScreenPane id="bring" state={paneState('bring')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <BringScreen
               items={bringItems}
@@ -458,8 +580,10 @@ export default function App() {
               persons={participants.map(p => p.name)}
             />
           </Suspense>
-        )}
-        {tab === 'expenses' && (
+            </ScreenPane>
+          )}
+          {visited.has('expenses') && (
+            <ScreenPane id="expenses" state={paneState('expenses')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <ExpenseScreen
               expenses={expenses}
@@ -479,8 +603,11 @@ export default function App() {
               onSettlementsChange={handleSettlementsChange}
             />
           </Suspense>
-        )}
-        {tab === 'bristol' && !bristolEnabled && (
+            </ScreenPane>
+          )}
+          {visited.has('bristol') && (
+            <ScreenPane id="bristol" state={paneState('bristol')} direction={screenDir} offset={leaveOffset}>
+              {!bristolEnabled && (
           <BristolGate
             onEnable={() => {
               localStorage.setItem('bristol_modus_enabled', 'true')
@@ -488,8 +615,8 @@ export default function App() {
               setBristolEnabled(true)
             }}
           />
-        )}
-        {tab === 'bristol' && bristolEnabled && (
+              )}
+              {bristolEnabled && (
           <Suspense fallback={<TabLoader />}>
             <BristolScreen
               listId={list.id}
@@ -497,13 +624,18 @@ export default function App() {
               isAdmin={isAdmin}
             />
           </Suspense>
-        )}
-        {tab === 'weather' && (
+              )}
+            </ScreenPane>
+          )}
+          {visited.has('weather') && (
+            <ScreenPane id="weather" state={paneState('weather')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <WeatherScreen />
           </Suspense>
-        )}
-        {tab === 'settings' && (
+            </ScreenPane>
+          )}
+          {visited.has('settings') && (
+            <ScreenPane id="settings" state={paneState('settings')} direction={screenDir} offset={leaveOffset}>
           <Suspense fallback={<TabLoader />}>
             <SettingsScreen
               userName={userName}
@@ -524,7 +656,8 @@ export default function App() {
               onChangeAdminPassword={handleChangeAdminPassword}
             />
           </Suspense>
-        )}
+            </ScreenPane>
+          )}
         </div>
       </main>
 
