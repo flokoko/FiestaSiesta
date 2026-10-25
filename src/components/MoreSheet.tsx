@@ -18,7 +18,9 @@ export default function MoreSheet({
   open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
 }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null)
-  useSheetFocus(sheetRef, open, onClose)
+  const closeRef = useRef<HTMLButtonElement | null>(null)
+  // Initialfokus auf den Schließen-Knopf — sonst landet er auf „Abmelden“.
+  useSheetFocus(sheetRef, open, onClose, closeRef)
 
   if (!open) return null
 
@@ -80,7 +82,7 @@ export default function MoreSheet({
             >
               <LogOut size={14} strokeWidth={2} /> <span>Abmelden</span>
             </button>
-            <button type="button" className="more-close" onClick={onClose} aria-label="Schließen">
+            <button ref={closeRef} type="button" className="more-close" onClick={onClose} aria-label="Schließen">
               <X size={16} strokeWidth={2.2} />
             </button>
           </div>

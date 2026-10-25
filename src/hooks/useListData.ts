@@ -86,6 +86,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   // ── Fetch guard for realtime sync debounce ─────────────────────────
   const isFetchingRef = useRef(false)
 
+  // ── Mindestalter zwischen automatischen visibilitychange-Refetches ──
+  const lastFetchAllRef = useRef(0)
+
   // ── Realtime debounce: accumulate changed tables, refetch once ──────
   const pendingRealtimeTablesRef = useRef<Set<string>>(new Set())
   const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -368,11 +371,17 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       .order('person_name', { ascending: true })
     if (err) {
       logError('fetchExpenseQuotas error:', err)
+      if (mySeq === fetchSeqsRef.current['expense_quotas']) {
+        const cached = readCache<ExpenseQuota[]>(listId, 'expense_quotas')
+        if (cached) setExpenseQuotas(cached)
+      }
       return
     }
     // Race guard: ein älterer Response darf einen neueren nie überschreiben
     if (mySeq !== fetchSeqsRef.current['expense_quotas']) return
-    setExpenseQuotas((data || []) as ExpenseQuota[])
+    const quotaData = (data || []) as ExpenseQuota[]
+    writeCache(listId, 'expense_quotas', quotaData)
+    setExpenseQuotas(quotaData)
   }, [claimFetchSeq])
 
   const fetchSettlements = useCallback(async (listId: string) => {
@@ -385,11 +394,17 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       .order('created_at', { ascending: true })
     if (err) {
       logError('fetchSettlements error:', err)
+      if (mySeq === fetchSeqsRef.current['settlements']) {
+        const cached = readCache<Settlement[]>(listId, 'settlements')
+        if (cached) setSettlements(cached)
+      }
       return
     }
     // Race guard: ein älterer Response darf einen neueren nie überschreiben
     if (mySeq !== fetchSeqsRef.current['settlements']) return
-    setSettlements((data || []) as Settlement[])
+    const settleData = (data || []) as Settlement[]
+    writeCache(listId, 'settlements', settleData)
+    setSettlements(settleData)
   }, [claimFetchSeq])
 
   const fetchAll = useCallback(async (listId: string, force = false) => {
@@ -423,7 +438,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     if (!list) return
     const refetch = () => { fetchAll(list.id) }
     const onVisible = () => {
-      if (document.visibilityState === 'visible') refetch()
+      // Mindestalter: Rückkehr in die App löst sonst bei jedem Sichtbarkeits-
+      // wechsel 8 Queries aus — erst ab 30 s seit dem letzten Lauf neu laden.
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastFetchAllRef.current < 30_000) return
+      lastFetchAllRef.current = Date.now()
+      refetch()
     }
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', refetch)
@@ -584,6 +604,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     cached<Expense[]>('expenses', setExpenses)
     cached<ExpenseSplit[]>('expense_splits', setExpenseSplits)
     cached<Participant[]>('participants', setParticipants)
+    cached<ExpenseQuota[]>('expense_quotas', setExpenseQuotas)
+    cached<Settlement[]>('settlements', setSettlements)
   }, [])
 
   useEffect(() => {
@@ -700,13 +722,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
             return orig ? { ...i, is_checked: orig.is_checked } : i
           }))
         }
-        if (list) fetchItems(list.id, 'shopping')
       })
     } else {
       // EIN Op mit .in(id-Liste): beim Flush ein Request statt einer pro Artikel.
       enqueue({ type: 'update', table: 'items', payload: { is_checked: checked }, filterColumn: 'id', filterValue: ids })
     }
-  }, [isOnline, enqueue, list, fetchItems])
+  }, [isOnline, enqueue])
 
   const toggleShoppingItem = useCallback((item: ListItem) => {
     const nextChecked = !item.is_checked
@@ -722,13 +743,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
           logError('toggleShoppingItem error:', error)
           setShoppingItems(prev => prev.map(i => i.id === item.id ? { ...i, is_checked: item.is_checked } : i))
         }
-        // Refetch AFTER server write completes — prevents race with optimistic state
-        if (list) fetchItems(list.id, 'shopping')
       })
     } else {
       enqueue({ type: 'update', table: 'items', payload: { is_checked: nextChecked }, filterColumn: 'id', filterValue: item.id })
     }
-  }, [isOnline, enqueue, list, fetchItems])
+  }, [isOnline, enqueue])
 
   // ── Undo helper ─────────────────────────────────────────────────────
   // Undo-Stack (max. 5 Stufen): mehrere Löschungen hintereinander übernehmen
@@ -770,13 +789,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
             // Rollback an der Originalposition (sort_order), nicht vorne
             setShoppingItems(prev => insertSortedBySortOrder(prev, [item]))
           }
-          if (list) fetchItems(list.id, 'shopping')
         })
       } else {
         enqueue({ type: 'delete', table: 'items', payload: {}, filterColumn: 'id', filterValue: item.id })
       }
     })
-  }, [withUndo, isOnline, enqueue, list, fetchItems])
+  }, [withUndo, isOnline, enqueue])
 
   const undoDelete = useCallback(() => {
     const entry = undoStackRef.current[undoStackRef.current.length - 1]
@@ -818,12 +836,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
           logError('toggleBringItem error:', error)
           setBringItems(prev => prev.map(i => i.id === item.id ? { ...i, is_brought: item.is_brought } : i))
         }
-        if (list) fetchItems(list.id, 'bring')
       })
     } else {
       enqueue({ type: 'update', table: 'items', payload: { is_brought: nextBrought }, filterColumn: 'id', filterValue: item.id })
     }
-  }, [isOnline, enqueue, list, fetchItems])
+  }, [isOnline, enqueue])
 
   const deleteBringItem = useCallback((item: ListItem) => {
     setBringItems(prev => prev.filter(i => i.id !== item.id))
@@ -834,12 +851,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
           // Rollback an der Originalposition (sort_order), nicht vorne
           setBringItems(prev => insertSortedBySortOrder(prev, [item]))
         }
-        if (list) fetchItems(list.id, 'bring')
       })
     } else {
       enqueue({ type: 'delete', table: 'items', payload: {}, filterColumn: 'id', filterValue: item.id })
     }
-  }, [isOnline, enqueue, list, fetchItems])
+  }, [isOnline, enqueue])
 
   const reorderItems = useCallback(async (listType: ListType, newOrder: string[]) => {
     if (!list) return

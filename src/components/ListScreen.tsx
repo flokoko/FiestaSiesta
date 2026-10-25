@@ -101,7 +101,7 @@ function DraggableCategorySection({
   }
 
   const handleAggregatedDelete = (agg: AggregatedItem) => {
-    confirm(`"${agg.name}" (${agg.count} Einträge) wirklich löschen?`, () => {
+    confirm(`„${agg.name}“ (${agg.count} Einträge) wirklich löschen?`, () => {
       for (const item of agg.items) {
         onItemDelete?.(item)
       }

@@ -7,7 +7,9 @@ const FOCUSABLE_SELECTOR =
 /**
  * Keyboard/focus handling for modal sheet overlays (role="dialog" aria-modal="true").
  *
- * - Focuses the first focusable element when the sheet opens.
+ * - Focuses `initialFocusRef` when given, otherwise the container itself
+ *   (gets tabIndex={-1} so it is programmatically focusable without entering
+ *   the tab order). Previously the first focusable element was focused.
  * - Traps Tab / Shift+Tab inside the sheet (simple focus trap).
  * - Closes on Escape (calls `onClose`).
  * - Restores focus to the element that triggered opening when the sheet closes.
@@ -19,6 +21,7 @@ export function useSheetFocus<T extends HTMLElement>(
   containerRef: RefObject<T | null>,
   open: boolean,
   onClose: () => void,
+  initialFocusRef?: RefObject<HTMLElement | null>,
 ) {
   const triggerRef = useRef<HTMLElement | null>(null)
   // Keep the latest onClose without re-running the effect on every render.
@@ -34,8 +37,15 @@ export function useSheetFocus<T extends HTMLElement>(
       : null
 
     const container = containerRef.current
-    const first = container?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
-    ;(first ?? container)?.focus()
+    const initial = initialFocusRef?.current
+    if (initial) {
+      initial.focus()
+    } else if (container) {
+      // Container muss programmatisch fokussierbar sein, ohne in die
+      // Tab-Reihenfolge zu geraten.
+      if (container.tabIndex < 0) container.tabIndex = -1
+      container.focus()
+    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -97,5 +107,5 @@ export function useSheetFocus<T extends HTMLElement>(
       window.scrollTo(0, scrollY)
       triggerRef.current?.focus()
     }
-  }, [open, containerRef])
+  }, [open, containerRef, initialFocusRef])
 }

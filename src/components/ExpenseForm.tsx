@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { Trash2, Plus, Pencil } from 'lucide-react'
 import type { ExpenseSplit, ExpenseQuota, ItemCategory } from '../types'
 import { expenseIcon } from '../lib/expenseIcons'
 import { supabase } from '../lib/supabase'
+import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
 import { calculateShareAmounts, calculateQuotaShares, fmtEUR } from '../lib/settlement'
@@ -83,6 +84,7 @@ export default function ExpenseForm({
   const [catLocalNames, setCatLocalNames] = useState<Record<string, string>>({})
   const [newCatName, setNewCatName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const submittingRef = useRef(false)
 
   const amountNum = parseFloat(amount) || 0
 
@@ -145,7 +147,7 @@ export default function ExpenseForm({
 
   // ── Save (insert or update) ──
   const handleSave = async () => {
-    if (isSubmitting) return
+    if (submittingRef.current) return
     const desc = description.trim()
     if (!desc || amountNum <= 0) return
     if (!hasQuotaConfig && (splitPeople.length === 0 || !exactSumOk)) return
@@ -160,10 +162,21 @@ export default function ExpenseForm({
       return
     }
 
+    submittingRef.current = true
     setIsSubmitting(true)
     try {
 
     if (editingId) {
+      // Alte Werte vor dem Update merken, um bei Split-Fehlern zurückrollen zu können.
+      const { data: oldExpense, error: oldErr } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', editingId)
+        .single()
+      if (oldErr || !oldExpense) {
+        toast(`Fehler beim Laden der Ausgabe: ${oldErr?.message ?? 'nicht gefunden'}`, 'error')
+        return
+      }
       const { error: updErr } = await supabase
         .from('expenses')
         .update({
@@ -211,7 +224,29 @@ export default function ExpenseForm({
         const results = await Promise.allSettled(ops)
         const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error))
         if (failed.length > 0) {
-          toast('Fehler beim Aktualisieren der Aufteilung. Bitte erneut versuchen.', 'error')
+          try {
+            await supabase.from('expenses').update({
+              description: oldExpense.description,
+              amount: oldExpense.amount,
+              paid_by: oldExpense.paid_by,
+              split_mode: oldExpense.split_mode,
+              expense_date: oldExpense.expense_date,
+              note: oldExpense.note,
+              category: oldExpense.category,
+            }).eq('id', editingId)
+            // Splits immer auf den alten Stand zurücksetzen: auch wenn es vorher
+            // keine gab, dürfen zurückgebliebene neue Zeilen nicht stehen bleiben.
+            await supabase.from('expense_splits').delete().eq('expense_id', editingId)
+            if (oldSplits.length > 0) {
+              await supabase.from('expense_splits').insert(
+                oldSplits.map(s => ({ expense_id: editingId, person_name: s.person_name, share_amount: s.share_amount }))
+              )
+            }
+            toast('Fehler beim Aktualisieren der Aufteilung — die Änderung wurde zurückgenommen.', 'error')
+          } catch (err) {
+            logError('Rollback nach Split-Fehler fehlgeschlagen:', err)
+            toast('Fehler beim Aktualisieren der Aufteilung. Bitte erneut versuchen.', 'error')
+          }
           return
         }
       }
@@ -262,6 +297,7 @@ export default function ExpenseForm({
     resetForm()
     onExpensesChange()
     } finally {
+      submittingRef.current = false
       setIsSubmitting(false)
     }
   }
@@ -358,7 +394,7 @@ export default function ExpenseForm({
                 <button
                   className="expense-cat-editor-del"
                   onClick={() => {
-                    confirm(`Kategorie "${cat.name}" wirklich löschen?`, async () => {
+                    confirm(`Kategorie „${cat.name}“ wirklich löschen?`, async () => {
                       await deleteCategory(cat.id)
                       await supabase.from('expenses').update({ category: null }).eq('list_id', listId).eq('category', cat.name)
                       onExpensesChange()

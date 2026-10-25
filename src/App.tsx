@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy, type ReactNode } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy, memo, type ReactNode } from 'react'
 import { ArrowLeft, Loader2, WifiOff } from 'lucide-react'
 import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
@@ -6,6 +6,7 @@ import { supabase, changeParticipantPassword } from './lib/supabase'
 import { screenDirection, type ScreenDirection } from './lib/navTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
+import ErrorBoundary from './components/ErrorBoundary'
 const importNotesScreen = () => import('./components/NotesScreen')
 const NotesScreen = lazy(importNotesScreen)
 import { spanishSuccess } from './lib/espanaFlair'
@@ -30,6 +31,19 @@ const SettingsScreen = lazy(importSettingsScreen)
 const BristolScreen = lazy(importBristolScreen)
 const WeatherScreen = lazy(importWeatherScreen)
 const TripPlanScreen = lazy(importTripPlanScreen)
+
+// Besuchte Panes bleiben gemountet (idle = display:none). Ohne memo rendert
+// jedes App-Update (Realtime-Refetch, Toast, Theme- oder Tab-Wechsel) ALLE
+// besuchten Screens neu — inkl. Leaflet (Wetter) und Recharts (Ausgaben).
+// memo um die lazy-Komponente ist unproblematisch: Chunk-Auflösung und die
+// Suspense-Fallbacks laufen unverändert weiter.
+const MemoNotes = memo(NotesScreen)
+const MemoList = memo(ListScreen)
+const MemoBring = memo(BringScreen)
+const MemoExpense = memo(ExpenseScreen)
+const MemoSettings = memo(SettingsScreen)
+const MemoBristol = memo(BristolScreen)
+const MemoWeather = memo(WeatherScreen)
 
 // Leichte Screens direkt nach dem Login, schwere (Bristol ~416 kB, Wetter
 // ~167 kB) erst im Idle — sie liegen sonst unnötig im Mobilfunk-Datenvolumen.
@@ -409,8 +423,27 @@ export default function App() {
   const handleSettlementsChange = useCallback(() => { if (list) fetchSettlements(list.id) }, [list, fetchSettlements])
   const handleParticipantsChange = useCallback(() => { if (list) fetchParticipants(list.id) }, [list, fetchParticipants])
 
+  // Stabile Prop-Callbacks statt Inline-Lambdas im JSX: neue Funktions-
+  // Identitäten pro Render würden die memoisierten Screens (und Sheet/Nav)
+  // bei jedem App-Update neu rendern. setState-Setter sind stabil, setTab
+  // ist über useCallback([]) stabil.
+  const handlePlanBack = useCallback(() => setTab('trip'), [setTab])
+  const handleOpenMore = useCallback(() => setMoreOpen(true), [])
+  const handleCloseMore = useCallback(() => setMoreOpen(false), [])
+  const handleEnableBristol = useCallback(() => {
+    localStorage.setItem('bristol_modus_enabled', 'true')
+    window.dispatchEvent(new CustomEvent('bristol-modus-change'))
+    setBristolEnabled(true)
+  }, [])
+
+
   // ── Render ─────────────────────────────────────────────────────────
   const expenseCategories = useMemo(() => categories.filter(c => c.list_type === 'expense'), [categories])
+
+  // Stabile Identität für BringScreen: ohne useMemo wäre persons bei jedem
+  // App-Render ein neues Array und die memoisierte Pane renderte immer mit.
+  const persons = useMemo(() => participants.map(p => p.name), [participants])
+
 
   // Wohin der Zurück-Pfeil zeigt: Unterseiten → Domäne, Blatt-Ziele → Heute
   const backTarget: TabView | null =
@@ -509,14 +542,16 @@ export default function App() {
           )}
           {visited.has('plan') && (
             <ScreenPane id="plan" active={tab === 'plan'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
               listId={list.id}
               userName={userName}
               isAdmin={isAdmin}
-              onBack={() => setTab('trip')}
+              onBack={handlePlanBack}
             />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('lists') && (
@@ -532,7 +567,7 @@ export default function App() {
           )}
           {visited.has('notes') && (
             <ScreenPane id="notes" active={tab === 'notes'} direction={screenDir}>
-          <NotesScreen
+          <MemoNotes
             listId={list.id}
             userName={userName}
             notes={notes}
@@ -545,8 +580,9 @@ export default function App() {
           )}
           {visited.has('list') && (
             <ScreenPane id="list" active={tab === 'list'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <ListScreen
+            <MemoList
               items={shoppingItems}
               categories={shoppingCategories}
               listId={list.id}
@@ -560,12 +596,14 @@ export default function App() {
               onCategoriesChange={handleCategoriesChange}
             />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('bring') && (
             <ScreenPane id="bring" active={tab === 'bring'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <BringScreen
+            <MemoBring
               items={bringItems}
               categories={bringCategories}
               listId={list.id}
@@ -575,15 +613,17 @@ export default function App() {
               onItemChange={handleBringItemsChange}
               onReorder={reorderItems}
               onCategoriesChange={handleCategoriesChange}
-              persons={participants.map(p => p.name)}
+              persons={persons}
             />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('expenses') && (
             <ScreenPane id="expenses" active={tab === 'expenses'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <ExpenseScreen
+            <MemoExpense
               expenses={expenses}
               expenseSplits={expenseSplits}
               expenseQuotas={expenseQuotas}
@@ -601,41 +641,43 @@ export default function App() {
               onSettlementsChange={handleSettlementsChange}
             />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('bristol') && (
             <ScreenPane id="bristol" active={tab === 'bristol'} direction={screenDir}>
               {!bristolEnabled && (
           <BristolGate
-            onEnable={() => {
-              localStorage.setItem('bristol_modus_enabled', 'true')
-              window.dispatchEvent(new CustomEvent('bristol-modus-change'))
-              setBristolEnabled(true)
-            }}
+            onEnable={handleEnableBristol}
           />
               )}
               {bristolEnabled && (
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <BristolScreen
+            <MemoBristol
               listId={list.id}
               userName={userName}
               isAdmin={isAdmin}
             />
           </Suspense>
+          </ErrorBoundary>
               )}
             </ScreenPane>
           )}
           {visited.has('weather') && (
             <ScreenPane id="weather" active={tab === 'weather'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <WeatherScreen />
+            <MemoWeather />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('settings') && (
             <ScreenPane id="settings" active={tab === 'settings'} direction={screenDir}>
+          <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <SettingsScreen
+            <MemoSettings
               userName={userName}
               listName={list.name}
               onLeave={handleLeave}
@@ -654,6 +696,7 @@ export default function App() {
               onChangeAdminPassword={handleChangeAdminPassword}
             />
           </Suspense>
+          </ErrorBoundary>
             </ScreenPane>
           )}
         </div>
@@ -662,13 +705,13 @@ export default function App() {
       <BottomNav
         tab={tab}
         onNavigate={setTab}
-        onMore={() => setMoreOpen(true)}
+        onMore={handleOpenMore}
         moreOpen={moreOpen}
       />
 
       <MoreSheet
         open={moreOpen}
-        onClose={() => setMoreOpen(false)}
+        onClose={handleCloseMore}
         onNavigate={setTab}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}

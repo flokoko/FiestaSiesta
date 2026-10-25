@@ -1,3 +1,9 @@
+-- HISTORISCH / ÜBERHOLT: Die hier definierten Bristol-Constraints sind nicht mehr gültig.
+-- Live gilt die Fassung aus sql/113_bristol_value_14.sql:
+--   CHECK (value = ANY (ARRAY[1..7,13,14])) und
+--   UNIQUE (list_id, participant_name, entry_date, entry_time)  (mehrere Einträge pro Tag)
+-- Diese Datei nur noch als Historie lesen, nicht erneut ausführen.
+
 -- Drop the deprecated shit_alerts table (feature removed)
 DROP TABLE IF EXISTS shit_alerts CASCADE;
 

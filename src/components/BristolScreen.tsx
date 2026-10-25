@@ -237,7 +237,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
 
   const handleDeleteEntry = useCallback((entryId: string, entry: BristolEntry) => {
     const datum = new Date(entry.entry_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
-    confirm(`"${entry.participant_name}" vom ${datum} wirklich löschen?`, async () => {
+    confirm(`„${entry.participant_name}“ vom ${datum} wirklich löschen?`, async () => {
       if (isOnline) {
         const { error } = await supabase.from('bristol_entries').delete().eq('id', entryId)
         if (error) {

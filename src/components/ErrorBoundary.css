@@ -1,0 +1,25 @@
+/* Compact-Fallback der ErrorBoundary: kleine Karte für einen einzelnen Pane
+   (z. B. wenn ein Lazy-Chunk nach einem Deploy fehlt), statt die ganze App
+   durch den globalen Absturz-Screen zu ersetzen. Der Knopf (error-screen-btn)
+   wird aus design.css wiederverwendet; hier nur Container + Text.
+   #root-Präfix wie in design.css — gleiche Spezifität, gleiche Mechanik. */
+
+#root .error-boundary-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 24px auto 0;
+  max-width: 34ch;
+  padding: 22px 20px;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  text-align: center;
+}
+
+#root .error-boundary-compact-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}

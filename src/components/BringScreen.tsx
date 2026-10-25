@@ -4,6 +4,7 @@ import { Trash2, GripVertical, Plus, Copy, MoreHorizontal, Search, X, Settings2,
 import type { BringFilter, ListItem, ItemCategory, ListType } from '../types'
 import { supabase, getJoinCode } from '../lib/supabase'
 import { logError } from '../lib/logger'
+import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import AddItemForm from './AddItemForm'
@@ -92,23 +93,30 @@ function DraggableBringGroup({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
-            <span
+            <button
+              type="button"
               className="bring-drag-handle"
               onPointerDown={(e: ReactPointerEvent) => handlePointerDown(e, item.id)}
+              aria-label={`${item.name} verschieben`}
             >
               <GripVertical size={16} strokeWidth={2} />
-            </span>
+            </button>
             <label className="bring-checkbox-wrap">
               <input
                 type="checkbox"
                 checked={item.is_brought}
                 onChange={() => { onToggleBrought(item); navigator.vibrate?.(10) }}
+                aria-label={`${item.name} als mitgebracht markieren`}
               />
               <span className="bring-checkmark" />
             </label>
             <span className="bring-item-name">{item.name}</span>
             <span className="bring-item-qty">{item.quantity}</span>
-            <button className="bring-item-delete" onClick={() => confirm('Dieses Element wirklich löschen?', () => onDelete(item))} aria-label="Löschen">
+            <button
+              className="bring-item-delete"
+              onClick={() => confirm(`„${item.name}“ wirklich löschen?`, () => onDelete(item), undefined, 'Löschen')}
+              aria-label="Löschen"
+            >
               <Trash2 size={16} strokeWidth={2} />
             </button>
           </div>
@@ -210,7 +218,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         .select()
         .single()
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
       setPackItems(prev => [...prev, data as PacklistItem])
@@ -256,7 +264,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         .update({ is_checked: newValue })
         .eq('id', item.id)
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         // Revert on error
         setPackItems(prev => prev.map(p => p.id === item.id ? { ...p, is_checked: !newValue } : p))
       }
@@ -274,7 +282,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
 
   // ── Delete a packing item ──
   const handleDeletePackItem = useCallback((item: PacklistItem) => {
-    confirm('Dieses Packlisten-Element wirklich löschen?', async () => {
+    confirm(`Packlisten-Element „${item.name}“ wirklich löschen?`, async () => {
       // Optimistic removal
       setPackItems(prev => prev.filter(p => p.id !== item.id))
 
@@ -284,7 +292,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           .delete()
           .eq('id', item.id)
         if (error) {
-          toast(`Fehler: ${error.message}`, 'error')
+          toast(friendlyError(error), 'error')
           // Re-fetch to restore correct state
           fetchPackItems()
         }
@@ -344,7 +352,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         .from('packlist_items')
         .insert(insertPayload)
       if (error) {
-        toast(`Fehler beim Übernehmen: ${error.message}`, 'error')
+        toast(`Übernehmen fehlgeschlagen — ${friendlyError(error)}`, 'error')
         // Re-fetch to restore correct state
         fetchPackItems()
         return

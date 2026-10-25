@@ -205,13 +205,34 @@ async function deliverViaEdgeFunction(
 }
 
 /**
- * Deliver a native browser notification (fallback path).
+ * Deliver a local browser notification (fallback path when the Edge
+ * Function is unavailable). Prefers the service worker's showNotification:
+ * on Android Chrome the Notification constructor throws "Illegal
+ * constructor" — a local notification would never arrive there. Falls back
+ * to the constructor only where no service worker exists.
  * Silently no-ops if the Notification API is unavailable or permission
  * is not granted.
  */
 function deliverNative(title: string, body: string): void {
   if (typeof window === 'undefined' || !('Notification' in window)) return
   if (Notification.permission !== 'granted') return
+
+  // Android Chrome: der Notification-Konstruktor wirft dort „Illegal constructor"
+  // und der try/catch unten schluckt das still — es käme nie eine Benachrichtigung
+  // an. Über den Service Worker ist die Anzeige erlaubt (und nimmt Icon + Badge).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then((reg) =>
+        reg.showNotification(title, {
+          body,
+          tag: NOTIFICATION_TAG,
+          icon: '/FiestaSiesta/icon-192.png',
+          badge: '/FiestaSiesta/icon-192.png',
+        }),
+      )
+      .catch(() => undefined)
+    return
+  }
 
   try {
     new Notification(title, {

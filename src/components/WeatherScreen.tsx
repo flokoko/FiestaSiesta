@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { MoreHorizontal, MapPin, Radar } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName } from '../lib/weather'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import 'leaflet/dist/leaflet.css'
 import './WeatherScreen.css'
 
@@ -43,6 +44,47 @@ interface RadarFrame {
   path: string
 }
 
+// ── Wetter-Zwischenspeicher ────────────────────────────────────────────
+// Der reine RAM-Cache (cacheRef) verlor bei jedem App-Start alle Daten: offline
+// blieb nur „Wetterdaten konnten nicht geladen werden". Im Urlaub ist „App
+// offline öffnen und Wetter checken" aber der Normalfall, deshalb persistiert
+// der letzte erfolgreiche Abruf in localStorage (~10–20 kB).
+const WEATHER_CACHE_KEY = 'fiesta-weather-cache'
+const WEATHER_FRESH_MS = 10 * 60 * 1000
+
+function readStoredWeather(): { data: WeatherData; ts: number } | null {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { data?: WeatherData; ts?: number }
+    if (!parsed?.data || typeof parsed.ts !== 'number') return null
+    return { data: parsed.data, ts: parsed.ts }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredWeather(entry: { data: WeatherData; ts: number }) {
+  try {
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(entry))
+  } catch {
+    // Quota voll oder Speicher gesperrt — der RAM-Cache reicht dann weiter
+  }
+}
+
+/** fetch mit hartem Zeitlimit: halb offene Mobilfunkverbindungen hängen sonst
+ *  bis zum Browser-Timeout und der Ladezustand bleibt ewig stehen. */
+function fetchWithTimeout(url: string, ms: number, signal?: AbortSignal): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  const forwardAbort = () => controller.abort()
+  signal?.addEventListener('abort', forwardAbort, { once: true })
+  return fetch(url, { signal: controller.signal }).finally(() => {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', forwardAbort)
+  })
+}
+
 function fmtDayLong(dateStr: string) {
   const d = new Date(dateStr)
   return d.toLocaleDateString('de-DE', { weekday: 'long' })
@@ -55,7 +97,7 @@ function fmtTime(dateStr: string) {
 
 function fmtHour(dateStr: string) {
   const d = new Date(dateStr)
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit' })
+  return `${String(d.getHours()).padStart(2, '0')}:00`
 }
 
 function fmtRadarTime(ts: number) {
@@ -101,13 +143,17 @@ function MapUpdater({ lat, lon }: { lat: number; lon: number }) {
 
 export default function WeatherScreen() {
   const isDark = useIsDark()
-  const [weather, setWeather] = useState<WeatherData | null>(null)
+  const [weather, setWeather] = useState<WeatherData | null>(() => readStoredWeather()?.data ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showLocationInput, setShowLocationInput] = useState(false)
   const [locationQuery, setLocationQuery] = useState('')
   const [geoLoading, setGeoLoading] = useState(false)
-  const cacheRef = useRef<{ data: WeatherData; ts: number } | null>(null)
+  const cacheRef = useRef<{ data: WeatherData; ts: number } | null>(readStoredWeather())
+  // Sequenz-Guard wie in useListData: ein langsamer Antwort für Ort A darf den
+  // frischen Zustand von Ort B nicht überschreiben.
+  const fetchSeqRef = useRef(0)
+  const fetchAbortRef = useRef<AbortController | null>(null)
 
   // ── Radar state ──
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([])
@@ -130,18 +176,24 @@ export default function WeatherScreen() {
 
   // ── Fetch weather data (rich API for screen) ──
   const fetchWeather = useCallback(async (lat: number, lon: number, name: string) => {
-    if (cacheRef.current && Date.now() - cacheRef.current.ts < 10 * 60 * 1000) {
+    if (cacheRef.current && Date.now() - cacheRef.current.ts < WEATHER_FRESH_MS) {
       setWeather(cacheRef.current.data)
       return
     }
+
+    const mySeq = ++fetchSeqRef.current
+    fetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    fetchAbortRef.current = controller
 
     setLoading(true)
     setError('')
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index,pressure_msl,visibility&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&timezone=auto&forecast_days=7`
-      const res = await fetch(url)
+      const res = await fetchWithTimeout(url, 10000, controller.signal)
       if (!res.ok) throw new Error('Wetterdaten konnten nicht geladen werden')
       const data = await res.json()
+      if (mySeq !== fetchSeqRef.current) return
 
       const wd: WeatherData = {
         current: {
@@ -176,11 +228,20 @@ export default function WeatherScreen() {
       }
 
       cacheRef.current = { data: wd, ts: Date.now() }
+      writeStoredWeather(cacheRef.current)
       setWeather(wd)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden')
+      if (mySeq !== fetchSeqRef.current) return
+      const aborted = err instanceof DOMException && err.name === 'AbortError'
+      const message = aborted
+        ? 'Wetterdaten brauchen zu lange — bitte später erneut versuchen.'
+        : err instanceof Error
+          ? err.message
+          : 'Fehler beim Laden'
+      // Mit gespeicherten Daten lieber den letzten Stand zeigen als eine Fehlermeldung
+      if (!cacheRef.current) setError(message)
     } finally {
-      setLoading(false)
+      if (mySeq === fetchSeqRef.current) setLoading(false)
     }
   }, [])
 
@@ -218,7 +279,7 @@ export default function WeatherScreen() {
   useEffect(() => {
     let cancelled = false
     setRadarError('')
-    fetch('https://api.rainviewer.com/public/weather-maps.json')
+    fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', 8000)
       .then(r => r.json())
       .then(data => {
         if (cancelled) return
@@ -333,6 +394,13 @@ export default function WeatherScreen() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [radarOpen, setRadarOpen] = useState(true)
+  const menuSheetRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(menuSheetRef, menuOpen, () => setMenuOpen(false))
+
+  // Laufenden Wetterabruf beim Ausbau des Screens abbrechen
+  useEffect(() => {
+    return () => fetchAbortRef.current?.abort()
+  }, [])
 
   // ── No location set: prompt ──
   if (!storedLocation && !showLocationInput) {
@@ -383,6 +451,7 @@ export default function WeatherScreen() {
             role="dialog"
             aria-modal="true"
             aria-label="Wetter-Optionen"
+            ref={menuSheetRef}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="more-grab" aria-hidden="true" />
@@ -427,6 +496,7 @@ export default function WeatherScreen() {
           </button>
           <button
             className="weather-screen-geo-cancel"
+            aria-label="Ortssuche schließen"
             onClick={() => { navigator.vibrate?.(8); setShowLocationInput(false); setLocationQuery(''); setError('') }}
           >
             ✕
@@ -571,6 +641,7 @@ export default function WeatherScreen() {
                 <input
                   type="range"
                   className="weather-radar-slider"
+                  aria-label="Radar-Zeitpunkt"
                   min={0}
                   max={radarFrames.length - 1}
                   value={radarIndex}

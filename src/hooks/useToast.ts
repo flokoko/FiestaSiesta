@@ -12,6 +12,7 @@ export interface ToastItem {
   action?: ToastAction
   onConfirm?: () => void
   onCancel?: () => void
+  confirmLabel?: string
   dismissing?: boolean
   duration: number
 }
@@ -68,14 +69,23 @@ export function useToastState() {
     scheduleDismiss(id, duration)
   }, [clearTimer, scheduleDismiss])
 
-  const confirm = useCallback((message: string, onConfirm: () => void, onCancel?: () => void) => {
+  const confirm = useCallback((message: string, onConfirm: () => void, onCancel?: () => void, confirmLabel?: string) => {
     const id = `toast-${++toastIdCounter}`
+    // Knopftext aus der Frage ableiten, wenn keiner übergeben wurde: bei
+    // „… wirklich löschen?“ ist „Bestätigen“ die falsche Antwort.
+    const label = confirmLabel
+      ?? (/löschen|lösche/i.test(message) ? 'Löschen'
+        : /entfernen/i.test(message) ? 'Entfernen'
+          : /freigeben/i.test(message) ? 'Freigeben'
+            : /übernehmen/i.test(message) ? 'Übernehmen'
+              : 'Bestätigen')
     const newItem: ToastItem = {
       id,
       message,
       type: 'confirm',
       onConfirm,
       onCancel,
+      confirmLabel: label,
       duration: 10000,
     }
 
@@ -89,8 +99,8 @@ export function useToastState() {
       return next
     })
 
-    scheduleDismiss(id, 10000)
-  }, [clearTimer, scheduleDismiss])
+    // Kein Auto-Dismiss: Der Dialog bleibt, bis der Nutzer entscheidet.
+  }, [clearTimer])
 
   // Cleanup timers on unmount
   useEffect(() => {

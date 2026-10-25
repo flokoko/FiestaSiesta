@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
+import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
@@ -34,6 +35,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   })
   // ── Doppelklick-Sperre je proposal_id: keine parallelen Vote-Inserts/Deletes
   const votingRef = useRef<Set<string>>(new Set())
+  // ── Doppelklick-Sperre für „Vorschlagen": Insert darf nicht doppelt feuern
+  const addingRef = useRef(false)
 
   const load = useCallback(async () => {
     const [p, v] = await Promise.all([
@@ -73,27 +76,34 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const handleAdd = async (slot: TripSlot) => {
     const title = draft.trim()
     if (!title) return
+    // Ref-Sperre: Doppelklick darf den Insert nicht doppelt abschicken
+    if (addingRef.current) return
+    addingRef.current = true
     setBusyId(`new-${slot}`)
-    const { error } = await supabase.from('trip_proposals').insert({
-      list_id: listId,
-      day: selectedDay,
-      slot,
-      title,
-      note: draftNote.trim() || null,
-      place: draftPlace.trim() || null,
-      created_by: userName,
-    })
-    setBusyId(null)
-    if (error) {
-      toast(`Fehler: ${error.message}`, 'error')
-      return
+    try {
+      const { error } = await supabase.from('trip_proposals').insert({
+        list_id: listId,
+        day: selectedDay,
+        slot,
+        title,
+        note: draftNote.trim() || null,
+        place: draftPlace.trim() || null,
+        created_by: userName,
+      })
+      if (error) {
+        toast(friendlyError(error), 'error')
+        return
+      }
+      navigator.vibrate?.(10)
+      setDraft('')
+      setDraftNote('')
+      setDraftPlace('')
+      setAddSlot(null)
+      void load()
+    } finally {
+      addingRef.current = false
+      setBusyId(null)
     }
-    navigator.vibrate?.(10)
-    setDraft('')
-    setDraftNote('')
-    setDraftPlace('')
-    setAddSlot(null)
-    void load()
   }
 
   const handleVote = async (proposal: TripProposal) => {
@@ -115,7 +125,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       // 23505 = unique(proposal_id, voter): der eigene Vote war schon gesetzt
       // (verzögertes Realtime/Echo). Ergebnis stimmt, also keinen Fehler zeigen.
       if (error && error.code !== '23505') {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
       void load()
@@ -125,7 +135,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const handleConfirm = (proposal: TripProposal) => {
-    confirm(`„${proposal.title}" als Plan übernehmen?`, async () => {
+    confirm(`„${proposal.title}“ als Plan übernehmen?`, async () => {
       // Pro day+slot ist nur EINE Bestätigung erlaubt (partial unique index in
       // sql/111_trip_plan_place_confirm.sql). Vor dem Setzen eine evtl.
       // bestehende Bestätigung desselben day+slot zurücksetzen, dann die
@@ -139,7 +149,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         .neq('id', proposal.id)
         .not('confirmed_at', 'is', null)
       if (clearError) {
-        toast(`Fehler: ${clearError.message}`, 'error')
+        toast(friendlyError(clearError), 'error')
         void load()
         return
       }
@@ -151,7 +161,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         if (error.code === '23505') {
           toast('Es ist bereits ein Plan für diese Zeit übernommen.', 'error')
         } else {
-          toast(`Fehler: ${error.message}`, 'error')
+          toast(friendlyError(error), 'error')
         }
         void load()
         return
@@ -163,13 +173,13 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const handleReopen = (proposal: TripProposal) => {
-    confirm(`Plan „${proposal.title}" wieder freigeben?`, async () => {
+    confirm(`Plan „${proposal.title}“ wieder freigeben?`, async () => {
       const { error } = await supabase
         .from('trip_proposals')
         .update({ confirmed_at: null, confirmed_by: null })
         .eq('id', proposal.id)
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
       toast('Abstimmung wieder offen', 'success')
@@ -178,10 +188,10 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const handleDelete = (proposal: TripProposal) => {
-    confirm(`„${proposal.title}" mit allen Stimmen löschen?`, async () => {
+    confirm(`„${proposal.title}“ mit allen Stimmen löschen?`, async () => {
       const { error } = await supabase.from('trip_proposals').delete().eq('id', proposal.id)
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
       toast('Vorschlag gelöscht', 'success')
@@ -228,7 +238,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       <p className="plan-day-title">{formatDayLong(selectedDate)}</p>
 
       {loading ? (
-        <div className="plan-loading"><Loader2 size={18} className="spin" /> Lade Vorschläge …</div>
+        <div className="plan-loading" role="status"><Loader2 size={18} className="spin" /> Lädt Vorschläge …</div>
       ) : (
         SLOTS.map((slot) => {
           const list = proposalsFor(proposals, selectedDay, slot.key)
@@ -251,7 +261,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                     className="plan-slot-action"
                     onClick={() => handleReopen(fixed)}
                   >
-                    <RotateCcw size={11} strokeWidth={2.2} /> ändern
+                    <RotateCcw size={11} strokeWidth={2.2} /> Ändern
                   </button>
                 ) : leader ? (
                   <button
@@ -259,7 +269,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                     className="plan-slot-action"
                     onClick={() => handleConfirm(leader)}
                   >
-                    <Check size={11} strokeWidth={2.6} /> übernehmen
+                    <Check size={11} strokeWidth={2.6} /> Übernehmen
                   </button>
                 ) : null}
               </h2>
@@ -307,7 +317,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                           onClick={() => handleVote(proposal)}
                           disabled={busyId === proposal.id || Boolean(fixed)}
                           aria-pressed={voted}
-                          aria-label={`Für ${proposal.title} stimmen`}
+                          aria-label={fixed ? 'Abstimmung geschlossen — Plan steht fest' : `Für ${proposal.title} stimmen`}
                         >
                           {busyId === proposal.id
                             ? <Loader2 size={13} className="spin" />
@@ -379,7 +389,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       )}
 
       <p className="plan-footnote">
-        <Crown size={12} strokeWidth={2} /> Meiste Stimmen gewinnen — „übernehmen" macht daraus den festen Plan.
+        <Crown size={12} strokeWidth={2} /> Die meisten Stimmen gewinnen — „Übernehmen“ macht daraus den festen Plan.
       </p>
     </div>
   )

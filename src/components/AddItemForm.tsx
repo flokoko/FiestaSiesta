@@ -3,6 +3,7 @@ import type { ItemCategory, ListType } from '../types'
 import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
+import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { publishActivity, markOwnAction } from '../lib/activityBus'
 import { spanishPhrase } from '../lib/espanaFlair'
 import './AddItemForm.css'
@@ -29,6 +30,7 @@ export default function AddItemForm({
   persons,
 }: AddItemFormProps) {
   const { toast } = useToast()
+  const { isOnline, enqueue } = useOfflineQueue()
   const [name, setName] = useState('')
   const [quantity, setQuantity] = useState('')
   const [category, setCategory] = useState<string>(categories[0]?.name ?? '')
@@ -45,7 +47,7 @@ export default function AddItemForm({
   const handleAdd = async () => {
     const n = name.trim()
     if (!n) return
-    const { error } = await supabase.from('items').insert({
+    const payload = {
       list_id: listId,
       name: n,
       quantity: quantity.trim() || '1',
@@ -55,7 +57,25 @@ export default function AddItemForm({
       is_brought: false,
       created_by: userName,
       list_type: listType,
-    })
+    }
+
+    if (!isOnline) {
+      // Offline: Eingabe in die Queue legen (Payload wie der Insert inkl.
+      // Defaults für is_checked/is_brought, damit der Flush nicht an
+      // NOT-NULL-Spalten scheitert), Formular leeren und die Zeile sofort
+      // über den Eltern-Callback erscheinen lassen.
+      enqueue({ type: 'insert', table: 'items', payload })
+      setName('')
+      setQuantity('')
+      setAssignedTo(defaultAssignedTo ?? '')
+      setCategory(categories[0]?.name ?? '')
+      setExpanded(false)
+      toast('Offline gespeichert — wird synchronisiert, sobald du wieder online bist.', 'success')
+      onAdded?.()
+      return
+    }
+
+    const { error } = await supabase.from('items').insert(payload)
     if (error) {
       logError('Insert failed:', error)
       toast(`Fehler beim Speichern: ${error.message}`, 'error')

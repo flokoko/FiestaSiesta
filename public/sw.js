@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.34.2';
+const CACHE_NAME = 'fiesta-siesta-v0.35.0';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -9,7 +9,7 @@ const INDEX_URL = '/FiestaSiesta/';
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    fetch('/FiestaSiesta/precache-manifest.json')
+    fetch('/FiestaSiesta/precache-manifest.json', { cache: 'no-store' })
       .then((res) => {
         if (!res.ok) throw new Error(`precache manifest ${res.status}`);
         return res.json();
@@ -45,6 +45,8 @@ self.addEventListener('install', (e) => {
 
 // Activate: keep the current cache plus the most recent previous generation
 // (escape hatch for sessions still open across a deploy), delete everything older.
+// Only OUR caches (fiesta-siesta-v*): this origin also serves other apps
+// (e.g. /BellaMozzarella/) — their Cache Storage must survive our updates.
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(async (keys) => {
@@ -55,7 +57,7 @@ self.addEventListener('activate', (e) => {
         .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
       const previous = generations.filter((k) => k !== CACHE_NAME).pop();
       if (previous) keep.add(previous);
-      const toDelete = keys.filter((k) => !keep.has(k));
+      const toDelete = keys.filter((k) => k.startsWith('fiesta-siesta-v') && !keep.has(k));
       await Promise.all(toDelete.map((k) => caches.delete(k)));
       await self.clients.claim();
     })
@@ -172,7 +174,7 @@ self.addEventListener('fetch', (e) => {
 
         if (response && response.status === 200) {
           const cache = await caches.open(CACHE_NAME);
-          e.waitUntil(cache.put(e.request, response.clone()));
+          e.waitUntil(cache.put(e.request, response.clone()).catch(() => undefined));
           return response;
         }
 

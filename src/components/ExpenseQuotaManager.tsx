@@ -11,6 +11,12 @@ interface ExpenseQuotaManagerProps {
   onQuotasChange: () => void
 }
 
+/** PostgREST `in.(...)`: Werte mit Komma muessen in ASCII-Doppelquotes stehen.
+ *  Ohne Komma bleibt der Wert nackt — sonst vergleicht der Filter auf „Name" statt Name. */
+function personNameFilter(name: string): string {
+  return name.includes(',') ? `"${name}"` : name
+}
+
 export default function ExpenseQuotaManager({
   listId,
   expenseCategories,
@@ -92,13 +98,18 @@ export default function ExpenseQuotaManager({
       return
     }
 
-    // Personen, die aus der Liste entfernt wurden, müssen verschwinden
-    const { error: pruneError } = await supabase
+    // Personen, die aus der Liste entfernt wurden, müssen verschwinden.
+    // Leere Personenliste: not.in.() wäre ein ungültiger Filter — dann alle
+    // Quoten dieser Kategorie löschen.
+    const pruneQuery = supabase
       .from('expense_quotas')
       .delete()
       .eq('list_id', listId)
       .eq('category', editingCategory)
-      .not('person_name', 'in', `(${rows.map(r => `"${r.person_name}"`).join(',')})`)
+    if (rows.length > 0) {
+      pruneQuery.not('person_name', 'in', `(${rows.map(r => personNameFilter(r.person_name)).join(',')})`)
+    }
+    const { error: pruneError } = await pruneQuery
 
     if (pruneError) {
       toast(`Fehler beim Aufräumen: ${pruneError.message}`, 'error')
@@ -126,7 +137,7 @@ export default function ExpenseQuotaManager({
   const handleRedistribute = useCallback(async (category: string) => {
     if (knownPersons.length === 0) return
     confirm(
-      `Quoten für "${category}" gleichmäßig auf ${knownPersons.length} ${knownPersons.length === 1 ? 'Person' : 'Personen'} neu verteilen?`,
+      `Quoten für „${category}“ gleichmäßig auf ${knownPersons.length} ${knownPersons.length === 1 ? 'Person' : 'Personen'} neu verteilen?`,
       async () => {
         const totalHundredths = 10000 // 100.00% in hundredths of a percent
         const base = Math.floor(totalHundredths / knownPersons.length)
@@ -148,12 +159,15 @@ export default function ExpenseQuotaManager({
           return
         }
 
-        const { error: pruneError } = await supabase
+        const pruneQuery = supabase
           .from('expense_quotas')
           .delete()
           .eq('list_id', listId)
           .eq('category', category)
-          .not('person_name', 'in', `(${rows.map(r => `"${r.person_name}"`).join(',')})`)
+        if (rows.length > 0) {
+          pruneQuery.not('person_name', 'in', `(${rows.map(r => personNameFilter(r.person_name)).join(',')})`)
+        }
+        const { error: pruneError } = await pruneQuery
         if (pruneError) {
           toast(`Fehler beim Aufräumen: ${pruneError.message}`, 'error')
           return

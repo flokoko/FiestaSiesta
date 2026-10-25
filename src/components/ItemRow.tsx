@@ -28,10 +28,10 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
   }
 
   const deleteItem = () => {
-    confirm('Dieses Element wirklich löschen?', () => {
+    confirm(`„${item.name}“ wirklich löschen?`, () => {
       onDelete?.(item)
       navigator.vibrate?.(15)
-    })
+    }, undefined, 'Löschen')
   }
 
   const rowClass = [
@@ -49,12 +49,14 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
       onPointerUp={dragHandleProps?.onPointerUp}
     >
       {dragHandleProps && (
-        <span
+        <button
+          type="button"
           className="item-drag-handle"
           onPointerDown={dragHandleProps.onPointerDown}
+          aria-label={`${item.name} verschieben`}
         >
           <GripVertical size={16} strokeWidth={2} />
-        </span>
+        </button>
       )}
       <label className="custom-checkbox" onClick={(e) => e.stopPropagation()}>
         <input
@@ -62,6 +64,7 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
           checked={item.is_checked}
           onChange={toggleChecked}
           className="custom-checkbox-input"
+          aria-label={`${item.name} abhaken`}
         />
         <span className={`custom-checkbox-visual ${item.is_checked ? 'checked' : ''}`}>
           {item.is_checked && (

@@ -7,6 +7,7 @@ import type { ItemCategory, ListType, Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
 import { getTheme, setTheme } from '../lib/theme'
 import { supabase } from '../lib/supabase'
+import { friendlyError } from '../lib/friendlyError'
 import {
   isPushSupported,
   isPushConfigured,
@@ -173,12 +174,12 @@ export default function SettingsScreen({
     }
     const exists = participants.find(p => p.name.toLowerCase() === n.toLowerCase())
     if (exists) {
-      toast(`Teilnehmer "${exists.name}" existiert bereits!`, 'error')
+      toast(`Teilnehmer „${exists.name}“ existiert bereits!`, 'error')
       return
     }
     const { error } = await supabase.from('participants').insert({ list_id: listId, name: n })
     if (error) {
-      toast(`Fehler: ${error.message}`, 'error')
+      toast(friendlyError(error), 'error')
       return
     }
     navigator.vibrate?.(10)
@@ -188,13 +189,13 @@ export default function SettingsScreen({
   }
 
   const handleDeleteParticipant = (p: Participant) => {
-    confirm(`Teilnehmer "${p.name}" entfernen?`, async () => {
+    confirm(`„${p.name}“ aus der Reise entfernen?`, async () => {
       const { data, error } = await supabase.rpc('delete_participant', {
         p_list_id: listId,
         p_name: p.name,
       })
       if (error) {
-        toast(`Fehler: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
       if (data?.error) {
@@ -204,7 +205,7 @@ export default function SettingsScreen({
       }
       navigator.vibrate?.(10)
       onParticipantsChange()
-    })
+    }, undefined, 'Entfernen')
   }
 
   const handleUnlock = async () => {
@@ -255,6 +256,7 @@ export default function SettingsScreen({
     if (result.error) {
       setAdminPwError(result.error)
     } else {
+      toast('Admin-Passwort geändert', 'success')
       setAdminOldPw('')
       setAdminNewPw('')
       setShowChangeAdminPw(false)
@@ -271,6 +273,7 @@ export default function SettingsScreen({
     setNewAdminPassword('')
     setShowSetPassword(false)
     setAdminError('')
+    toast('Admin-Passwort gesetzt', 'success')
   }
 
   const handleAddCategory = (listType: ListType) => {
@@ -301,7 +304,7 @@ export default function SettingsScreen({
               className="settings-cat-name-input"
               type="text"
               value={localCatNames[cat.id] ?? cat.name}
-              aria-label={`Kategorie "${cat.name}" umbenennen`}
+              aria-label={`Kategorie „${cat.name}“ umbenennen`}
               onChange={(e) => {
                 setLocalCatNames(prev => ({ ...prev, [cat.id]: e.target.value }))
                 debouncedUpdateCategory(cat.id, { name: e.target.value })
@@ -309,7 +312,7 @@ export default function SettingsScreen({
             />
             <button
               className="settings-cat-delete-btn"
-              onClick={() => confirm('Dieses Element wirklich löschen?', () => deleteCategory(cat.id))}
+              onClick={() => confirm(`Kategorie „${cat.name}“ wirklich löschen?`, () => deleteCategory(cat.id))}
               aria-label="Kategorie löschen"
             >
               <Trash2 size={16} strokeWidth={2} />

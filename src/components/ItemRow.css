@@ -219,6 +219,10 @@
 }
 
 .item-drag-handle {
+  /* Ist ein <button>: Browser-Defaults zurücksetzen, Optik trägt die Klasse. */
+  appearance: none;
+  background: none;
+  border: 0;
   cursor: grab;
   display: flex;
   align-items: center;

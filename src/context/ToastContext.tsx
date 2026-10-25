@@ -5,7 +5,7 @@ import Toast from '../components/Toast'
 interface ToastContextValue {
   toast: (message: string, type?: 'success' | 'error' | 'info', action?: ToastAction) => void
   dismiss: (id?: string) => void
-  confirm: (message: string, onConfirm: () => void, onCancel?: () => void) => void
+  confirm: (message: string, onConfirm: () => void, onCancel?: () => void, confirmLabel?: string) => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)

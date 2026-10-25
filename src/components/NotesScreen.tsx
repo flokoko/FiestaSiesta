@@ -2,6 +2,7 @@ import { useState, useMemo, type ReactNode } from 'react'
 import { Trash2, ExternalLink, GripVertical, Star } from 'lucide-react'
 import type { QuickNote } from '../types'
 import { supabase } from '../lib/supabase'
+import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { useDragReorder } from '../hooks/useDragReorder'
@@ -97,7 +98,7 @@ export default function NotesScreen({
         created_by: userName,
       })
       if (error) {
-        toast(`Fehler beim Speichern: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
     } else {
@@ -118,11 +119,13 @@ export default function NotesScreen({
   }
 
   const handleDelete = (note: QuickNote) => {
-    confirm('Dieses Element wirklich löschen?', async () => {
+    // Kurzer Auszug für den Bestätigungs-Toast: eine Zeile, max. ~40 Zeichen
+    const kurz = note.content.replace(/\s+/g, ' ').trim().slice(0, 40)
+    confirm(`Notiz „${kurz}“ wirklich löschen?`, async () => {
       if (isOnline) {
         const { error } = await supabase.from('notes').delete().eq('id', note.id)
         if (error) {
-          toast(`Fehler beim Löschen: ${error.message}`, 'error')
+          toast(friendlyError(error), 'error')
           return
         }
       } else {
@@ -136,7 +139,7 @@ export default function NotesScreen({
       }
       navigator.vibrate?.(15)
       onNotesChange()
-    })
+    }, undefined, 'Löschen')
   }
 
   const startEdit = (note: QuickNote) => {
@@ -163,7 +166,7 @@ export default function NotesScreen({
         })
         .eq('id', note.id)
       if (error) {
-        toast(`Fehler beim Speichern: ${error.message}`, 'error')
+        toast(friendlyError(error), 'error')
         return
       }
     } else {
@@ -242,7 +245,7 @@ export default function NotesScreen({
               type="text"
               aria-label="Notizen durchsuchen"
               className="dash-notes-search"
-              placeholder="🔍 Suchen…"
+              placeholder="Suchen…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

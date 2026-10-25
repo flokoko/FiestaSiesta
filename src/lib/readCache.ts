@@ -53,6 +53,8 @@ const KNOWN_CACHE_TABLES = [
   'expenses',
   'expense_splits',
   'participants',
+  'expense_quotas',
+  'settlements',
   'bristol_entries',
 ]
 

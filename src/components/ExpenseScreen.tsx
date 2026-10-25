@@ -174,7 +174,7 @@ export default function ExpenseScreen({
 
   // ── Delete ──
   const handleDelete = (expense: Expense) => {
-    confirm(`"${expense.description}" wirklich löschen?`, async () => {
+    confirm(`„${expense.description}“ wirklich löschen?`, async () => {
       // Erst die Ausgabe selbst löschen — schlägt das fehl, bleibt der alte
       // Stand konsistent. (Die DB cascade't die Splits über ON DELETE CASCADE
       // mit; der Split-Delete danach ist Best-Effort für Schemas ohne Cascade.)

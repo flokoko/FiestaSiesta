@@ -31,7 +31,13 @@ function loadQueue(): QueuedOp[] {
 }
 
 function saveQueue(queue: QueuedOp[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(queue))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue))
+  } catch (e) {
+    // localStorage voll oder gesperrt (QuotaExceededError): darf nicht aus dem
+    // Klick-Handler fliegen — Queue im Speicher weiterführen.
+    console.error('saveQueue failed:', e)
+  }
 }
 
 /**
@@ -165,6 +171,15 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
     // id entfernen: Ops, die während des Flushes (gleicher oder anderer Tab)
     // zusätzlich eingereiht werden, gehen so nicht verloren.
     for (;;) {
+      // Flush-Lock erneuern: ein langer Flush (> LOCK_TTL_MS) darf nicht von
+      // einem zweiten Tab übernommen werden, der sonst parallel flusht und
+      // doppelte Inserts erzeugt.
+      try {
+        flushLockTs = Date.now()
+        localStorage.setItem(LOCK_KEY, String(flushLockTs))
+      } catch {
+        // ignore
+      }
       const queue = loadQueue()
       const op = queue[0]
       if (!op) break
@@ -228,7 +243,7 @@ function enqueueOp(op: Omit<QueuedOp, 'id' | 'timestamp'>): void {
   // Dedup: für update/delete mit gleicher ID, ersetze letzten Eintrag
   if (op.type === 'update' || op.type === 'delete') {
     const existingIdx = queue.findIndex(
-      q => q.type === op.type && q.filterColumn === op.filterColumn && q.filterValue === op.filterValue
+      q => q.type === op.type && q.filterColumn === op.filterColumn && JSON.stringify(q.filterValue) === JSON.stringify(op.filterValue)
     )
     if (existingIdx !== -1) {
       queue[existingIdx] = fullOp

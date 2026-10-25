@@ -135,7 +135,7 @@ export default function ExpenseSettlement({
   const handleDeleteSettlement = (s: Settlement) => {
     if (deletingId) return
     confirm(
-      `Zahlung "${s.payer} → ${s.payee}: ${fmtEUR(s.amount)}" wirklich löschen?`,
+      `Zahlung „${s.payer} → ${s.payee}: ${fmtEUR(s.amount)}“ wirklich löschen?`,
       async () => {
         setDeletingId(s.id)
         try {
