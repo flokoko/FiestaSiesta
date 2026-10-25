@@ -3783,3 +3783,23 @@ body::before {
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--glass-edge);
 }
+
+/* Toast: im Dark Mode war "weiße Schrift auf weißer Fläche" (--ink als
+   Hintergrund, --surface als Schrift). Eigene, themenabhängige Tokens. */
+:root {
+  --toast-bg: #1D1A21;
+  --toast-ink: #FFFFFF;
+}
+
+:root[data-theme='dark'] {
+  --toast-bg: #352F3B;
+  --toast-ink: #F8F4FB;
+}
+
+#root .toast,
+#root .toast-success,
+#root .toast-error,
+#root .toast-info {
+  background: var(--toast-bg);
+  color: var(--toast-ink);
+}

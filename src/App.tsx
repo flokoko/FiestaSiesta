@@ -37,6 +37,7 @@ function TabLoader() {
 import './App.css'
 import './nav.css'
 import './design.css'
+import './design-expense.css'
 
 // ── Confetti helper: spanische Flagge (Rot-Gelb-Rot) ─────────────────
 async function fireConfetti() {

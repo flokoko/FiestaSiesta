@@ -209,16 +209,47 @@ export default function ExpenseScreen({
 
       <section className="money-hero">
         <div className="money-hero-glow" aria-hidden="true" />
-        <div className="money-hero-label">Gesamt ausgelegt</div>
+        <div className="money-hero-label">Zusammen ausgegeben</div>
         <div className="money-hero-total">{fmtEUR(totalSpent)}</div>
-        <div className="money-hero-balance">
+        <div className={`money-hero-balance${myBalance < -0.005 ? ' is-negative' : ''}`}>
           {expenses.length === 0
             ? 'Trag die erste Ausgabe ein'
-            : myBalance >= 0
+            : myBalance > 0.005
               ? `Dir stehen ${fmtEUR(myBalance)} zu`
-              : `Du schuldest ${fmtEUR(Math.abs(myBalance))}`}
+              : myBalance < -0.005
+                ? `Du schuldest ${fmtEUR(Math.abs(myBalance))}`
+                : 'Du bist ausgeglichen'}
         </div>
       </section>
+
+      {allPersons.length > 0 && expenses.length > 0 && (
+        <div className="xp-balances">
+          {[...allPersons]
+            .sort((a, b) => (a === userName ? -1 : b === userName ? 1 : a.localeCompare(b)))
+            .map((person) => {
+            const value = Math.round((openBalances[person] ?? 0) * 100) / 100
+            const positive = value > 0.005
+            const negative = value < -0.005
+            return (
+              <div
+                key={person}
+                className={`xp-bal${positive ? ' is-plus' : ''}${negative ? ' is-minus' : ''}`}
+              >
+                <span className="xp-bal-avatar" aria-hidden="true">
+                  {person.slice(0, 2).toUpperCase()}
+                </span>
+                <span className="xp-bal-body">
+                  <span className="xp-bal-name">{person === userName ? 'Du' : person.split(' ')[0]}</span>
+                  <span className="xp-bal-value">
+                    {positive ? '+' : ''}
+                    {fmtEUR(value)}
+                  </span>
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <section className="money-debts">
         <div className="money-debts-head">
@@ -235,15 +266,24 @@ export default function ExpenseScreen({
         </div>
         {proposals.length === 0 ? (
           <p className="money-debts-empty">
-            {expenses.length === 0 ? 'Noch nichts zu verteilen.' : 'Alles ausgeglichen 🎉'}
+            {expenses.length === 0 ? 'Noch nichts zu verteilen.' : 'Alles ausgeglichen'}
           </p>
         ) : (
           <div className="money-debts-list">
             {proposals.slice(0, 3).map((txn, i) => (
-              <div key={`${txn.from}-${txn.to}-${i}`} className="money-debt-row">
-                <span className="money-debt-from">{txn.from}</span>
-                <ArrowRight size={13} strokeWidth={2.2} className="money-debt-arrow" />
-                <span className="money-debt-to">{txn.to}</span>
+              <div key={`${txn.from}-${txn.to}-${i}`} className="money-debt-row xp-debt-row">
+                <span className="xp-bal-avatar is-sm" aria-hidden="true">
+                  {txn.from.slice(0, 2).toUpperCase()}
+                </span>
+                <span className="money-debt-from">
+                  {txn.from === userName ? 'Du' : txn.from.split(' ')[0]}
+                </span>
+                <span className="money-debt-verb">
+                  {txn.from === userName ? 'schuldest' : 'schuldet'}
+                </span>
+                <span className="money-debt-to">
+                  {txn.to === userName ? 'dir' : txn.to.split(' ')[0]}
+                </span>
                 <span className="money-debt-amount">{fmtEUR(txn.amount)}</span>
               </div>
             ))}
@@ -348,6 +388,7 @@ export default function ExpenseScreen({
             expenseSplits={expenseSplits}
             expenseCategories={expenseCategories}
             searchQuery={searchQuery}
+            userName={userName}
             isLoading={isLoading}
             formExpanded={formExpanded}
             onEdit={startEdit}

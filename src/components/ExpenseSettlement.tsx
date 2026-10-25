@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Wallet, ArrowRight, CheckCircle2, Trash2, X, BarChart3, Receipt } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Trash2, X, BarChart3, Receipt } from 'lucide-react'
 import type { Expense, ExpenseSplit, Settlement } from '../types'
 import {
   computeBalances,
   computeOpenBalances,
   computeSettlementProposals,
   sortedBalanceEntries,
-  totalExpenses,
   fmtEUR,
   fmtDate,
   type SettlementTxn,
@@ -38,7 +37,6 @@ export default function ExpenseSettlement({
 
   // ── All hooks MUST be before any conditional return ──
   const [view, setView] = useState<'settlement' | 'charts'>('settlement')
-  const total = useMemo(() => totalExpenses(expenses), [expenses])
   const originalBalances = useMemo(() => computeBalances(expenses, expenseSplits), [expenses, expenseSplits])
 
   // Convert persisted Settlement[] to SettlementTxn[] for computeOpenBalances
@@ -158,24 +156,19 @@ export default function ExpenseSettlement({
 
   return (
     <div key="settlement">
-      {/* ── Compact total banner ── */}
-      <div className="expense-total-banner">
-        <Wallet size={18} strokeWidth={2} /> Gesamtausgaben: {fmtEUR(total)}
-      </div>
-
-      {/* ── Sub-Toggle: Abrechnung | Charts ── */}
-      <div className="expense-toggle expense-settlement-toggle">
+      {/* Die Gesamtsumme steht schon im Hero — hier nur noch die Sicht-Auswahl. */}
+      <div className="expense-toggle expense-settlement-toggle xp-seg">
         <button
           className={`expense-toggle-btn ${view === 'settlement' ? 'active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setView('settlement') }}
         >
-          <Receipt size={16} strokeWidth={2} /> Abrechnung
+          <Receipt size={15} strokeWidth={2} /> Salden
         </button>
         <button
           className={`expense-toggle-btn ${view === 'charts' ? 'active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setView('charts') }}
         >
-          <BarChart3 size={16} strokeWidth={2} /> Charts
+          <BarChart3 size={15} strokeWidth={2} /> Charts
         </button>
       </div>
 
@@ -186,18 +179,32 @@ export default function ExpenseSettlement({
       ) : (
         <>
           {/* ── Open Balances ── */}
-          <div className="expense-balance-list">
+          <div className="xp-rows xp-salden">
             {sortedOpenBalances.map(({ name, balance }) => {
-              const cls = balance > 0.01 ? 'positive' : balance < -0.01 ? 'negative' : 'neutral'
+              const cls = balance > 0.01 ? 'is-plus' : balance < -0.01 ? 'is-minus' : ''
               return (
-                <div key={name} className={`expense-balance-card ${cls}`}>
-                  <span className="expense-balance-name">{name}</span>
-                  <span className={`expense-balance-amount ${cls}`}>
-                    {balance > 0.01
-                      ? `+${fmtEUR(balance)}`
-                      : balance < -0.01
-                        ? `-${fmtEUR(-balance)}`
-                        : '0,00 €'}
+                <div key={name} className={`xp-row xp-saldo ${cls}`}>
+                  <span className="xp-row-icon xp-saldo-icon" aria-hidden="true">
+                    {name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="xp-row-main">
+                    <span className="xp-row-title">{name}</span>
+                    <span className="xp-row-meta">
+                      {balance > 0.01
+                        ? 'bekommt zurück'
+                        : balance < -0.01
+                          ? 'schuldet noch'
+                          : 'ausgeglichen'}
+                    </span>
+                  </span>
+                  <span className="xp-row-right">
+                    <span className="xp-row-amount">
+                      {balance > 0.01
+                        ? `+${fmtEUR(balance)}`
+                        : balance < -0.01
+                          ? `-${fmtEUR(-balance)}`
+                          : '0,00 €'}
+                    </span>
                   </span>
                 </div>
               )
@@ -215,10 +222,10 @@ export default function ExpenseSettlement({
           ) : (
             <div className="expense-settlement-list">
               {settlementProposals.map((txn, i) => (
-                <div key={i} className="expense-txn">
-                  <span className="expense-txn-from">{txn.from}</span>
-                  <span className="expense-txn-arrow">→</span>
-                  <span className="expense-txn-to">{txn.to}</span>
+                <div key={i} className="expense-txn xp-txn">
+                  <span className="xp-txn-text">
+                    <strong>{txn.from}</strong> zahlt <strong>{txn.to}</strong>
+                  </span>
                   <span className="expense-txn-amount">{fmtEUR(txn.amount)}</span>
                   {settlingIdx === i ? (
                     <div className="expense-settle-inline">
@@ -255,12 +262,11 @@ export default function ExpenseSettlement({
                     </div>
                   ) : (
                     <button
-                      className="expense-settle-btn"
+                      className="expense-settle-btn xp-settle-btn"
                       onClick={() => handleStartSettle(i, txn.amount)}
-                      aria-label="Als beglichen markieren"
-                      title="Beglichen"
+                      aria-label={`${txn.from} an ${txn.to} als beglichen markieren`}
                     >
-                      <CheckCircle2 size={17} strokeWidth={2.2} />
+                      Begleichen
                     </button>
                   )}
                 </div>
@@ -276,12 +282,12 @@ export default function ExpenseSettlement({
               </h3>
               <div className="expense-settlement-list">
                 {settlements.map(s => (
-                  <div key={s.id} className="expense-txn expense-txn-settled">
-                    <span className="expense-txn-from">{s.payer}</span>
-                    <span className="expense-txn-arrow">→</span>
-                    <span className="expense-txn-to">{s.payee}</span>
+                  <div key={s.id} className="expense-txn expense-txn-settled xp-txn">
+                    <span className="xp-txn-text">
+                      <strong>{s.payer}</strong> an <strong>{s.payee}</strong>
+                      <span className="xp-txn-date">{fmtDate(s.settled_at)}</span>
+                    </span>
                     <span className="expense-txn-amount">{fmtEUR(s.amount)}</span>
-                    <span className="expense-txn-date">{fmtDate(s.settled_at)}</span>
                     <button
                       className="expense-settle-delete"
                       onClick={() => handleDeleteSettlement(s)}

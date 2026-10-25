@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Pencil } from 'lucide-react'
 import type { ExpenseSplit, ExpenseQuota, ItemCategory } from '../types'
+import { expenseIcon } from '../lib/expenseIcons'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
@@ -297,23 +298,27 @@ export default function ExpenseForm({
 
       {/* Kategorie */}
       <div className="expense-category-row">
-        {expenseCategories.map(cat => (
-          <button
-            key={cat.id}
-            className={`expense-cat-chip ${expenseCategory === cat.name ? 'active' : ''}`}
-            onClick={() => setExpenseCategory(expenseCategory === cat.name ? '' : cat.name)}
-            type="button"
-            style={expenseCategory === cat.name ? { borderColor: cat.color, background: cat.bg, color: cat.color } : {}}
-          >
-            {cat.icon} {cat.name}
-          </button>
-        ))}
+        {expenseCategories.map(cat => {
+          const CatIcon = expenseIcon(cat.name)
+          return (
+            <button
+              key={cat.id}
+              className={`expense-cat-chip ${expenseCategory === cat.name ? 'active' : ''}`}
+              onClick={() => setExpenseCategory(expenseCategory === cat.name ? '' : cat.name)}
+              type="button"
+              aria-pressed={expenseCategory === cat.name}
+            >
+              <CatIcon size={14} strokeWidth={1.9} /> {cat.name}
+            </button>
+          )
+        })}
         <button
           className="expense-cat-chip expense-cat-edit-btn"
           onClick={() => setCatEditorOpen(v => !v)}
           type="button"
+          aria-label="Kategorien bearbeiten"
         >
-          ✏️
+          <Pencil size={13} strokeWidth={1.9} />
         </button>
       </div>
 

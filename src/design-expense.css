@@ -1,0 +1,686 @@
+/* ══════════════════════════════════════════════════════════════════════
+   Geld/Ausgaben — ruhige, listenbasierte Sprache (Vorbild: Splitwise).
+   Ersetzt die emojilastigen Karten aus dem Vorgänger-Design.
+   Import in App.tsx NACH design.css, alle Regeln #root-gescopet.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tint-rose: #FBEAE7;
+  --tint-mint: #E7F1EA;
+  --tint-blue: #E8EEF6;
+  --tint-amber: #FAF0DC;
+  --tint-plum: #F1EBF4;
+  --tint-ink: #4A3F45;
+  --xp-line: rgba(23, 20, 26, 0.07);
+  --xp-plus: #1F7A4D;
+  --xp-minus: #B3341F;
+}
+
+:root[data-theme='dark'] {
+  --tint-rose: rgba(226, 112, 95, 0.16);
+  --tint-mint: rgba(88, 178, 132, 0.16);
+  --tint-blue: rgba(112, 148, 214, 0.16);
+  --tint-amber: rgba(214, 168, 88, 0.16);
+  --tint-plum: rgba(168, 140, 200, 0.16);
+  --tint-ink: #E8E2EC;
+  --xp-line: rgba(255, 255, 255, 0.08);
+  --xp-plus: #5FCB96;
+  --xp-minus: #F08A78;
+}
+
+/* ── Saldo-Karten: wer bekommt was, wer schuldet was ── */
+#root .xp-balances {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+#root .xp-bal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 20px -18px rgba(23, 20, 26, 0.4);
+  min-width: 0;
+}
+
+#root .xp-bal-avatar {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+}
+
+#root .xp-bal-avatar.is-sm {
+  width: 22px;
+  height: 22px;
+  font-size: 8.5px;
+}
+
+#root .xp-bal-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+#root .xp-bal-name {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#root .xp-bal-value {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .xp-bal.is-plus .xp-bal-value { color: var(--xp-plus); }
+#root .xp-bal.is-minus .xp-bal-value { color: var(--xp-minus); }
+#root .xp-bal.is-plus { box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px rgba(31, 122, 77, 0.12); }
+#root .xp-bal.is-minus { box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px rgba(179, 52, 31, 0.12); }
+
+/* ── Liste: eine Karte, haarfeine Trenner, kompakte Zeilen ── */
+#root .xp-list {
+  margin: 10px 0 0;
+  padding-bottom: 96px;
+}
+
+#root .xp-group { margin: 0 0 14px; }
+
+#root .xp-group-label {
+  margin: 0 0 7px 4px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink-3);
+}
+
+#root .xp-rows {
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 14px 34px -30px rgba(23, 20, 26, 0.5);
+  overflow: hidden;
+}
+
+#root .xp-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--xp-line);
+}
+
+#root .xp-row:last-child { border-bottom: none; }
+
+#root .xp-row-hit {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 4px 11px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root .xp-row-hit:active { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+
+#root .xp-row-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tint-ink);
+}
+
+#root .xp-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+#root .xp-row-title {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#root .xp-row-meta {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#root .xp-row-right {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-left: 6px;
+}
+
+#root .xp-row-amount {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .xp-row-share {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 550;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .xp-row-del {
+  flex: 0 0 auto;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ink-3);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+#root .xp-row-del:hover,
+#root .xp-row-del:focus-visible { opacity: 1; color: var(--accent); }
+
+@media (hover: none), (pointer: coarse) {
+  #root .xp-row-del { width: 46px; }
+}
+
+/* ── Leerzustand ── */
+#root .xp-empty {
+  margin: 12px 0 0;
+  padding: 30px 22px 34px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+#root .xp-empty-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tint-rose);
+  color: var(--tint-ink);
+  margin-bottom: 6px;
+}
+
+#root .xp-empty strong {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+#root .xp-empty span:last-child {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-3);
+  max-width: 30ch;
+}
+
+/* ── Schuldenzeilen: Avatar vor dem Namen ── */
+#root .xp-debt-row {
+  gap: 7px;
+}
+
+#root .xp-debt-row .money-debt-amount {
+  margin-left: auto;
+}
+
+/* Der Hero trägt den Gesamtbetrag, nicht mehr die Einzelbilanz. */
+#root .money-hero-balance.is-negative { color: rgba(255, 255, 255, 0.92); }
+
+/* Schuldenzeilen als Satz: "Ben schuldet dir 35,45 €" */
+#root .money-debt-verb,
+#root .money-debt-from,
+#root .money-debt-to {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+#root .money-debt-verb {
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+#root .money-debt-arrow { display: none; }
+
+#root .money-debt-row {
+  padding: 11px 4px;
+}
+
+#root .money-debt-row + .money-debt-row {
+  border-top: 1px solid var(--xp-line);
+}
+
+/* ── Abrechnung: gleiche Sprache wie die Liste ── */
+#root .xp-seg {
+  margin: 10px 0 12px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  box-shadow: none;
+  border: 1px solid var(--xp-line);
+  width: auto;
+}
+
+#root .xp-seg .expense-toggle-btn {
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#root .xp-seg .expense-toggle-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 6px -3px rgba(23, 20, 26, 0.4);
+}
+
+#root .xp-salden { margin: 0 0 18px; }
+
+#root .xp-saldo { cursor: default; }
+
+#root .xp-saldo .xp-row-icon.xp-saldo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+  font-family: var(--font-ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+#root .xp-saldo.is-plus .xp-row-amount { color: var(--xp-plus); }
+#root .xp-saldo.is-minus .xp-row-amount { color: var(--xp-minus); }
+
+#root .xp-txn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+}
+
+#root .xp-txn-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -0.01em;
+}
+
+#root .xp-txn-text strong {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+#root .xp-txn .expense-txn-amount {
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+#root .xp-settle-btn {
+  border: 1px solid var(--glass-edge);
+  background: var(--surface-2);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 650;
+  width: auto;
+  height: auto;
+  min-height: 32px;
+  box-shadow: none;
+}
+
+#root .xp-settle-btn:active { transform: scale(0.97); }
+
+#root .xp-txn-date {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+#root .expense-settlement-list .expense-txn {
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+/* Salden-Zeilen brauchen eigenes Padding — sie haben keinen .xp-row-hit-Wrapper */
+#root .xp-saldo {
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+}
+
+#root .xp-saldo .xp-row-right { padding-left: 0; }
+
+/* Ausgleichszahlungen als Karte wie die Ausgabenliste */
+#root .expense-settlement-list {
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 14px 34px -30px rgba(23, 20, 26, 0.5);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+#root .expense-settlement-list .xp-txn + .xp-txn,
+#root .expense-settlement-list .expense-txn + .expense-txn {
+  border-top: 1px solid var(--xp-line);
+}
+
+#root .expense-settlement-list .xp-txn { padding: 12px 14px; }
+
+#root .expense-settlement-title,
+#root .expense-settled-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 8px 3px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  text-transform: none;
+}
+
+/* ── Formular: gleiche ruhige Sprache ── */
+#root .expense-form {
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 18px 40px -34px rgba(23, 20, 26, 0.55);
+  padding: 14px;
+}
+
+#root .expense-form .expense-input,
+#root .expense-form .expense-select {
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+  border-radius: 14px;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 13px;
+}
+
+#root .expense-form .expense-input:focus,
+#root .expense-form .expense-select:focus {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  outline: none;
+}
+
+/* Kategorie-Chips: Icon + Name, ausgewählt = Akzent-Tint */
+#root .expense-category-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+#root .expense-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--xp-line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  box-shadow: none;
+  min-height: 32px;
+}
+
+#root .expense-cat-chip.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+  font-weight: 650;
+}
+
+#root .expense-cat-edit-btn {
+  padding: 7px 9px;
+  color: var(--ink-3);
+}
+
+/* Aufteilung: Segmented Control statt zwei Riesenpillen */
+#root .expense-split-toggle {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+  box-shadow: none;
+  width: auto;
+}
+
+#root .expense-split-toggle .expense-toggle-btn {
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+#root .expense-split-toggle .expense-toggle-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 6px -3px rgba(23, 20, 26, 0.4);
+}
+
+/* Personen-Auswahl */
+#root .expense-form .expense-person-chip {
+  border-radius: 999px;
+  border: 1px solid var(--xp-line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  box-shadow: none;
+  font-weight: 550;
+}
+
+#root .expense-form .expense-person-chip.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+}
+
+/* Fußzeile */
+#root .expense-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#root .expense-btn-cancel {
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 12px;
+}
+
+#root .expense-btn-save {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-grad);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 11px 20px;
+  box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+#root .expense-btn-save:disabled {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  box-shadow: none;
+}
+
+/* Modus-Umschalter (Gleichmäßig / Exakt) und Abschnitts-Labels */
+#root .expense-mode-toggle {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+  box-shadow: none;
+  width: auto;
+  margin-top: 10px;
+}
+
+#root .expense-mode-btn {
+  border: none;
+  background: none;
+  box-shadow: none;
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+#root .expense-mode-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 6px -3px rgba(23, 20, 26, 0.4);
+}
+
+#root .expense-chips-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+  margin: 14px 0 7px 2px;
+}
+
+#root .expense-form-preview {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--xp-line);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  box-shadow: none;
+}
+
+/* Dark-Mode-Falle: Fläche --ink (fast weiß) + Schrift --surface (fast durchsichtig)
+   ergibt weiße Schrift auf weißer Fläche. Hier die Chips im Ausgabenformular. */
+:root[data-theme='dark'] #root .expense-chips .expense-chip.active {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: #FFFFFF;
+}
+
+:root[data-theme='dark'] #root .expense-mode-btn.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #F7F3FA;
+}
+
+:root[data-theme='dark'] #root .expense-chips .expense-chip {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-2);
+}
