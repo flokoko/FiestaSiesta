@@ -1,13 +1,13 @@
 {
   "name": "Fiesta Siesta",
-  "short_name": "Fiesta Siesta",
+  "short_name": "FiestaSiesta",
   "description": "Urlaubs-App für Gran Canaria — Einkaufsliste, Mitbringen, Ausgaben, Bristol, Wetter & Notizen, gemeinsam in Realtime.",
   "start_url": "/FiestaSiesta/",
   "scope": "/FiestaSiesta/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#AA151B",
-  "theme_color": "#AA151B",
+  "background_color": "#F8F6F4",
+  "theme_color": "#F8F6F4",
   "icons": [
     {
       "src": "/FiestaSiesta/icon-192.png",

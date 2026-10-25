@@ -2,17 +2,48 @@
 // Keep in sync with APP_VERSION in src/version.ts
 const CACHE_NAME = 'fiesta-siesta-v0.19.0';
 
-// Install: skipWaiting to activate immediately
-self.addEventListener('install', () => {
+const INDEX_URL = '/FiestaSiesta/';
+
+// Install: precache every build asset (from the manifest emitted by
+// vite.config.ts), then activate immediately.
+self.addEventListener('install', (e) => {
   self.skipWaiting();
+  e.waitUntil(
+    fetch('/FiestaSiesta/precache-manifest.json')
+      .then((res) => {
+        if (!res.ok) throw new Error(`precache manifest ${res.status}`);
+        return res.json();
+      })
+      .then((files) => {
+        const urls = [INDEX_URL, '/FiestaSiesta/index.html', ...files];
+        return caches.open(CACHE_NAME).then((cache) => cache.addAll(urls));
+      })
+      .catch(() => {
+        // Non-fatal: install must not abort when the manifest can't be loaded.
+        return caches
+          .open(CACHE_NAME)
+          .then((cache) =>
+            cache.addAll([INDEX_URL, '/FiestaSiesta/index.html']).catch(() => undefined)
+          );
+      })
+  );
 });
 
-// Activate: clean old caches
+// Activate: keep the current cache plus the most recent previous generation
+// (escape hatch for sessions still open across a deploy), delete everything older.
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys().then(async (keys) => {
+      const keep = new Set([CACHE_NAME]);
+      const generations = keys
+        .filter((k) => k.startsWith('fiesta-siesta-v'))
+        .sort();
+      const previous = generations.filter((k) => k !== CACHE_NAME).pop();
+      if (previous) keep.add(previous);
+      const toDelete = keys.filter((k) => !keep.has(k));
+      await Promise.all(toDelete.map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })
   );
 });
 
@@ -73,45 +104,69 @@ self.addEventListener('notificationclose', () => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Don't intercept Supabase API calls
+  // Never intercept Supabase/API traffic
   if (url.hostname.includes('supabase')) return;
 
-  // Only handle GET
+  // GET only
   if (e.request.method !== 'GET') return;
 
   // Same-origin only
   if (url.origin !== self.location.origin) return;
 
-  // HTML navigation requests: NETWORK-FIRST with cache fallback.
-  // This guarantees users always get the latest index.html (which points
-  // to the latest hashed bundle), instead of a stale cached HTML that
-  // references an old broken bundle.
+  // HTML navigation: cache-first on index.html, network fallback.
   if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
     e.respondWith(
-      fetch(e.request)
-        .then((response) => {
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached =
+          (await cache.match(e.request)) ||
+          (await cache.match(INDEX_URL)) ||
+          (await caches.match(e.request)) ||
+          (await caches.match(INDEX_URL));
+        if (cached) return cached;
+
+        try {
+          const response = await fetch(e.request);
           if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+            e.waitUntil(cache.put(e.request, response.clone()));
           }
           return response;
-        })
-        .catch(() => caches.match(e.request).then((cached) => cached || caches.match('/FiestaSiesta/')))
+        } catch {
+          return new Response('Offline — die App konnte nicht geladen werden.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          });
+        }
+      })()
     );
     return;
   }
 
-  // Other same-origin GET (hashed assets): stale-while-revalidate
+  // Assets: cache-first (across current + previous generation), else network.
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetchPromise = fetch(e.request).then((response) => {
+    (async () => {
+      const cached = await caches.match(e.request);
+      if (cached) return cached;
+
+      try {
+        const response = await fetch(e.request);
+        const isJsCss = /\.(js|css)(\?|#|$)/.test(url.pathname);
+
         if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          const cache = await caches.open(CACHE_NAME);
+          e.waitUntil(cache.put(e.request, response.clone()));
+          return response;
         }
+
+        // Stale hashed JS/CSS gone after a deploy: don't leak the raw 404.
+        if (isJsCss) {
+          return new Response('', { status: 410, statusText: 'Gone' });
+        }
+
         return response;
-      }).catch(() => cached);
-      return cached || fetchPromise;
-    })
+      } catch {
+        return new Response('', { status: 504, statusText: 'Gateway Timeout' });
+      }
+    })()
   );
 });

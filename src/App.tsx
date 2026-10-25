@@ -107,10 +107,35 @@ export default function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!('serviceWorker' in navigator)) return
+    const sw = navigator.serviceWorker
+    // A controller already present means this is a returning session — only
+    // then does a new service worker count as a real "update" worth announcing.
+    const hadController = !!sw.controller
+
+    const onControllerChange = () => {
+      if (hadController) setUpdateAvailable(true)
+    }
+    sw.addEventListener('controllerchange', onControllerChange)
+
+    sw.ready.then((registration) => {
+      // A worker already waiting to activate is a genuine update.
+      if (registration.waiting) {
         setUpdateAvailable(true)
+      }
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing
+        if (!installing) return
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && sw.controller) {
+            setUpdateAvailable(true)
+          }
+        })
       })
+    })
+
+    return () => {
+      sw.removeEventListener('controllerchange', onControllerChange)
     }
   }, [])
 

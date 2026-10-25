@@ -33,7 +33,13 @@ jobs:
           # leere VITE_*-Werte bauen grün, liefern aber eine blanke App.
           cp .env.public .env
 
+      - run: npm run lint
+      - run: npm test
+
       - run: npm run build
+
+      - name: Remove bundle stats
+        run: rm -f dist/stats.html
 
       - uses: actions/configure-pages@v5
         with:
