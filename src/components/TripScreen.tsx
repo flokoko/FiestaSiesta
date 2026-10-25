@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { MapPin, Image, Map as MapIcon, FileText, StickyNote, ChevronRight } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { useMemo } from 'react'
+import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote } from 'lucide-react'
 import SlotIcon from './SlotIcon'
-import { SLOTS, isoDay, planFor, proposalsFor } from '../lib/tripPlan'
-import type { TripProposal, TripSlot, TripVote, TabView } from '../types'
+import WeatherGlyph from './WeatherGlyph'
+import { isoDay, SLOTS } from '../lib/tripPlan'
+import type { TripPlanMap } from '../hooks/useTripPlan'
+import type { TripForecast } from '../lib/tripWeather'
+import { getWeatherInfo } from '../lib/weatherCodes'
+import type { TabView } from '../types'
 import {
   TRIP, formatDayShort, formatDayLong, formatRange, tripDay, tripDays,
   tripPhase, daysUntilTrip, TRIP_LENGTH,
@@ -11,63 +14,38 @@ import {
 
 interface TripScreenProps {
   onNavigate: (tab: TabView) => void
+  onEmergency: () => void
   notesCount: number
-  listId: string
+  /** gilt der Plan pro Tag (aus useTripPlan in App.tsx) */
+  plan: TripPlanMap
+  proposalCount: number
+  /** Tagesvorschau für die Reisetage, leer außerhalb des 16-Tage-Fensters */
+  weather: TripForecast
 }
 
-type DayPlan = Partial<Record<TripSlot, string>>
-
-export default function TripScreen({ onNavigate, notesCount, listId }: TripScreenProps) {
-  // tripDays() liefert bei jedem Render ein neues Array — stand in den Effect-Deps
-  // und löste zwei Supabase-Queries pro App-State-Änderung aus.
+export default function TripScreen({
+  onNavigate, onEmergency, notesCount, plan, proposalCount, weather,
+}: TripScreenProps) {
+  // tripDays() liefert bei jedem Render ein neues Array — deshalb memoisiert.
   const days = useMemo(() => tripDays(), [])
   const current = tripDay()
   const phase = tripPhase()
-  const [plans, setPlans] = useState<Record<string, DayPlan>>({})
-  const [proposalCount, setProposalCount] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      const [p, v] = await Promise.all([
-        supabase.from('trip_proposals').select('*').eq('list_id', listId),
-        supabase.from('trip_votes').select('*').eq('list_id', listId),
-      ])
-      if (cancelled || p.error || v.error) return
-      const grouped: Record<string, string[]> = {}
-      for (const row of (v.data ?? []) as TripVote[]) {
-        grouped[row.proposal_id] = [...(grouped[row.proposal_id] ?? []), row.voter]
-      }
-      const rows = ((p.data ?? []) as TripProposal[]).map((row) => ({
-        ...row,
-        votes: grouped[row.id] ?? [],
-      }))
-      setProposalCount(rows.length)
-      const next: Record<string, DayPlan> = {}
-      for (const day of days) {
-        const iso = isoDay(day)
-        const entry: DayPlan = {}
-        for (const slot of SLOTS) {
-          const entryPlan = planFor(proposalsFor(rows, iso, slot.key))
-          if (entryPlan) entry[slot.key] = entryPlan.title
-        }
-        if (Object.keys(entry).length > 0) next[iso] = entry
-      }
-      setPlans(next)
-    }
-    void load()
-    return () => { cancelled = true }
-  }, [listId, days])
 
   const badge = current
     ? `Tag ${current}`
     : phase === 'before'
       ? `in ${daysUntilTrip()} Tagen`
       : 'vorbei'
-  const decidedSlots = Object.values(plans).reduce((n, day) => n + Object.keys(day).length, 0)
+  const decidedSlots = Object.values(plan).reduce((n, day) => n + Object.keys(day).length, 0)
   const planHint = decidedSlots > 0
     ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten geplant · ${proposalCount} ${proposalCount === 1 ? 'Vorschlag' : 'Vorschläge'}`
     : `${TRIP_LENGTH} Tage · noch nichts geplant`
+  // Vorschau nur für Tage anzeigen, die wirklich in der Reise liegen —
+  // Open-Meteo liefert 16 Tage ab heute, das kann vor dem Reisebeginn enden.
+  const lastTripWeatherDay = days.filter((d) => weather[isoDay(d)]).pop()
+  const weatherHint = lastTripWeatherDay
+    ? `Wetter bis ${formatDayShort(lastTripWeatherDay)}`
+    : phase === 'after' ? null : 'Wetter folgt 16 Tage vorher'
 
   return (
     <div className="trip">
@@ -98,6 +76,14 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
             </span>
             <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
           </button>
+          <button type="button" className="trip-hub-row" onClick={onEmergency}>
+            <span className="trip-hub-icon"><ShieldAlert size={16} strokeWidth={2} /></span>
+            <span className="trip-hub-text">
+              <strong>Notfall &amp; Adressen</strong>
+              <small>Notruf, Arzt, Adresse — offline</small>
+            </span>
+            <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
+          </button>
           <div className="trip-hub-row is-muted">
             <span className="trip-hub-icon"><Image size={16} strokeWidth={2} /></span>
             <span className="trip-hub-text">
@@ -112,23 +98,20 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
               <small>kommt später</small>
             </span>
           </div>
-          <div className="trip-hub-row is-muted">
-            <span className="trip-hub-icon"><FileText size={16} strokeWidth={2} /></span>
-            <span className="trip-hub-text">
-              <strong>Dokumente</strong>
-              <small>kommt später</small>
-            </span>
-          </div>
         </div>
       </section>
 
       <section className="trip-section">
-        <h2 className="trip-h2">Die Tage</h2>
+        <div className="trip-section-head">
+          <h2 className="trip-h2">Die Tage</h2>
+          {weatherHint && <span className="trip-weather-hint">{weatherHint}</span>}
+        </div>
         <div className="trip-days">
           {days.map((date, index) => {
             const isToday = current === index + 1
             const iso = isoDay(date)
-            const plan = plans[iso]
+            const dayPlan = plan[iso]
+            const wx = weather[iso]
             return (
               <button
                 type="button"
@@ -138,14 +121,26 @@ export default function TripScreen({ onNavigate, notesCount, listId }: TripScree
               >
                 <header className="trip-day-head">
                   <span className="trip-day-num">Tag {index + 1}</span>
-                  <span className="trip-day-date">{isToday ? formatDayLong(date) : formatDayShort(date)}</span>
+                  <span className="trip-day-meta">
+                    {wx && (
+                      <span
+                        className={`trip-day-weather${wx.rain >= 40 ? ' is-wet' : ''}`}
+                        title={`${getWeatherInfo(wx.code).desc} · ${Math.round(wx.tMax)}° / ${Math.round(wx.tMin)}° · Regen ${wx.rain}%`}
+                      >
+                        <WeatherGlyph code={wx.code} size={12} className="trip-day-weather-icon" />
+                        {Math.round(wx.tMax)}°
+                        {wx.rain >= 30 && <em>{wx.rain}%</em>}
+                      </span>
+                    )}
+                    <span className="trip-day-date">{isToday ? formatDayLong(date) : formatDayShort(date)}</span>
+                  </span>
                 </header>
-                {plan ? (
+                {dayPlan ? (
                   <ul className="trip-day-plan">
-                    {SLOTS.filter((slot) => plan[slot.key]).map((slot) => (
+                    {SLOTS.filter((slot) => dayPlan[slot.key]).map((slot) => (
                       <li key={slot.key}>
                         <SlotIcon slot={slot.key} size={10} className="trip-day-plan-emoji" />
-                        {plan[slot.key]}
+                        {dayPlan[slot.key]?.title}
                       </li>
                     ))}
                   </ul>

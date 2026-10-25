@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity } from 'lucide-react'
+import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity, ShieldAlert } from 'lucide-react'
 import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -11,11 +11,12 @@ interface MoreSheetProps {
   isDark: boolean
   onToggleTheme: () => void
   onLeave: () => void
+  onEmergency: () => void
   userName: string
 }
 
 export default function MoreSheet({
-  open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
+  open, onClose, onNavigate, isDark, onToggleTheme, onLeave, onEmergency, userName,
 }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null)
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -42,6 +43,12 @@ export default function MoreSheet({
       hint: 'Skala, Statistik, Gag',
       icon: Activity,
       action: () => { onNavigate('bristol'); onClose() },
+    },
+    {
+      label: 'Notfall',
+      hint: 'Notruf, Arzt, Adresse',
+      icon: ShieldAlert,
+      action: () => { onEmergency(); onClose() },
     },
     {
       label: 'Einstellungen',

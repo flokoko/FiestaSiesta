@@ -17,6 +17,11 @@ export const TRIP: TripInfo = {
   end: '2026-12-06',
 }
 
+/** Koordinaten der Unterkunft (Temisas, Gemeinde Agüimes, 691 m).
+ *  Wird für die Wetter-Vorschau auf den Tageskarten benutzt. */
+export const TRIP_LAT = 27.90937
+export const TRIP_LON = -15.50733
+
 export type TripPhase = 'before' | 'during' | 'after'
 
 function parseIso(iso: string): Date {
@@ -59,11 +64,20 @@ export function daysUntilTrip(today: Date = new Date()): number {
   return diffDays(today, TRIP_START)
 }
 
-/** Alle Reisetage als Datum, inklusive An- und Abreisetag */
+/** Alle Reisetage als Datum, inklusive An- und Abreisetag.
+ *  Bewusst über setDate und nicht über `+ i * 24h`: über die Zeitumstellung
+ *  hinweg landet die Millisekundenrechnung auf 23:00 des Vortags (der Tag
+ *  wäre doppelt, der letzte würde fehlen). */
 export function tripDays(): Date[] {
+  return tripDaysFrom(TRIP_START, TRIP_LENGTH)
+}
+
+/** Reisetage ab einem beliebigen Start — eigene Funktion, damit die
+ *  Zeitumstellungs-Falle testbar bleibt (Termin ist fest verdrahtet). */
+export function tripDaysFrom(start: Date, count: number): Date[] {
   const out: Date[] = []
-  for (let i = 0; i < TRIP_LENGTH; i += 1) {
-    out.push(new Date(TRIP_START.getTime() + i * DAY_MS))
+  for (let i = 0; i < count; i += 1) {
+    out.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i))
   }
   return out
 }

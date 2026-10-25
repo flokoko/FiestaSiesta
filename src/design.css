@@ -4166,3 +4166,170 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   #root .spin { animation: none; }
 }
+
+/* ── Countdown & Tage-Wetter (v0.36) ─────────────────────────────────── */
+/* Reisefortschritt im Heute-Hero: ein Segment pro Reisetag. Liegt auf dem
+   dunklen Hero-Verlauf, deshalb feste Weiß-Alphas statt Theme-Tokens. */
+#root .today-progress {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  width: 100%;
+}
+
+#root .today-progress-dot {
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+  transition: background 0.25s var(--ease);
+}
+
+#root .today-progress-dot.is-past {
+  background: rgba(255, 255, 255, 0.52);
+}
+
+#root .today-progress-dot.is-now {
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55), 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+/* Tagesplan im Heute-Cockpit: eine Glaszeile pro Tageszeit. */
+#root .today-plan {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  padding: 4px 16px;
+  border: none;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  font: inherit;
+}
+
+#root .today-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+
+#root .today-plan-row:first-child {
+  border-top: none;
+}
+
+#root .today-plan-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  width: 70px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+#root .today-plan-icon {
+  color: var(--gold);
+  flex: none;
+}
+
+#root .today-plan-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Kopfzeile über den Tageskarten (Titel + Vorschau-Hinweis). */
+#root .trip-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#root .trip-weather-hint {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* Tageskarte: Wetter-Abzeichen neben dem Datum. */
+#root .trip-day-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+#root .trip-day-weather {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+#root .trip-day-weather em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+#root .trip-day-weather.is-wet {
+  background: rgba(58, 122, 200, 0.14);
+  color: #2C5C93;
+}
+
+#root .trip-day-weather.is-wet em {
+  color: #2C5C93;
+}
+
+#root .trip-day-weather-icon {
+  flex: none;
+  color: var(--ink-2);
+  margin-top: -1px;
+}
+
+#root .trip-day-weather.is-wet .trip-day-weather-icon {
+  color: #2C5C93;
+}
+
+#root .trip-day.is-today .trip-day-weather-icon {
+  color: #fff;
+}
+
+#root .trip-day.is-today .trip-day-weather {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+#root .trip-day.is-today .trip-day-weather em {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:root[data-theme='dark'] #root .trip-day-weather.is-wet {
+  background: rgba(58, 122, 200, 0.22);
+  color: #A8C8EE;
+}
+
+:root[data-theme='dark'] #root .trip-day-weather.is-wet em {
+  color: #A8C8EE;
+}

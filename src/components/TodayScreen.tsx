@@ -1,7 +1,12 @@
+import { useMemo } from 'react'
 import { ShoppingCart, Backpack, Wallet, Activity, ChevronRight, ArrowRight } from 'lucide-react'
 import type { TabView } from '../types'
+import type { TripPlanMap } from '../hooks/useTripPlan'
+import { SLOTS, isoDay } from '../lib/tripPlan'
+import SlotIcon from './SlotIcon'
 import {
-  TRIP, formatDayLong, formatRange, tripDay, tripPhase, daysUntilTrip, TRIP_LENGTH,
+  TRIP, TRIP_START, TRIP_LENGTH, formatDayLong, formatDayShort, formatRange,
+  tripDay, tripDays, tripPhase, daysUntilTrip,
 } from '../lib/trip'
 
 interface TodayScreenProps {
@@ -14,6 +19,8 @@ interface TodayScreenProps {
   expenseTotal: number
   userBalance: number
   bristolEnabled: boolean
+  /** gilt der Plan pro Tag (aus useTripPlan in App.tsx) */
+  plan: TripPlanMap
   onNavigate: (tab: TabView) => void
 }
 
@@ -24,18 +31,47 @@ function euro(value: number): string {
 
 export default function TodayScreen({
   userName, participantCount, shoppingCount, shoppingChecked, bringCount,
-  expenseTotal, userBalance, bristolEnabled, onNavigate,
+  expenseTotal, userBalance, bristolEnabled, plan, onNavigate,
 }: TodayScreenProps) {
   const today = new Date()
   const phase = tripPhase(today)
   const day = tripDay(today)
   const open = Math.max(0, shoppingCount - shoppingChecked)
+  const days = useMemo(() => tripDays(), [])
 
   const kicker = phase === 'during'
     ? `Tag ${day} von ${TRIP_LENGTH}`
     : phase === 'before'
       ? `Noch ${daysUntilTrip(today)} Tage`
       : 'Reise vorbei'
+
+  // Vor der Reise zeigt die Karte den ersten Tag mit Plan, während der Reise
+  // den heutigen, danach den letzten geplanten — nie eine leere Karte.
+  const focusIndex = useMemo(() => {
+    if (phase === 'during' && day) return day - 1
+    const filled = days
+      .map((d, i) => (plan[isoDay(d)] ? i : -1))
+      .filter((i) => i >= 0)
+    if (filled.length === 0) return phase === 'after' ? days.length - 1 : 0
+    return phase === 'before' ? filled[0] : filled[filled.length - 1]
+  }, [phase, day, days, plan])
+
+  const focusDate = days[focusIndex] ?? TRIP_START
+  const focusPlan = plan[isoDay(focusDate)]
+  const focusSlots = focusPlan ? SLOTS.filter((slot) => focusPlan[slot.key]) : []
+  const isToday = phase === 'during' && focusIndex === (day ?? 0) - 1
+
+  const planTitle = isToday
+    ? 'Heute geplant'
+    : `Tag ${focusIndex + 1} · ${formatDayShort(focusDate)}`
+  const emptyTitle = isToday
+    ? 'Für heute steht nichts im Plan'
+    : phase === 'before'
+      ? 'Noch nichts geplant'
+      : 'Kein Plan für diesen Tag'
+  const emptyHint = isToday
+    ? 'Öffne den Reiseplan und schlag etwas für heute vor.'
+    : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
   const quickTiles: Array<{ key: TabView; label: string; hint: string; icon: typeof ShoppingCart }> = [
     { key: 'list', label: 'Einkaufen', hint: `${open} offen`, icon: ShoppingCart },
@@ -51,6 +87,13 @@ export default function TodayScreen({
     icon: Activity,
   })
 
+  const remaining = day !== null ? TRIP_LENGTH - day : null
+  const metaRight = phase === 'during' && remaining !== null
+    ? remaining === 0 ? 'Abreisetag' : `noch ${remaining} ${remaining === 1 ? 'Tag' : 'Tage'}`
+    : phase === 'before'
+      ? `ab ${formatDayShort(TRIP_START)}`
+      : null
+
   return (
     <div className="today">
       <section className="today-hero">
@@ -60,6 +103,19 @@ export default function TodayScreen({
         <div className="today-sub">{TRIP.name} · {TRIP.place}</div>
         <div className="today-sub today-sub-soft">
           {formatRange()} · {participantCount === 1 ? 'du allein' : `${participantCount} dabei`}
+          {metaRight ? ` · ${metaRight}` : ''}
+        </div>
+        <div className="today-progress" aria-hidden="true">
+          {days.map((date, index) => {
+            const past = phase === 'after' || (day !== null && index + 1 < day)
+            const now = day !== null && index + 1 === day
+            return (
+              <span
+                key={isoDay(date)}
+                className={`today-progress-dot${past ? ' is-past' : ''}${now ? ' is-now' : ''}`}
+              />
+            )
+          })}
         </div>
       </section>
 
@@ -88,18 +144,30 @@ export default function TodayScreen({
 
       <section className="today-section">
         <div className="today-section-head">
-          <h2>Heute geplant</h2>
-          <button type="button" className="today-link" onClick={() => onNavigate('trip')}>
-            Reise öffnen <ArrowRight size={13} strokeWidth={2.4} />
+          <h2>{planTitle}</h2>
+          <button type="button" className="today-link" onClick={() => onNavigate('plan')}>
+            Reiseplan <ArrowRight size={13} strokeWidth={2.4} />
           </button>
         </div>
-        <button type="button" className="today-empty" onClick={() => onNavigate('trip')}>
-          <span className="today-empty-title">Noch kein Programm für heute</span>
-          <span className="today-empty-hint">
-            Öffne die Reise, um Programmpunkte für heute anzulegen.
-          </span>
-          <ChevronRight size={16} strokeWidth={2} className="today-empty-chevron" />
-        </button>
+        {focusSlots.length > 0 ? (
+          <button type="button" className="today-plan" onClick={() => onNavigate('plan')}>
+            {focusSlots.map((slot) => (
+              <span className="today-plan-row" key={slot.key}>
+                <span className="today-plan-slot">
+                  <SlotIcon slot={slot.key} size={10} className="today-plan-icon" />
+                  {slot.label}
+                </span>
+                <span className="today-plan-title">{focusPlan?.[slot.key]?.title}</span>
+              </span>
+            ))}
+          </button>
+        ) : (
+          <button type="button" className="today-empty" onClick={() => onNavigate('plan')}>
+            <span className="today-empty-title">{emptyTitle}</span>
+            <span className="today-empty-hint">{emptyHint}</span>
+            <ChevronRight size={16} strokeWidth={2} className="today-empty-chevron" />
+          </button>
+        )}
       </section>
 
       <section className="today-section">

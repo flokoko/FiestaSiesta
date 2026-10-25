@@ -58,6 +58,9 @@ const SCREEN_CHUNKS_EAGER = [
 const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen]
 import TodayScreen from './components/TodayScreen'
 import TripScreen from './components/TripScreen'
+import EmergencySheet from './components/EmergencySheet'
+import { useTripPlan } from './hooks/useTripPlan'
+import { useTripWeather } from './hooks/useTripWeather'
 import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
@@ -186,6 +189,14 @@ export default function App() {
   // ── Tab state ──────────────────────────────────────────────────────
   const [tab, setTabState] = useState<TabView>('home')
   const [moreOpen, setMoreOpen] = useState(false)
+  const [emergencyOpen, setEmergencyOpen] = useState(false)
+
+  // Reiseplan + Wetter-Vorschau: EIN Aufruf für Heute und Reise. Zwei Hook-
+  // Instanzen würden denselben Realtime-Kanal doppelt abonnieren (wirft beim
+  // zweiten subscribe) und die Vorschläge zweimal laden. `tab` mitgeben, damit
+  // der Plan beim Betreten der Screens nachgeladen wird.
+  const { plan: tripPlan, proposalCount: tripProposalCount } = useTripPlan(list?.id, tab)
+  const tripWeather = useTripWeather()
 
   const tabRef = useRef<TabView>('home')
   // Richtung des Wechsels: vorwärts = tiefer in den Baum, zurück = zurück.
@@ -430,6 +441,8 @@ export default function App() {
   const handlePlanBack = useCallback(() => setTab('trip'), [setTab])
   const handleOpenMore = useCallback(() => setMoreOpen(true), [])
   const handleCloseMore = useCallback(() => setMoreOpen(false), [])
+  const handleOpenEmergency = useCallback(() => setEmergencyOpen(true), [])
+  const handleCloseEmergency = useCallback(() => setEmergencyOpen(false), [])
   const handleEnableBristol = useCallback(() => {
     localStorage.setItem('bristol_modus_enabled', 'true')
     window.dispatchEvent(new CustomEvent('bristol-modus-change'))
@@ -531,13 +544,21 @@ export default function App() {
             expenseTotal={expenseTotal}
             userBalance={userBalance}
             bristolEnabled={bristolEnabled}
+            plan={tripPlan}
             onNavigate={setTab}
           />
             </ScreenPane>
           )}
           {visited.has('trip') && (
             <ScreenPane id="trip" active={tab === 'trip'} direction={screenDir}>
-          <TripScreen onNavigate={setTab} notesCount={notes.length} listId={list.id} />
+          <TripScreen
+            onNavigate={setTab}
+            onEmergency={handleOpenEmergency}
+            notesCount={notes.length}
+            plan={tripPlan}
+            proposalCount={tripProposalCount}
+            weather={tripWeather}
+          />
             </ScreenPane>
           )}
           {visited.has('plan') && (
@@ -716,8 +737,11 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         onLeave={handleLeave}
+        onEmergency={handleOpenEmergency}
         userName={userName}
       />
+
+      <EmergencySheet open={emergencyOpen} onClose={handleCloseEmergency} />
     </div>
       )}
     </>
