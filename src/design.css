@@ -141,11 +141,32 @@
 /* ── Grundfläche ──────────────────────────────────────────────────── */
 body {
   font-family: var(--font-ui);
-  background: var(--bg-gradient) !important;
-  background-attachment: fixed;
+  /* Basisverlauf nur als Canvas-Farbe (Overscroll); die sichtbare Aurora
+     lebt in der festen Ebene unten. */
+  background: var(--bg-gradient);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
+}
+
+/* Aurora als eigene, feste Ebene (v0.19.1): ersetzt
+   background-attachment: fixed am Body — das zwingt Chromium bei jedem
+   Scrollframe zum Repaint und wird von iOS Safari ohnehin ignoriert.
+   Die Ebene liegt mit z-index: -1 hinter allen Inhalten und folgt dem
+   Dark Mode per var(). Die vier Rot/Gold-Blobs aus index.css (body::before)
+   bleiben als oberste Ebenen erhalten, damit die Optik unverändert ist. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 25%, rgba(170, 21, 27, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(170, 21, 27, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 75%, rgba(212, 160, 23, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 30% 60%, rgba(170, 21, 27, 0.05) 0%, transparent 40%),
+    var(--bg-gradient);
 }
 
 #root .app {
@@ -212,22 +233,6 @@ body {
   gap: 2px;
 }
 
-#root .header-flag-bar {
-  width: 4px;
-  height: 14px;
-  border-radius: 2px;
-}
-
-#root .header-flag-bar.green,
-#root .header-flag-bar.red {
-  background: var(--accent);
-}
-
-#root .header-flag-bar.white {
-  background: var(--gold);
-  border: none;
-}
-
 #root .header-flag-bar-full {
   display: none;
 }
@@ -268,15 +273,6 @@ body {
 
 #root .header-back:active {
   transform: scale(0.96);
-}
-
-#root .header-settings-btn {
-  background: var(--surface);
-  border: none;
-  border-radius: 999px;
-  color: var(--ink-2);
-  box-shadow: var(--shadow-1);
-  padding: 7px;
 }
 
 /* ── Bottom-Navigation: schwebende Pille ──────────────────────────── */
@@ -740,7 +736,6 @@ body {
 /* ── Buttons ──────────────────────────────────────────────────────── */
 #root .join-btn,
 #root .set-btn-primary,
-#root .settings-btn-primary,
 #root .expense-btn-save,
 #root .plan-btn-primary,
 #root .packlist-add-btn,
@@ -777,7 +772,6 @@ body {
 }
 
 #root .set-btn-ghost,
-#root .settings-btn-secondary,
 #root .expense-btn-cancel,
 #root .plan-btn,
 #root .dash-btn-cancel {
@@ -793,9 +787,6 @@ body {
   text-transform: none;
 }
 
-#root .set-btn-danger,
-#root .settings-btn-danger,
-#root .set-btn-ghost.set-btn-danger,
 #root .more-leave {
   background: var(--accent-soft);
   border: none;
@@ -811,7 +802,6 @@ body {
 
 /* ── Eingaben ─────────────────────────────────────────────────────── */
 #root .settings-inline-input,
-#root .settings-cat-icon-input,
 #root .settings-cat-name-input,
 #root .weather-screen-location-input,
 #root .weather-location-input,
@@ -1532,8 +1522,6 @@ body {
 }
 
 /* Artikel: gruppierte Karte pro Kategorie */
-#root .cat-items,
-#root .list-screen .cat-items,
 #root .bring-group {
   background: var(--surface);
   border-radius: var(--r-2);
@@ -1738,7 +1726,6 @@ body {
   padding-bottom: 96px;
 }
 
-#root .money-list,
 #root .expense-screen .list-body {
   padding-bottom: 96px;
 }
@@ -1844,15 +1831,6 @@ body {
   color: var(--ink-3);
 }
 
-#root .bring-filters,
-#root .bring-subtabs {
-  display: flex;
-  gap: 8px;
-  padding: 10px 2px 2px;
-  background: none;
-  border: none;
-}
-
 #root .bring-filter-btn,
 #root .bring-subtab {
   background: var(--surface);
@@ -1876,8 +1854,7 @@ body {
 }
 
 #root .list-search-row,
-#root .bring-search-input,
-#root .expense-search-input {
+#root .bring-search-input {
   border-radius: 14px;
 }
 
@@ -2327,8 +2304,7 @@ body {
   color: var(--ink);
 }
 
-#root .wx-day-name small,
-#root .wx-day-sub {
+#root .wx-day-name small {
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 500;
@@ -2780,17 +2756,6 @@ body {
   transform: none;
 }
 
-#root .dash-bristol-row {
-  background: var(--surface);
-  border: none;
-  border-radius: var(--r-2);
-  box-shadow: var(--shadow-1);
-  padding: 14px 16px;
-  color: var(--ink-2);
-  font-size: 13px;
-  font-weight: 600;
-}
-
 /* ═══════════════════════════════════════════════════════════════════
    MEHR-BLATT, MENÜS, TOASTS
    ═══════════════════════════════════════════════════════════════════ */
@@ -2988,14 +2953,6 @@ body {
   display: none;
 }
 
-#root .join-app-name,
-#root .join-title {
-  font-family: var(--font-ui);
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  color: var(--ink);
-}
-
 #root .join-subtitle {
   color: var(--ink-3);
   font-size: 13px;
@@ -3161,14 +3118,12 @@ body {
 #root .money-debts-list,
 #root .money-debts-empty,
 #root .packlist-items,
-#root .cat-items,
 #root .bring-group,
 #root .plan-slot,
 #root .expense-form,
 #root .dash-note-form,
 #root .dash-add-btn,
 #root .dash-install-banner,
-#root .dash-bristol-row,
 #root .weather-widget,
 #root .bristol-widget,
 #root .more-tile,
@@ -3332,7 +3287,6 @@ body {
 /* Buttons: Verlauf mit Lichtkante, weicherer Wurf */
 #root .join-btn,
 #root .set-btn-primary,
-#root .settings-btn-primary,
 #root .expense-btn-save,
 #root .plan-btn-primary,
 #root .packlist-add-btn,
@@ -3358,12 +3312,10 @@ body {
 }
 
 #root .set-btn-ghost,
-#root .settings-btn-secondary,
 #root .expense-btn-cancel,
 #root .plan-btn,
 #root .dash-btn-cancel,
-#root .more-leave,
-#root .set-btn-danger {
+#root .more-leave {
   background: var(--surface-2);
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
@@ -3373,7 +3325,6 @@ body {
 
 /* Eingaben: Glasfeld mit Fokusring */
 #root .settings-inline-input,
-#root .settings-cat-icon-input,
 #root .settings-cat-name-input,
 #root .weather-screen-location-input,
 #root .weather-location-input,
@@ -3522,14 +3473,12 @@ body {
 #root .money-debts-list,
 #root .money-debts-empty,
 #root .packlist-items,
-#root .cat-items,
 #root .bring-group,
 #root .plan-slot,
 #root .expense-form,
 #root .dash-note-form,
 #root .dash-add-btn,
 #root .dash-install-banner,
-#root .dash-bristol-row,
 #root .weather-widget,
 #root .bristol-widget,
 #root .list-empty,
@@ -3543,7 +3492,6 @@ body {
 #root .bring-subtab,
 #root .plan-vote,
 #root .settings-inline-input,
-#root .settings-cat-icon-input,
 #root .settings-cat-name-input,
 #root .weather-screen-location-input,
 #root .weather-location-input,
@@ -3604,7 +3552,11 @@ body {
   transition: transform 0.22s linear;
 }
 
-/* Sheen-Band, das waagerecht mit dem Zeiger wandert */
+/* Statisches Sheen-Band (v0.19.1): background-position bleibt fest —
+   das Band wird nicht mehr per Paint-Eigenschaft über der geblurrten
+   Fläche verschoben, sein Stand entspricht dem neutralen --gx = 0. Der
+   bewegte Lichtreflex kommt ausschließlich aus den ::before/::after-
+   Transforms (Compositor). */
 #root .today-hero,
 #root .trip-hero,
 #root .money-hero,
@@ -3621,9 +3573,8 @@ body {
     ),
     var(--hero-glass);
   background-size: 240% 100%, 100% 100%;
-  background-position: calc(50% + 34% * var(--gx, 0)) 50%, 0 0;
+  background-position: 50% 50%, 0 0;
   background-repeat: no-repeat, no-repeat;
-  transition: background-position 0.25s linear;
 }
 
 /* Glanzkante im aktiven Nav-Pill */
@@ -3652,8 +3603,15 @@ body {
   background: var(--glass-edge);
 }
 
-/* ── 3. Auf Touch-Geräten: transparenter + Blur auf den Karten ────── */
-@media (hover: none), (max-width: 600px) {
+/* ── 3. Auf Touch-Geräten: transparenter ──────────────────────────── */
+/* Nur bei echten Touch-Geräten (hover: none + pointer: coarse) — schmale
+   Desktop-Fenster fallen nicht mehr in den Touch-Modus. Die Karten
+   bleiben transluzent (68 %) und behalten Lichtkante + Innenkante aus
+   dem LIQUID-GLASS-Block oben, bekommen aber wieder KEIN backdrop-filter
+   (GPU-Last, Chromium-Schmierspuren der Radien — vgl. v0.17.1). Blur
+   bleibt nur auf App-Header, Bottom-Nav, Sheets, Hero-Karten, Login-
+   Karte, Toast und Wetter-Hero. */
+@media (hover: none) and (pointer: coarse) {
   :root {
     --surface: rgba(255, 255, 255, 0.68);
     --surface-2: rgba(255, 255, 255, 0.5);
@@ -3673,7 +3631,6 @@ body {
   #root .money-debts-list,
   #root .money-debts-empty,
   #root .packlist-items,
-  #root .cat-items,
   #root .bring-group,
   #root .plan-slot,
   #root .expense-form,
@@ -3686,8 +3643,6 @@ body {
   #root .expense-empty,
   #root .dash-notes-empty {
     background: var(--surface);
-    backdrop-filter: blur(18px) saturate(175%);
-    -webkit-backdrop-filter: blur(18px) saturate(175%);
   }
 
   /* Glaskante bleibt auch bei mehr Transparenz lesbar */

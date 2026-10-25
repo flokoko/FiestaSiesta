@@ -258,18 +258,26 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
     })
   }
 
-  const visibleItems = hideChecked ? items.filter((i) => !i.is_checked) : items
-  const searchFiltered = searchQuery.trim()
-    ? visibleItems.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : visibleItems
+  // Suche (inkl. "Erledigte ausblenden") memoisiert — nicht bei jedem
+  // Render neu filtern (z. B. bei Drag-State-Updates im Kind)
+  const searchFiltered = useMemo(() => {
+    const base = hideChecked ? items.filter((i) => !i.is_checked) : items
+    const query = searchQuery.trim().toLowerCase()
+    return query ? base.filter((i) => i.name.toLowerCase().includes(query)) : base
+  }, [items, hideChecked, searchQuery])
 
   // Kategorie-Auswahl über die Wischleiste
   const shownCategories = activeCat ? categories.filter((c) => c.name === activeCat) : categories
-  const chips = categories.map((cat) => {
-    const catItems = items.filter((i) => i.category === cat.name)
-    const catOpen = catItems.filter((i) => !i.is_checked).length
-    return { name: cat.name, color: cat.color, bg: cat.bg, open: catOpen, total: catItems.length }
-  }).filter((c) => c.total > 0)
+  const chips = useMemo(
+    () => categories
+      .map((cat) => {
+        const catItems = items.filter((i) => i.category === cat.name)
+        const catOpen = catItems.filter((i) => !i.is_checked).length
+        return { name: cat.name, color: cat.color, bg: cat.bg, open: catOpen, total: catItems.length }
+      })
+      .filter((c) => c.total > 0),
+    [items, categories],
+  )
 
   // Skeleton loading state
   if (isLoading) {

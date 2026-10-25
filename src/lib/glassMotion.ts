@@ -7,8 +7,21 @@
  *   --gx, --gy  Zeigerposition, normiert auf -1 … 1 (0 = Mitte)
  *   --gsy       vertikaler Scroll-Offset in px
  *
+ * Kostenkontrolle (v0.19.1): --gsy wird nur geschrieben, wenn sich der
+ * Wert seit dem letzten Schreiben um mehr als GSY_WRITE_THRESHOLD px
+ * bewegt hat (jeder Schreibvorgang löst einen Style-Recalc am
+ * Wurzelelement aus). data-scrolled toggelt unverändert exakt an der
+ * 6-px-Schwelle. Bei verborgenem Dokument (document.hidden) wird nichts
+ * geschrieben — der nächste Event nach der Rückkehr holt alles nach.
+ *
  * Respektiert prefers-reduced-motion: dann bleiben alle Werte neutral.
  */
+
+/** Mindestdelta in px, bevor --gsy neu auf <html> geschrieben wird */
+const GSY_WRITE_THRESHOLD = 24
+
+/** Schwellwert für data-scrolled am <html>-Element */
+const SCROLLED_THRESHOLD = 6
 
 let started = false
 
@@ -21,15 +34,20 @@ export function initGlassMotion(): void {
 
   let gx = 0
   let gy = 0
-  let gsy = 0
+  let gsy = 0        // aktueller Scrollwert
+  let writtenGsy = 0 // zuletzt geschriebener --gsy-Wert
   let frame = 0
 
   const flush = () => {
     frame = 0
+    if (document.hidden) return
     root.style.setProperty('--gx', gx.toFixed(3))
     root.style.setProperty('--gy', gy.toFixed(3))
-    root.style.setProperty('--gsy', `${Math.round(gsy)}px`)
-    if (gsy > 6) root.setAttribute('data-scrolled', 'true')
+    if (Math.abs(gsy - writtenGsy) > GSY_WRITE_THRESHOLD) {
+      writtenGsy = gsy
+      root.style.setProperty('--gsy', `${Math.round(gsy)}px`)
+    }
+    if (gsy > SCROLLED_THRESHOLD) root.setAttribute('data-scrolled', 'true')
     else root.removeAttribute('data-scrolled')
   }
 
