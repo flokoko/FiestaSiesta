@@ -31,7 +31,7 @@
   --glass-blur: blur(26px) saturate(185%);
   --ink: #17141A;
   --ink-2: #4E4854;
-  --ink-3: #7C7682;
+  --ink-3: #6E6874; /* AA (Phase 3): 5,2:1 auf --surface (68–82 % Weiß), 4,75:1 direkt auf Aurora; vorher 4,2–4,4:1 */
   --line: rgba(23, 20, 26, 0.07);
   --line-2: rgba(23, 20, 26, 0.12);
 
@@ -39,7 +39,9 @@
   --accent-2: #FF6B4A;
   --accent-soft: rgba(215, 38, 61, 0.09);
   --accent-grad: linear-gradient(150deg, #E2705F 0%, #D2525E 42%, #B23A50 78%, #8C2640 100%);
-  --hero-glass: linear-gradient(150deg, rgba(198, 84, 84, 0.9) 0%, rgba(176, 58, 72, 0.9) 45%, rgba(148, 44, 66, 0.92) 78%, rgba(110, 32, 54, 0.95) 100%);
+  /* Helles Ende abgedunkelt (Phase 3, AA): Kicker/Meta mit 0,95 Weiß-Alpha
+     erreichen am hellsten Stop 4,8:1 statt 3,2:1; Optik bleibt weiches Rosé. */
+  --hero-glass: linear-gradient(150deg, rgba(164, 64, 64, 0.9) 0%, rgba(170, 54, 68, 0.9) 45%, rgba(148, 44, 66, 0.92) 78%, rgba(110, 32, 54, 0.95) 100%);
   --gold: #F0A62E;
   --gold-soft: rgba(240, 166, 46, 0.14);
   --green: #249B77;
@@ -106,7 +108,8 @@
   --glass-hi: rgba(255, 255, 255, 0.16);
   --ink: #F7F4F8;
   --ink-2: #B7B0BE;
-  --ink-3: #7E7787;
+  --ink-3: #9A93AB; /* AA (Phase 3): 5,9:1 auf --surface, 6,7:1 auf Aurora-Basis. Vorgabe #8D8697 fiel
+     in den Aurora-Glow-Zonen auf 3,5–4,2:1 (Karten über Blob), daher leicht heller. */
   --line: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.14);
 
@@ -114,7 +117,8 @@
   --accent-2: #FF8A5C;
   --accent-soft: rgba(255, 91, 103, 0.14);
   --accent-grad: linear-gradient(150deg, #C9645F 0%, #B85061 42%, #963A52 78%, #6E2440 100%);
-  --hero-glass: linear-gradient(150deg, rgba(201, 100, 95, 0.9) 0%, rgba(184, 80, 97, 0.88) 44%, rgba(150, 58, 82, 0.9) 78%, rgba(110, 36, 64, 0.93) 100%);
+  /* Startsto leicht abgedunkelt (Phase 3, AA): 4,97:1 mit 0,95 Weiß-Alpha statt 3,6:1 */
+  --hero-glass: linear-gradient(150deg, rgba(184, 82, 78, 0.9) 0%, rgba(178, 76, 92, 0.88) 44%, rgba(150, 58, 82, 0.9) 78%, rgba(110, 36, 64, 0.93) 100%);
   --gold: #F5BE5C;
   --gold-soft: rgba(245, 190, 92, 0.16);
   --green: #4DBE9A;
@@ -164,6 +168,11 @@ body::before {
   /* Nur die Aurora: die alten Rot/Gold-Blobs aus index.css lagen darueber und
      haben die Pastelltöne zu Grau gedämpft (Bella-Rest, bewusst entfernt). */
   background: var(--bg-gradient);
+}
+
+/* Kein iOS/Android-Tap-Flackern auf Chips und Buttons (Phase 3) */
+#root {
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root .app {
@@ -296,11 +305,11 @@ body::before {
   padding: 8px 0 6px;
   border-radius: 18px;
   font-family: var(--font-ui);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--ink-3);
+  color: var(--ink-2);
   transition: background 0.28s var(--ease), color 0.28s var(--ease), transform 0.28s var(--ease);
 }
 
@@ -810,9 +819,7 @@ body::before {
 #root .dash-note-input,
 #root .dash-note-textarea,
 #root .dash-notes-search,
-#root .join-input,
-#root .list-search-input,
-#root .bring-search-input {
+#root .join-input {
   background: var(--surface-2);
   border: 1px solid transparent;
   border-radius: 14px;
@@ -825,18 +832,12 @@ body::before {
   transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
-#root .settings-inline-input:focus,
-#root .weather-screen-location-input:focus,
-#root .expense-input:focus,
-#root .plan-input:focus,
-#root .dash-note-input:focus,
-#root .dash-note-textarea:focus,
-#root .join-input:focus,
-#root .list-search-input:focus {
-  background: var(--surface);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-  outline: none;
+/* EINE generische Fokusregel (Phase 3) für Eingaben, Buttons und Links —
+   ersetzt die verstreuten Einzel-:focus-Regeln (vorher nur 8 von 16 Feldern,
+   Buttons/Links gar nicht). */
+#root :where(input, select, textarea, button, a, [role='button']):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1474,14 +1475,28 @@ body::before {
   opacity: 0.6;
 }
 
-/* Kategoriekopf in der Liste */
+/* Kategorie-Abschnitt der Einkaufsliste (Phase-3-Bugfix): ListScreen.tsx
+   rendert .cat-section — die Abschnitte bekommen dieselbe Glasfläche wie
+   .bring-group (vorher hatten sie als einzige Liste keine Karte). */
+#root .cat-section {
+  background: var(--surface);
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-1);
+  border: none;
+  padding: 0 14px;
+  margin: 10px 0 0;
+  overflow: hidden;
+}
+
+/* Kategoriekopf: liegt jetzt in der Glaskarte — wie .bring-group-header */
 #root .cat-header,
 #root .list-screen .cat-header {
   background: none;
   border: none;
   border-radius: 0;
-  margin: 22px 0 0;
-  padding: 0 2px 8px;
+  margin: 0;
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -1723,8 +1738,12 @@ body::before {
   padding-bottom: 96px;
 }
 
-#root .expense-screen .list-body {
-  padding-bottom: 96px;
+/* Untere Leisten verdecken nichts mehr (Phase 3): .money-list/.list-body
+   existieren im Geld-Screen nicht — das Boden-Padding sitzt auf den
+   tatsächlich gerenderten Containern (die fixe Leiste ragt ~136 px + 
+   safe-area über das Content-Ende hinaus). */
+#root .expense-screen {
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
 }
 
 /* Leerzustände */
@@ -1758,7 +1777,7 @@ body::before {
 
 /* Bringen */
 #root .bring-screen {
-  padding: 0;
+  padding: 0 0 calc(110px + env(safe-area-inset-bottom));
 }
 
 #root .bring-group {
@@ -1828,30 +1847,7 @@ body::before {
   color: var(--ink-3);
 }
 
-#root .bring-filter-btn,
-#root .bring-subtab {
-  background: var(--surface);
-  border: none;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-transform: none;
-  color: var(--ink-2);
-  box-shadow: var(--shadow-1);
-}
-
-#root .bring-filter-btn.active,
-#root .bring-subtab.active {
-  background: var(--ink);
-  color: var(--surface);
-  box-shadow: var(--shadow-2);
-}
-
-#root .list-search-row,
-#root .bring-search-input {
+#root .list-search-row {
   border-radius: 14px;
 }
 
@@ -2163,6 +2159,12 @@ body::before {
   color: #9A6B10;
 }
 
+/* Dark Mode (Phase 3): #9A6B10 war auf der Gold-Fläche im Dunkeln nur 2,5:1 —
+   mit --gold (#F5BE5C) erreicht das Badge dort 7,3:1 (AA). */
+:root[data-theme='dark'] #root .settings-admin-badge {
+  color: var(--gold);
+}
+
 #root .set-mini-btn {
   border: none;
   border-radius: 999px;
@@ -2190,20 +2192,6 @@ body::before {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-3);
-}
-
-#root .settings-participant-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-#root .settings-copy-btn {
-  background: var(--surface-3);
-  border: none;
-  border-radius: 999px;
-  color: var(--ink-2);
-  box-shadow: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -2236,7 +2224,7 @@ body::before {
 }
 
 #root .wx-now-desc {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
   opacity: 1;
   font-size: 13px;
   font-weight: 600;
@@ -2358,7 +2346,6 @@ body::before {
   color: var(--ink-3);
 }
 
-#root .weather-screen-change-btn,
 #root .weather-screen-set-btn,
 #root .weather-screen-geo-btn {
   background: var(--surface);
@@ -2770,6 +2757,9 @@ body::before {
   box-shadow: var(--shadow-3);
   border: none;
   padding: 10px 18px calc(18px + env(safe-area-inset-bottom));
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: sheetUp 0.32s var(--ease);
 }
 
@@ -3051,10 +3041,6 @@ body::before {
   font-size: 38px;
 }
 
-#root .list-screen .cat-header:first-child {
-  margin-top: 16px;
-}
-
 /* Reiseplan: Tagesdatum als Label, Vorschlags-Leerzustand ohne Doppelkarte */
 #root .plan-day-title {
   background: none;
@@ -3115,6 +3101,7 @@ body::before {
 #root .money-debts-list,
 #root .money-debts-empty,
 #root .packlist-items,
+#root .cat-section,
 #root .bring-group,
 #root .plan-slot,
 #root .expense-form,
@@ -3397,9 +3384,11 @@ body::before {
   border-bottom: 1px solid var(--glass-edge);
 }
 
-/* Wetter-Hero ebenfalls glasig */
+/* Wetter-Hero ebenfalls glasig — helle Stops abgedunkelt (Phase 3, AA):
+   13px-Beschreibung mit 0,95 Weiß-Alpha erreicht 5,0:1 statt 2,5:1, die
+   38px-Temperatur (großer Text, AA ab 3:1) 5,3:1 statt 2,7:1. */
 #root .wx-now {
-  background: linear-gradient(150deg, #D98A6A 0%, #C9705F 45%, #A84A53 100%);
+  background: linear-gradient(150deg, #945E48 0%, #884C41 45%, #723238 100%);
   border: 1px solid rgba(255, 255, 255, 0.26);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -3470,6 +3459,7 @@ body::before {
 #root .money-debts-list,
 #root .money-debts-empty,
 #root .packlist-items,
+#root .cat-section,
 #root .bring-group,
 #root .plan-slot,
 #root .expense-form,
@@ -3628,6 +3618,7 @@ body::before {
   #root .money-debts-list,
   #root .money-debts-empty,
   #root .packlist-items,
+  #root .cat-section,
   #root .bring-group,
   #root .plan-slot,
   #root .expense-form,
@@ -3689,4 +3680,102 @@ body::before {
     background-position: 50% 50%, 0 0;
     transition: none;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 3 — Ergänzungen (der Subagent lief ins Iterationslimit, bevor
+   diese Punkte dran waren)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Suchfelder: Grundlayout wie die übrigen Eingaben (die Klassen vergibt
+   jetzt der Screen selbst, `list-search-input`/`bring-search-input`). */
+#root .list-search-input,
+#root .bring-search-input,
+#root .expense-search-input {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 14px;
+  width: 100%;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+/* Kicker/Meta auf den Verläufen: 0,95 statt 0,85 Weiß (AA auf dem
+   abgedunkelten Verlaufsende), Sekundärtext 0,82. */
+#root .today-kicker,
+#root .trip-kicker,
+#root .money-hero-label,
+#root .note-head p,
+#root .lists-head p {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+#root .today-sub,
+#root .trip-range,
+#root .today-date {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+#root .today-sub-soft {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* Touch: 16px in Eingabefeldern verhindert den iOS-Zoom beim Fokus,
+   und die kleinen Icon-Buttons bekommen 44px Trefferfläche. */
+@media (hover: none), (pointer: coarse) {
+  #root input,
+  #root select,
+  #root textarea {
+    font-size: 16px;
+  }
+
+  #root .list-menu-btn,
+  #root .set-mini-btn,
+  #root .more-close,
+  #root .expense-card-btn,
+  #root .item-delete,
+  #root .item-edit,
+  #root .item-drag-handle,
+  #root .bottom-nav-item {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #root .item-delete,
+  #root .item-edit,
+  #root .item-drag-handle {
+    margin: -8px -4px;
+  }
+}
+
+/* Reduzierte Bewegung: auch die Seiten- und Sheet-Animationen aus. */
+@media (prefers-reduced-motion: reduce) {
+  #root .app-main,
+  #root .more-sheet,
+  #root .list-menu-sheet,
+  #root .toast {
+    animation: none;
+  }
+
+  #root *,
+  #root *::before,
+  #root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Leere Listenkarte nicht als 10-px-Glasstreifen stehen lassen */
+#root .expense-list:not(:has(*)),
+#root .bring-group:not(:has(*)) {
+  display: none;
 }
