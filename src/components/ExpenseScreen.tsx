@@ -309,11 +309,14 @@ export default function ExpenseScreen({
         )}
       </section>
 
-      <div className="money-toggle" role="tablist" aria-label="Bereich">
+      {/* Kein role="tablist": es gibt keine Panels mit aria-controls, und der
+          dritte (Matrix/Quoten) war ein „ausgewählter" Tab, der beim Tippen die
+          Auswahl wegnahm. Als normale Umschalter mit aria-pressed ist es ehrlich
+          und für Screenreader korrekt. */}
+      <div className="money-toggle">
         <button
           type="button"
-          role="tab"
-          aria-selected={section === 'expenses'}
+          aria-pressed={section === 'expenses'}
           className={`money-toggle-btn${section === 'expenses' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('expenses') }}
         >
@@ -321,15 +324,14 @@ export default function ExpenseScreen({
         </button>
         <button
           type="button"
-          role="tab"
-          aria-selected={section === 'settlement'}
+          aria-pressed={section === 'settlement'}
           className={`money-toggle-btn${section === 'settlement' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSection('settlement') }}
         >
           <Receipt size={15} strokeWidth={2} /> Abrechnung
         </button>
         {(section === 'matrix' || section === 'quotas') && (
-          <button type="button" role="tab" aria-selected={true} className="money-toggle-btn active" onClick={() => setSection('expenses')}>
+          <button type="button" aria-pressed={true} className="money-toggle-btn active" onClick={() => setSection('expenses')}>
             {section === 'matrix' ? <Table2 size={15} strokeWidth={2} /> : <Percent size={15} strokeWidth={2} />}
             {section === 'matrix' ? 'Matrix' : 'Quoten'}
           </button>

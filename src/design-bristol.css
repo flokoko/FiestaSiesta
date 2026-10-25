@@ -824,6 +824,13 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+:root[data-theme='dark'] #root .bv-today {
+  /* --ink ist im Dunkeln fast weiß, --surface nur 6,5 % Weiß → hell auf hell.
+     Feste helle Fläche mit dunkler Tinte, wie der Chip-Fix in design.css. */
+  background: #F2EEF6;
+  color: #17141A;
+}
+
 :root[data-theme='dark'] #root .bristol-card-badge {
   background: rgba(255, 255, 255, 0.09);
   color: #D9D3E2;

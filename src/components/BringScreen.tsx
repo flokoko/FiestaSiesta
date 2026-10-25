@@ -434,11 +434,10 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         <i style={{ width: `${progress}%` }} />
       </div>
 
-      <div className="money-toggle" role="tablist" aria-label="Bereich">
+      <div className="money-toggle">
         <button
           type="button"
-          role="tab"
-          aria-selected={subTab === 'bring'}
+          aria-pressed={subTab === 'bring'}
           className={`money-toggle-btn${subTab === 'bring' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('bring') }}
         >
@@ -446,8 +445,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
         </button>
         <button
           type="button"
-          role="tab"
-          aria-selected={subTab === 'packlist'}
+          aria-pressed={subTab === 'packlist'}
           className={`money-toggle-btn${subTab === 'packlist' ? ' active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setSubTab('packlist') }}
         >

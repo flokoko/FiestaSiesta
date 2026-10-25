@@ -214,6 +214,15 @@ export default function NotesScreen({
           rows={3}
         />
         <div className="dash-note-form-actions">
+          {editingId && (
+            <button
+              type="button"
+              className="dash-btn-cancel"
+              onClick={() => { setEditingId(null); setFormTitle(''); setFormContent('') }}
+            >
+              Abbrechen
+            </button>
+          )}
           <button className="dash-btn-save" onClick={handleSave} disabled={!formContent.trim()}>
             Speichern
           </button>
@@ -231,6 +240,7 @@ export default function NotesScreen({
           {notes.length > 0 && (
             <input
               type="text"
+              aria-label="Notizen durchsuchen"
               className="dash-notes-search"
               placeholder="🔍 Suchen…"
               value={searchQuery}

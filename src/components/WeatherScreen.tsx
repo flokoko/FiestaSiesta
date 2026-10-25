@@ -120,6 +120,10 @@ export default function WeatherScreen() {
   // wechselt die Radar-Animation im Verborgenen alle 500 ms das Frame und Leaflet
   // lädt jedes Mal das komplette Tile-Set — Akku und Datenvolumen für nichts.
   const rootRef = useRef<HTMLDivElement>(null)
+  // Wetter/Radar veralteten bisher für die gesamte Sitzung: der Pane bleibt
+  // gemountet, fetchWeather lief nur beim ersten Mount.
+  const [radarTick, setRadarTick] = useState(0)
+  const lastRadarTsRef = useRef(Date.now())
 
   // ── Read stored location from localStorage ──
   const storedLocation = useMemo(() => getStoredLocation(), [])
@@ -187,7 +191,30 @@ export default function WeatherScreen() {
     }
   }, [storedLocation, fetchWeather])
 
+  // ── Auffrischen: beim Zurückkehren in die App und alle 5 Min. ──
+  // fetchWeather prüft selbst den 10-Minuten-Cache, ist also billig.
+  useEffect(() => {
+    if (!storedLocation) return
+    const maybeRefresh = () => {
+      if (document.hidden) return
+      if (rootRef.current && rootRef.current.offsetParent === null) return
+      void fetchWeather(storedLocation.lat, storedLocation.lon, storedLocation.name)
+      if (Date.now() - lastRadarTsRef.current > 10 * 60 * 1000) {
+        lastRadarTsRef.current = Date.now()
+        setRadarTick(t => t + 1)
+      }
+    }
+    const onVisible = () => maybeRefresh()
+    document.addEventListener('visibilitychange', onVisible)
+    const timer = setInterval(maybeRefresh, 5 * 60 * 1000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(timer)
+    }
+  }, [storedLocation, fetchWeather])
+
   // ── Fetch radar data (RainViewer) ──
+  // radarTick: die Frames veralten nach ~10 Minuten, der Pane lebt aber tagelang.
   useEffect(() => {
     let cancelled = false
     setRadarError('')
@@ -205,7 +232,7 @@ export default function WeatherScreen() {
         if (!cancelled) setRadarError('Regenradar konnte nicht geladen werden')
       })
     return () => { cancelled = true }
-  }, [])
+  }, [radarTick])
 
   // ── Radar animation interval ──
   useEffect(() => {
@@ -382,6 +409,7 @@ export default function WeatherScreen() {
       {showLocationInput && (
         <div className="weather-screen-location-form">
           <input
+            aria-label="Ort suchen"
             className="weather-screen-location-input"
             type="text"
             placeholder="Stadtname eingeben…"
@@ -406,7 +434,7 @@ export default function WeatherScreen() {
         </div>
       )}
 
-      {error && <p className="weather-screen-error">{error}</p>}
+      {error && <p className="weather-screen-error" role="alert">{error}</p>}
       {loading && !weather && (
         <div className="weather-screen-loading">
           <span className="weather-screen-loading-emoji">🌦️</span>

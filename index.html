@@ -7,9 +7,23 @@
     <link rel="manifest" href="/FiestaSiesta/manifest.json" />
     <!-- Ohne Preload wird die Schrift erst nach CSS-Parse entdeckt (~1 RTT später sichtbar) -->
     <link rel="preload" href="/FiestaSiesta/fonts/jakarta-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="theme-color" content="#F8F6F4" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F0D12" />
+    <script>
+      // Theme VOR dem ersten Paint setzen: sonst startet die App immer hell und
+      // springt dann auf Dunkel (die statische Splash-Fläche hing nur an
+      // prefers-color-scheme, nicht an der gespeicherten Wahl).
+      (function () {
+        try {
+          var m = localStorage.getItem('theme') || 'auto'
+          var d = m === 'dark' || (m === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light')
+          var meta = document.querySelector('meta[name="theme-color"]:not([media])')
+          if (meta) meta.setAttribute('content', d ? '#0F0D12' : '#F8F6F4')
+        } catch (e) {}
+      })()
+    </script>
     <meta name="description" content="Urlaubs-App für Gran Canaria — gemeinsam planen, packen, abrechnen." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

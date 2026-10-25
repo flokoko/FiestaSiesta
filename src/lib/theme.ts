@@ -27,6 +27,10 @@ export function applyTheme(): void {
         : 'light'
       : mode
   document.documentElement.setAttribute('data-theme', resolved)
+  // Browser-Chrom (Statusleiste) mitziehen — die beiden Meta-Tags folgten sonst
+  // nur prefers-color-scheme, nicht dem In-App-Umschalter.
+  const meta = document.querySelector('meta[name="theme-color"]:not([media])')
+  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0F0D12' : '#F8F6F4')
 }
 
 /**

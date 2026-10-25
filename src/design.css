@@ -3642,10 +3642,12 @@ body::before {
 /* Touch: 16px in Eingabefeldern verhindert den iOS-Zoom beim Fokus,
    und die kleinen Icon-Buttons bekommen 44px Trefferfläche. */
 @media (hover: none), (pointer: coarse) {
+  /* !important, weil Feldklassen wie #root .join-input (1 id + 1 class) stärker
+     sind als #root input (1 id + 1 type) — sonst zoomt iOS beim Fokus trotzdem. */
   #root input,
   #root select,
   #root textarea {
-    font-size: 16px;
+    font-size: 16px !important;
   }
 
   #root .list-menu-btn,
@@ -3655,12 +3657,30 @@ body::before {
   #root .item-delete,
   #root .item-edit,
   #root .item-drag-handle,
-  #root .bottom-nav-item {
-    min-width: 44px;
+  #root .bottom-nav-item,
+  /* Dauerkontrollen, die vorher 20–38 px hoch waren */
+  #root .xp-settle-btn,
+  #root .expense-cat-chip,
+  #root .bristol-stats-modal-close,
+  #root .bristol-history-edit-btn,
+  #root .more-leave,
+  #root .plan-back,
+  #root .toast-btn,
+  #root .toast-close {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  #root .xp-settle-btn,
+  #root .expense-cat-chip,
+  #root .bristol-stats-modal-close,
+  #root .bristol-history-edit-btn,
+  #root .more-leave,
+  #root .plan-back,
+  #root .toast-close {
+    min-width: 44px;
   }
 
   #root .item-delete,
@@ -3999,4 +4019,135 @@ body::before {
 #root .toast .toast-btn-cancel {
   background: rgba(255, 255, 255, 0.14);
   color: var(--toast-ink);
+}
+
+/* ── Dark: aktive Segment-Pille (v0.34) ─────────────────────────────── */
+/* --surface ist im Dunkeln 6,5 % Weiß, die Bahn (--surface-3) 9 % — die aktive
+   Pille war damit schwächer als ihr Hintergrund und unsichtbar. Gilt für Geld-,
+   Mitbringen- und Theme-Umschalter. */
+:root[data-theme='dark'] #root .money-toggle-btn.active,
+:root[data-theme='dark'] #root .expense-toggle-btn.active,
+:root[data-theme='dark'] #root .bring-subtab.active,
+:root[data-theme='dark'] #root .bring-filter-btn.active {
+  background: #F2EEF6;
+  color: #17141A;
+  border-color: transparent;
+}
+
+/* ── Absturz-Bildschirm (v0.34) ─────────────────────────────────────── */
+/* Vorher Inline-Styles im alten Bella-Grün; jetzt Teil des Designsystems. */
+#root .error-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  gap: 6px;
+  background: var(--bg, #F8F6F4);
+  color: var(--ink);
+}
+
+#root .error-screen-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 10px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+#root .error-screen-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+#root .error-screen-text {
+  margin: 0 0 18px;
+  max-width: 32ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+#root .error-screen-btn {
+  border: 0;
+  padding: 13px 22px;
+  border-radius: var(--r-4, 999px);
+  background: var(--accent-grad, var(--accent));
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Dark: Toast-Aktionsknöpfe (v0.34) ─────────────────────────────── */
+/* var(--accent) ist im Dunkeln #FF5B67 — weiß darauf ergibt ~3:1, AA verlangt
+   4,5:1 bei 13 px. Dunkle Schrift auf der hellen Akzentfläche. */
+:root[data-theme='dark'] #root .toast .toast-btn-undo,
+:root[data-theme='dark'] #root .toast .toast-btn-confirm,
+:root[data-theme='dark'] #root .toast .toast-btn-action {
+  color: #17141A;
+  background: color-mix(in srgb, var(--accent) 92%, #ffffff);
+  font-weight: 800;
+}
+
+/* ── Kopf: Mini-Flagge (v0.34) ──────────────────────────────────────── */
+/* Das Markup rendert .header-flag-band red/yellow/red-bottom, gestylt waren nur
+   die nie gerenderten .header-flag-bar.green/white/red — die Flagge blieb unsichtbar. */
+#root .header-flag {
+  display: inline-flex;
+  flex-direction: column;
+  width: 7px;
+  height: 16px;
+  margin-right: 7px;
+  border-radius: 2px;
+  overflow: hidden;
+  vertical-align: -2px;
+  flex: 0 0 auto;
+}
+
+#root .header-flag-band {
+  display: block;
+  width: 100%;
+  flex: 1 1 0;
+}
+
+#root .header-flag-band.red,
+#root .header-flag-band.red-bottom {
+  background: var(--accent);
+}
+
+#root .header-flag-band.yellow {
+  background: var(--gold);
+  flex-grow: 2;
+}
+
+#root .header-flag-bar-full {
+  display: none;
+}
+
+/* ── Notizen: Aktionszeile (v0.34) ──────────────────────────────────── */
+#root .dash-note-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#root .dash-btn-cancel {
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3, 14px);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
 }

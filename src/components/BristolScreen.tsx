@@ -4,6 +4,7 @@ import { supabase, getJoinCode } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import type { BristolEntry } from '../types'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -55,6 +56,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
   // `submitting === false` und legen drei Einträge an (State wird erst beim
   // nächsten Render gesetzt).
   const submittingRef = useRef(false)
+  const statsModalRef = useRef<HTMLDivElement>(null)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(todayStr())
   const [intradayDate, setIntradayDate] = useState(todayStr())
@@ -87,6 +89,8 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     setEntries(data as BristolEntry[] ?? [])
     setLoadingEntries(false)
   }, [listId])
+
+  useSheetFocus(statsModalRef, showStatsInfo, () => setShowStatsInfo(false))
 
   useEffect(() => {
     fetchEntries()
@@ -1254,7 +1258,15 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
       {/* ── Statistik-Erklärung (Modal) ── */}
       {showStatsInfo && (
         <div className="bristol-stats-overlay" onClick={() => setShowStatsInfo(false)}>
-          <div className="bristol-stats-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="bristol-stats-modal"
+            ref={statsModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Was bedeuten die Statistiken?"
+            tabIndex={-1}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bristol-stats-modal-header">
               <span className="bristol-stats-modal-title">Was bedeuten die Statistiken?</span>
               <button

@@ -81,6 +81,7 @@ export default function AddItemForm({
             className="add-input"
             type="text"
             placeholder={placeholder ?? "Was soll gekauft werden?"}
+            aria-label="Artikelname"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
@@ -92,6 +93,7 @@ export default function AddItemForm({
               className="add-input add-qty"
               type="text"
               placeholder="Menge"
+              aria-label="Menge"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
@@ -130,6 +132,7 @@ export default function AddItemForm({
                 className="add-input"
                 type="text"
                 placeholder="Zuweisen an (optional)"
+                aria-label="Person zuweisen"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}

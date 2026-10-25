@@ -470,14 +470,14 @@ export default function App() {
       </header>
 
       {!isOnline && (
-        <div className="offline-banner">
+        <div className="offline-banner" role="status">
           <WifiOff size={16} strokeWidth={2} /> Du bist offline — {queueLength > 0 ? `${queueLength} ${queueLength === 1 ? 'Änderung wird' : 'Änderungen werden'} synchronisiert` : 'Änderungen können momentan nicht gespeichert werden'}.
         </div>
       )}
 
       {updateAvailable && (
-        <div className="update-banner">
-          <span>🆕 Neue Version verfügbar!</span>
+        <div className="update-banner" role="status" aria-label="Neue Version verfügbar">
+          <span>Neue Version verfügbar</span>
           <button className="update-banner-btn" onClick={() => window.location.reload()}>
             Aktualisieren
           </button>

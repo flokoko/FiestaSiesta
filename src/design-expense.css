@@ -707,3 +707,13 @@
 }
 
 #root .money-add-btn:active { transform: scale(0.985); }
+
+/* ── Dark: aktive Segment-Pille in den Geld-Umschaltern (v0.34) ─────── */
+/* Eigene Selektor-Ebene, weil `#root .xp-seg .expense-toggle-btn.active`
+   (1,3,0) sonst stärker ist als der allgemeine Override in design.css. */
+:root[data-theme='dark'] #root .xp-seg .expense-toggle-btn.active,
+:root[data-theme='dark'] #root .expense-split-toggle .expense-toggle-btn.active {
+  background: #F2EEF6;
+  color: #17141A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}

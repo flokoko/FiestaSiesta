@@ -3,8 +3,12 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { initGlassMotion } from './lib/glassMotion'
+import { applyTheme } from './lib/theme'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './context/ToastContext'
+
+// vor dem ersten Render, damit kein heller Zwischenzustand entsteht
+applyTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

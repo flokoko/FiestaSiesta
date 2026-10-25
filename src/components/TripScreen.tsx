@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MapPin, Image, Map as MapIcon, FileText, StickyNote, ChevronRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import SlotIcon from './SlotIcon'
@@ -18,7 +18,9 @@ interface TripScreenProps {
 type DayPlan = Partial<Record<TripSlot, string>>
 
 export default function TripScreen({ onNavigate, notesCount, listId }: TripScreenProps) {
-  const days = tripDays()
+  // tripDays() liefert bei jedem Render ein neues Array — stand in den Effect-Deps
+  // und löste zwei Supabase-Queries pro App-State-Änderung aus.
+  const days = useMemo(() => tripDays(), [])
   const current = tripDay()
   const phase = tripPhase()
   const [plans, setPlans] = useState<Record<string, DayPlan>>({})

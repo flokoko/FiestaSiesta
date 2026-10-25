@@ -274,6 +274,7 @@ export default function ExpenseForm({
         className="expense-input"
         type="text"
         placeholder="Beschreibung (z.B. Supermarkt)"
+        aria-label="Beschreibung"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         autoFocus
@@ -284,6 +285,7 @@ export default function ExpenseForm({
           type="number"
           step="0.01"
           placeholder="Betrag (€)"
+          aria-label="Betrag in Euro"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
@@ -401,6 +403,7 @@ export default function ExpenseForm({
         className="expense-input"
         type="text"
         placeholder="Notiz (optional) — z.B. 'Für den Strandtag'"
+        aria-label="Notiz zur Ausgabe"
         value={expenseNote}
         onChange={(e) => setExpenseNote(e.target.value)}
       />
@@ -462,6 +465,7 @@ export default function ExpenseForm({
                 type="number"
                 step="0.01"
                 placeholder="0,00"
+                aria-label={`Anteil für ${p} in Euro`}
                 value={exactShares[p] ?? ''}
                 onChange={(e) =>
                   setExactShares((prev) => ({ ...prev, [p]: e.target.value }))

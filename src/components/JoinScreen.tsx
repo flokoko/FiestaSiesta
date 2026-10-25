@@ -113,7 +113,7 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
           Die Reise fasst <strong>drei Personen</strong>.
         </p>
 
-        {error && <p className="join-error">{error}</p>}
+        {error && <p className="join-error" role="alert">{error}</p>}
 
         <button className="join-btn" onClick={handleLogin} disabled={loading}>
           {loading ? 'Verbinde…' : 'Anmelden →'}
