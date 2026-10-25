@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.31.0';
+const CACHE_NAME = 'fiesta-siesta-v0.32.0';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -15,16 +15,30 @@ self.addEventListener('install', (e) => {
         return res.json();
       })
       .then((files) => {
-        const urls = [INDEX_URL, '/FiestaSiesta/index.html', ...files];
-        return caches.open(CACHE_NAME).then((cache) => cache.addAll(urls));
+        const urls = [...new Set([INDEX_URL, '/FiestaSiesta/index.html', ...files])];
+        // Einzeln laden statt cache.addAll: addAll ist alles-oder-nichts, ein einziger
+        // 404 (z. B. eine Datei, die gerade nicht ausgeliefert wird) ließ bisher nur
+        // index.html im Cache zurück — die App startete offline dann in einen
+        // ewigen Boot-Splash, ohne dass der Browser die Installation wiederholte.
+        return caches.open(CACHE_NAME).then(async (cache) => {
+          const results = await Promise.allSettled(urls.map((url) => cache.add(url)));
+          const failed = results.filter((r) => r.status === 'rejected').length;
+          // Nur ein kleiner Schwund ist tolerabel; sonst Installation scheitern lassen,
+          // damit der Browser es beim nächsten Update-Versuch erneut probiert.
+          if (failed > Math.max(2, Math.floor(urls.length * 0.2))) {
+            throw new Error(`precache incomplete: ${failed}/${urls.length}`);
+          }
+        });
       })
-      .catch(() => {
-        // Non-fatal: install must not abort when the manifest can't be loaded.
+      .catch((err) => {
+        // Manifest nicht ladbar → wenigstens index.html, aber NICHT als Erfolg verbuchen.
+        console.warn('[sw] precache failed', err);
         return caches
           .open(CACHE_NAME)
-          .then((cache) =>
-            cache.addAll([INDEX_URL, '/FiestaSiesta/index.html']).catch(() => undefined)
-          );
+          .then((cache) => cache.addAll([INDEX_URL, '/FiestaSiesta/index.html']).catch(() => undefined))
+          .then(() => {
+            throw err;
+          });
       })
   );
 });
@@ -37,7 +51,8 @@ self.addEventListener('activate', (e) => {
       const keep = new Set([CACHE_NAME]);
       const generations = keys
         .filter((k) => k.startsWith('fiesta-siesta-v'))
-        .sort();
+        // numerisch, nicht lexikalisch: sonst gilt v0.9.0 als neuer als v0.31.0
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
       const previous = generations.filter((k) => k !== CACHE_NAME).pop();
       if (previous) keep.add(previous);
       const toDelete = keys.filter((k) => !keep.has(k));
@@ -113,25 +128,28 @@ self.addEventListener('fetch', (e) => {
   // Same-origin only
   if (url.origin !== self.location.origin) return;
 
-  // HTML navigation: cache-first on index.html, network fallback.
+  // HTML navigation: NETWORK first, cache as offline fallback.
+  // Vorher cache-first: nach einem Deploy lieferte der Service Worker die alte
+  // index.html weiter, die auf inzwischen gelöschte Asset-Hashes zeigt — die App
+  // blieb dann im statischen Boot-Splash stehen und kam nie hoch. Offline greift
+  // weiter der Cache.
   if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
     e.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
-        const cached =
-          (await cache.match(e.request)) ||
-          (await cache.match(INDEX_URL)) ||
-          (await caches.match(e.request)) ||
-          (await caches.match(INDEX_URL));
-        if (cached) return cached;
-
         try {
           const response = await fetch(e.request);
           if (response && response.status === 200) {
-            e.waitUntil(cache.put(e.request, response.clone()));
+            e.waitUntil(cache.put(e.request, response.clone()).catch(() => undefined));
+            return response;
           }
-          return response;
+          throw new Error(`status ${response && response.status}`);
         } catch {
+          const cached =
+            (await cache.match(e.request)) ||
+            (await cache.match(INDEX_URL)) ||
+            (await caches.match(INDEX_URL));
+          if (cached) return cached;
           return new Response('Offline — die App konnte nicht geladen werden.', {
             status: 503,
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },

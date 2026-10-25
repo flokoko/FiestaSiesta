@@ -17,6 +17,7 @@ import {
   bristolInk,
 } from '../lib/bristolConstants'
 import { spanishSuccess } from '../lib/espanaFlair'
+import { isoDay, todayIso } from '../lib/date'
 import './BristolScreen.css'
 
 interface BristolScreenProps {
@@ -26,7 +27,8 @@ interface BristolScreenProps {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10)
+  // lokale Zeit: toISOString() wäre UTC und zeigt nachts den Vortag
+  return todayIso()
 }
 
 /** True if the user's last 3 Bristol entries (by entry_time, fallback entry_date) are all value 13. */
@@ -49,6 +51,10 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
   const [entries, setEntries] = useState<BristolEntry[]>([])
   const [loadingEntries, setLoadingEntries] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  // Ref-Guard, nicht State: drei Tipps im selben Tick sehen alle noch
+  // `submitting === false` und legen drei Einträge an (State wird erst beim
+  // nächsten Render gesetzt).
+  const submittingRef = useRef(false)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(todayStr())
   const [intradayDate, setIntradayDate] = useState(todayStr())
@@ -103,6 +109,10 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
   }, [listId, fetchEntries])
 
   const handleSubmitEntry = useCallback(async (value: number) => {
+    // Doppeltipp auf eine Skala-Kachel erzeugte zwei Einträge (kein Guard am
+    // State). Jetzt: während des Speicherns sind weitere Tipps wirkungslos.
+    if (submittingRef.current) return
+    submittingRef.current = true
     setSubmitting(true)
     const entryTime = new Date().toISOString()
     if (isOnline) {
@@ -115,7 +125,9 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           entry_date: selectedDate,
           entry_time: entryTime,
         })
-      setSubmitting(false)
+      submittingRef.current = false
+      submittingRef.current = false
+    setSubmitting(false)
       if (error) {
         toast(`Fehler: ${error.message}`, 'error')
         return
@@ -132,7 +144,9 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           entry_time: entryTime,
         },
       })
-      setSubmitting(false)
+      submittingRef.current = false
+      submittingRef.current = false
+    setSubmitting(false)
     }
     const isToday = selectedDate === today
     const dateLabel = isToday ? '' : ` (${new Date(selectedDate).toLocaleDateString('de-DE')})`
@@ -188,7 +202,9 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         .from('bristol_entries')
         .update({ value })
         .eq('id', entryId)
-      setSubmitting(false)
+      submittingRef.current = false
+      submittingRef.current = false
+    setSubmitting(false)
       if (error) {
         toast(`Fehler: ${error.message}`, 'error')
         return
@@ -201,7 +217,9 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         filterColumn: 'id',
         filterValue: entryId,
       })
-      setSubmitting(false)
+      submittingRef.current = false
+      submittingRef.current = false
+    setSubmitting(false)
     }
     toast(`${spanishSuccess()} Bristol-Wert auf ${value} (${BRISTOL_ADJECTIVES[value]}) geändert!`, 'success')
     navigator.vibrate?.(20)
@@ -290,7 +308,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     for (let i = 13; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().slice(0, 10)
+      const dateStr = isoDay(d)
       const dayEntries = entries.filter(e => e.entry_date === dateStr)
       const avg = dayEntries.length > 0
         ? dayEntries.reduce((s, e) => s + e.value, 0) / dayEntries.length
@@ -595,7 +613,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     for (let i = 0; i < 7; i++) {
       const d = new Date(now)
       d.setDate(d.getDate() - i)
-      dayMap[d.toISOString().slice(0, 10)] = []
+      dayMap[isoDay(d)] = []
     }
     entries.forEach(e => {
       if (dayMap[e.entry_date]) {

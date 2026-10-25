@@ -99,8 +99,10 @@ export function computeSettlement(balances: Record<string, number>): SettlementT
 
   for (const [name, balance] of Object.entries(balances)) {
     const rounded = Math.round(balance * 100) / 100
-    if (rounded > 0.01) creditors.push({ name, amount: rounded })
-    else if (rounded < -0.01) debtors.push({ name, amount: -rounded })
+    // ±0,005-Schwelle: ein offener Cent (±0,01 nach Cent-Rundung) ist eine
+    // echte Schuld/Forderung — vorher verschwand er mit der 0,01-Schwelle still.
+    if (rounded >= 0.005) creditors.push({ name, amount: rounded })
+    else if (rounded <= -0.005) debtors.push({ name, amount: -rounded })
   }
 
   creditors.sort((a, b) => b.amount - a.amount)
@@ -208,10 +210,54 @@ export function calculateShareAmounts(
       share_amount: (perCents + (i < remainder ? 1 : 0)) / 100,
     }))
   }
-  return splitPeople.map((p) => {
+  // Exact: jeden Anteil auf Cent runden (Math.round) und die Summe per
+  // Rest-Cent-Verteilung exakt auf den Betrag bringen — gleiche Technik wie
+  // calculateQuotaShares. Ohne Rundung landen Float-Werte (z.B. 3.335)
+  // ungerundet in der DB und verfälschen die Salden um Bruchteile von Cent.
+  if (splitPeople.length === 0) return []
+  const totalCents = Math.round(amountNum * 100)
+  const cells = splitPeople.map((p) => {
     const val = parseFloat(exactShares[p] ?? '0')
-    return { person_name: p, share_amount: isNaN(val) ? 0 : val }
+    const raw = isNaN(val) ? 0 : val * 100
+    return { person_name: p, cents: Math.round(raw), raw }
   })
+  let remainder = totalCents - cells.reduce((sum, c) => sum + c.cents, 0)
+
+  if (remainder > 0) {
+    // 1. Rest-Cents zuerst an die Personen mit dem größten Rundungs-Verlust
+    //    (Eingabe wurde ab- statt aufgerundet).
+    const loss = cells
+      .map((c, i) => ({ i, loss: c.raw - c.cents }))
+      .sort((a, b) => b.loss - a.loss)
+    for (const f of loss) {
+      if (remainder <= 0) break
+      cells[f.i].cents += 1
+      remainder -= 1
+    }
+    // 2. Falls dann noch Rest übrig ist: reihum an alle — kein stiller
+    //    Cent-Verlust, die Shares summieren sich exakt auf den Betrag.
+    let turn = 0
+    while (remainder > 0) {
+      cells[turn % cells.length].cents += 1
+      turn += 1
+      remainder -= 1
+    }
+  } else if (remainder < 0) {
+    // Eingabesumme > Betrag (innerhalb der 1-Cent-Toleranz): Überschuss reihum
+    // abziehen, keine Person unter 0 Cent. Terminiert, weil abgezogen wird,
+    // solange irgendein Cent vorhanden ist und remainder so gegen 0 klettert.
+    let turn = 0
+    while (remainder < 0 && cells.some(c => c.cents > 0)) {
+      const idx = turn % cells.length
+      if (cells[idx].cents > 0) {
+        cells[idx].cents -= 1
+        remainder += 1
+      }
+      turn += 1
+    }
+  }
+
+  return cells.map(c => ({ person_name: c.person_name, share_amount: c.cents / 100 }))
 }
 
 /**

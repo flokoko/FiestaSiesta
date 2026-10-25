@@ -150,9 +150,18 @@ export default function ExpenseForm({
     if (!desc || amountNum <= 0) return
     if (!hasQuotaConfig && (splitPeople.length === 0 || !exactSumOk)) return
 
+    const shares = calculateShares()
+
+    // Keine gültige Aufteilung → nicht speichern. Vorher wurde die Ausgabe
+    // trotzdem angelegt (nur ohne Splits) und belastete damit allein paid_by;
+    // die Salden waren danach falsch und niemand konnte sehen, warum.
+    if (shares.length === 0 || shares.every(s => s.share_amount <= 0)) {
+      toast('Keine gültige Aufteilung — bitte mindestens eine Person mit Anteil > 0 % wählen.', 'error')
+      return
+    }
+
     setIsSubmitting(true)
     try {
-    const shares = calculateShares()
 
     if (editingId) {
       const { error: updErr } = await supabase

@@ -5,6 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/FiestaSiesta/favicon.svg" />
     <link rel="apple-touch-icon" href="/FiestaSiesta/apple-touch-icon.png" />
     <link rel="manifest" href="/FiestaSiesta/manifest.json" />
+    <!-- Ohne Preload wird die Schrift erst nach CSS-Parse entdeckt (~1 RTT später sichtbar) -->
+    <link rel="preload" href="/FiestaSiesta/fonts/jakarta-latin.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#F8F6F4" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F0D12" />

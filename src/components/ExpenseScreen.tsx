@@ -5,8 +5,9 @@ import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
 import {
   isEqualQuotaDistribution, computeBalances, computeOpenBalances,
-  computeSettlement, totalExpenses, fmtEUR,
+  computeSettlementProposals, totalExpenses, fmtEUR, type SettlementTxn,
 } from '../lib/settlement'
+import { todayIso } from '../lib/date'
 import ExpenseForm from './ExpenseForm'
 import ExpenseList from './ExpenseList'
 import ExpenseSettlement from './ExpenseSettlement'
@@ -60,7 +61,7 @@ export default function ExpenseScreen({
   const [splitPeople, setSplitPeople] = useState<string[]>([])
   const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal')
   const [exactShares, setExactShares] = useState<Record<string, string>>({})
-  const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [expenseDate, setExpenseDate] = useState(() => todayIso())
   const [expenseNote, setExpenseNote] = useState('')
   const [expenseCategory, setExpenseCategory] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,14 +73,22 @@ export default function ExpenseScreen({
 
   // ── Saldo-Logik: erst was offen ist, dann die Details ──
   const balances = useMemo(() => computeBalances(expenses, expenseSplits), [expenses, expenseSplits])
-  const openBalances = useMemo(
-    () => computeOpenBalances(
-      balances,
-      settlements.map(s => ({ from: s.payer, to: s.payee, amount: s.amount })),
-    ),
-    [balances, settlements],
+  const settledTxns: SettlementTxn[] = useMemo(
+    () => settlements.map(s => ({ from: s.payer, to: s.payee, amount: s.amount })),
+    [settlements],
   )
-  const proposals = useMemo(() => computeSettlement(openBalances), [openBalances])
+  const openBalances = useMemo(
+    () => computeOpenBalances(balances, settledTxns),
+    [balances, settledTxns],
+  )
+  // Gleiche Wahrheit wie im Abrechnungs-Tab (ExpenseSettlement): stabile
+  // Payer→Payee-Vorschläge aus den ORIGINAL-Salden, bereits beglichene
+  // Zahlungen werden nur auf dem passenden Paar abgezogen — nach einer
+  // Teil-Begleichung werden die anderen Paarungen nicht neu sortiert.
+  const proposals = useMemo(
+    () => computeSettlementProposals(balances, settledTxns),
+    [balances, settledTxns],
+  )
   const totalSpent = useMemo(() => totalExpenses(expenses), [expenses])
   const myBalance = Math.round((openBalances[userName] ?? 0) * 100) / 100
 
@@ -116,7 +125,7 @@ export default function ExpenseScreen({
     setSplitPeople([])
     setSplitMode('equal')
     setExactShares({})
-    setExpenseDate(new Date().toISOString().slice(0, 10))
+    setExpenseDate(todayIso())
     setExpenseNote('')
     setExpenseCategory('')
     setEditingId(null)
@@ -132,7 +141,7 @@ export default function ExpenseScreen({
     setSplitPeople(allPersons.slice())
     setSplitMode('equal')
     setExactShares({})
-    setExpenseDate(new Date().toISOString().slice(0, 10))
+    setExpenseDate(todayIso())
     setExpenseNote('')
     setExpenseCategory('')
     setFormExpanded(true)

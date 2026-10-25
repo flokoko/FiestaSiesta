@@ -12,6 +12,7 @@ import {
 } from '../lib/settlement'
 import ExpenseCharts from './ExpenseCharts'
 import { supabase } from '../lib/supabase'
+import { todayIso } from '../lib/date'
 import { useToast } from '../context/ToastContext'
 
 interface ExpenseSettlementProps {
@@ -63,7 +64,7 @@ export default function ExpenseSettlement({
   // ── Inline "begleichen" form state ──
   const [settlingIdx, setSettlingIdx] = useState<number | null>(null)
   const [settleAmount, setSettleAmount] = useState('')
-  const [settleDate, setSettleDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [settleDate, setSettleDate] = useState(() => todayIso())
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // ── Delete state guard ──
@@ -74,7 +75,7 @@ export default function ExpenseSettlement({
     navigator.vibrate?.(8)
     setSettlingIdx(idx)
     setSettleAmount(proposedAmount.toFixed(2))
-    setSettleDate(new Date().toISOString().slice(0, 10))
+    setSettleDate(todayIso())
   }
 
   const handleCancelSettle = () => {

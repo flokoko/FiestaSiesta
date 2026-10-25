@@ -25,13 +25,27 @@ export function getJoinCode() {
   return currentJoinCode
 }
 
-// Custom fetch that injects the x-join-code header on every request
+// Custom fetch that injects the x-join-code header on every request.
+// Zusätzlich ein hartes Zeitlimit: bei halb-offenem Mobilnetz (Insel, NAT-Hänger)
+// settled der Request sonst NIE — optimistische Updates hängen, fetchAll bleibt
+// für immer „lädt", und der Fehler-/Cache-Pfad wird nie erreicht.
+const REQUEST_TIMEOUT_MS = 12_000
+
 const customFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
   const headers = new Headers(init.headers)
   if (currentJoinCode) {
     headers.set('x-join-code', currentJoinCode)
   }
-  return fetch(input, { ...init, headers })
+
+  let signal = init.signal ?? undefined
+  try {
+    const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    signal = signal ? AbortSignal.any([signal, timeout]) : timeout
+  } catch {
+    // Ältere Browser ohne AbortSignal.any/timeout: ohne Limit weiterlaufen
+  }
+
+  return fetch(input, { ...init, headers, signal })
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

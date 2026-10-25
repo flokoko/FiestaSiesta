@@ -317,9 +317,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
         .in('expense_id', expenseIds)
       if (splitErr) {
         logError('fetchExpenses splits error:', splitErr)
-        // Fall back to cached splits, but still apply fresh expenses
-        const cachedSplits = readCache<ExpenseSplit[]>(listId, 'expense_splits')
-        splits = cachedSplits ?? []
+        // NICHT die frischen Ausgaben mit alten Splits mischen: eine gerade
+        // angelegte Ausgabe hätte dann keinen Anteil und würde allein dem
+        // Zahler angelastet. Lieber den bisherigen (konsistenten) Stand
+        // stehen lassen — der nächste Fetch/Realtime-Event korrigiert ihn.
+        return
       } else {
         splits = (splitData || []) as ExpenseSplit[]
       }
@@ -835,8 +837,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       logError('toggleNoteFavorite error:', error)
       return
     }
-    fetchAll(list.id, true)
-  }, [list, fetchAll])
+    // Nur Notizen: ein Boolean-Toggle braucht keine 8 Tabellen-Abfragen.
+    fetchNotes(list.id)
+  }, [list, fetchNotes])
 
   // ── Derived values (pure functions from lib/derivedState) ──────────
   const shoppingCategories = useMemo(() => deriveCategoriesByType(categories, 'shopping'), [categories])
@@ -862,7 +865,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     setParticipantId(pid)
     setList(l)
     setIsLoading(true)
-    fetchAll(l.id)
+    // force: der Guard eines noch laufenden Fetches der ALTEN Liste darf den
+    // ersten Ladevorgang der neuen Liste nicht verschlucken (leere Listen bis
+    // zum nächsten Realtime-Event). Die seq-Guards verwerfen die alte Antwort.
+    fetchAll(l.id, true)
     const { data: fullList } = await supabase
       .from('lists')
       .select('*')
@@ -879,6 +885,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       realtimeDebounceRef.current = null
     }
     pendingRealtimeTablesRef.current.clear()
+    // Ohne Reset bleibt ein evtl. noch laufender Fetch als „läuft" markiert und
+    // der nächste Join lädt gar nicht erst.
+    isFetchingRef.current = false
     if (list) clearCacheForList(list.id)
     localStorage.removeItem('user_name')
     localStorage.removeItem('participant_id')

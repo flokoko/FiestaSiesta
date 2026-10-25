@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useToastState, type ToastAction } from '../hooks/useToast'
 import Toast from '../components/Toast'
 
@@ -13,8 +13,12 @@ const ToastContext = createContext<ToastContextValue | null>(null)
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { toasts, toast, dismiss, confirm } = useToastState()
 
+  // Ohne useMemo ist `value` bei jedem Toast ein neues Objekt — dann rendert jeder
+  // useToast()-Konsument neu, inklusive der gemounteten Screens mit Recharts/Leaflet.
+  const value = useMemo(() => ({ toast, dismiss, confirm }), [toast, dismiss, confirm])
+
   return (
-    <ToastContext.Provider value={{ toast, dismiss, confirm }}>
+    <ToastContext.Provider value={value}>
       {children}
       <Toast toasts={toasts} onDismiss={dismiss} />
     </ToastContext.Provider>

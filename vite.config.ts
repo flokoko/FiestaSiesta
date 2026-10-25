@@ -31,8 +31,11 @@ function precacheManifestPlugin(): Plugin {
       }
 
       // 2) Files copied verbatim from public/ (fonts, icons, manifest.json).
+      //    sw.js gehört NICHT ins Manifest: der Browser aktualisiert es an jedem
+      //    Cache vorbei, ein geprecachtes Duplikat ist nur Ballast.
       for (const abs of walkDir('public')) {
         const rel = relative('public', abs).split(sep).join('/')
+        if (rel === 'sw.js') continue
         if (PRECACHE_EXT.test(rel)) names.add(BASE + rel)
       }
 
@@ -46,6 +49,25 @@ function precacheManifestPlugin(): Plugin {
 
 export default defineConfig({
   base: BASE,
+  build: {
+    rollupOptions: {
+      output: {
+        // React und Supabase ändern sich bei App-Updates fast nie. Getrennte Chunks
+        // bedeuten: ein Deploy invalidiert nur den kleinen App-Chunk, der Service
+        // Worker muss nicht 460 kB neu laden.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) {
+            return 'vendor-react'
+          }
+          if (id.includes('@supabase') || id.includes('postgrest') || id.includes('realtime-js')) {
+            return 'vendor-supabase'
+          }
+          return undefined
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     precacheManifestPlugin(),

@@ -81,26 +81,27 @@ export default function ExpenseQuotaManager({
       percent: parseFloat(draft[person] ?? '0') || 0,
     }))
 
-    // Delete existing quotas for this list+category, then insert
-    const { error: delError } = await supabase
+    // Upsert statt Löschen-dann-Einfügen: vorher waren bei einem Fehlschlag des
+    // Inserts die alten Quoten bereits weg (delete ist durch, insert scheitert).
+    const { error: upsertError } = await supabase
+      .from('expense_quotas')
+      .upsert(rows, { onConflict: 'list_id,category,person_name' })
+
+    if (upsertError) {
+      toast(`Fehler beim Speichern: ${upsertError.message}`, 'error')
+      return
+    }
+
+    // Personen, die aus der Liste entfernt wurden, müssen verschwinden
+    const { error: pruneError } = await supabase
       .from('expense_quotas')
       .delete()
       .eq('list_id', listId)
       .eq('category', editingCategory)
+      .not('person_name', 'in', `(${rows.map(r => `"${r.person_name}"`).join(',')})`)
 
-    if (delError) {
-      toast(`Fehler beim Aktualisieren: ${delError.message}`, 'error')
-      return
-    }
-
-    // Only insert rows where percent > 0 OR the person had a previous quota
-    // (We keep all persons so 0% is explicitly stored)
-    const { error: insError } = await supabase
-      .from('expense_quotas')
-      .insert(rows)
-
-    if (insError) {
-      toast(`Fehler beim Speichern: ${insError.message}`, 'error')
+    if (pruneError) {
+      toast(`Fehler beim Aufräumen: ${pruneError.message}`, 'error')
       return
     }
 
@@ -137,19 +138,24 @@ export default function ExpenseQuotaManager({
           percent: (base + (i < remainder ? 1 : 0)) / 100,
         }))
 
-        const { error: delError } = await supabase
+        // Upsert statt delete+insert — ein gescheiterter Insert darf die
+        // bestehenden Quoten nicht löschen.
+        const { error: upsertError } = await supabase
+          .from('expense_quotas')
+          .upsert(rows, { onConflict: 'list_id,category,person_name' })
+        if (upsertError) {
+          toast(`Fehler beim Neuverteilen: ${upsertError.message}`, 'error')
+          return
+        }
+
+        const { error: pruneError } = await supabase
           .from('expense_quotas')
           .delete()
           .eq('list_id', listId)
           .eq('category', category)
-        if (delError) {
-          toast(`Fehler beim Neuverteilen: ${delError.message}`, 'error')
-          return
-        }
-
-        const { error: insError } = await supabase.from('expense_quotas').insert(rows)
-        if (insError) {
-          toast(`Fehler beim Speichern: ${insError.message}`, 'error')
+          .not('person_name', 'in', `(${rows.map(r => `"${r.person_name}"`).join(',')})`)
+        if (pruneError) {
+          toast(`Fehler beim Aufräumen: ${pruneError.message}`, 'error')
           return
         }
 

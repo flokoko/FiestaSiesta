@@ -116,6 +116,10 @@ export default function WeatherScreen() {
   const [radarIndex, setRadarIndex] = useState(0)
   const [radarError, setRadarError] = useState('')
   const radarIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Wurzel-Ref: Screens bleiben gemountet (nur display:none). Ohne diese Prüfung
+  // wechselt die Radar-Animation im Verborgenen alle 500 ms das Frame und Leaflet
+  // lädt jedes Mal das komplette Tile-Set — Akku und Datenvolumen für nichts.
+  const rootRef = useRef<HTMLDivElement>(null)
 
   // ── Read stored location from localStorage ──
   const storedLocation = useMemo(() => getStoredLocation(), [])
@@ -207,6 +211,8 @@ export default function WeatherScreen() {
   useEffect(() => {
     if (radarPlaying && radarFrames.length > 0) {
       radarIntervalRef.current = setInterval(() => {
+        if (document.hidden) return
+        if (rootRef.current && rootRef.current.offsetParent === null) return
         setRadarIndex(prev => (prev + 1) % radarFrames.length)
       }, 500)
     }
@@ -323,7 +329,7 @@ export default function WeatherScreen() {
   }
 
   return (
-    <div className="weather-screen">
+    <div className="weather-screen" ref={rootRef}>
       <header className="list-head">
         <div className="list-head-text">
           <h1>Wetter</h1>

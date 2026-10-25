@@ -2,6 +2,7 @@
   "name": "Fiesta Siesta",
   "short_name": "FiestaSiesta",
   "description": "Urlaubs-App für Gran Canaria — Einkaufsliste, Mitbringen, Ausgaben, Bristol, Wetter & Notizen, gemeinsam in Realtime.",
+  "id": "/FiestaSiesta/",
   "start_url": "/FiestaSiesta/",
   "scope": "/FiestaSiesta/",
   "display": "standalone",

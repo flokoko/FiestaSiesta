@@ -162,6 +162,7 @@ export async function unsubscribeFromPush(
 ): Promise<void> {
   // Cancel the browser-side subscription first
   const existing = await getExistingSubscription()
+  const endpoint = existing?.endpoint ?? null
   if (existing) {
     try {
       await existing.unsubscribe()
@@ -170,12 +171,18 @@ export async function unsubscribeFromPush(
     }
   }
 
-  // Delete all rows for this list+participant (covers all endpoints)
-  await supabase
+  // Nur das Abo DIESES Geräts löschen. Vorher wurden alle Zeilen von
+  // list+participant entfernt — wer die Benachrichtigungen auf dem Handy
+  // abschaltete, bekam auf dem Tablet ebenfalls keine Pushs mehr.
+  let query = supabase
     .from('push_subscriptions')
     .delete()
     .eq('list_id', listId)
     .eq('participant_name', participantName)
+
+  if (endpoint) query = query.eq('endpoint', endpoint)
+
+  await query
 
   localStorage.removeItem('push_notifications_enabled')
 }
