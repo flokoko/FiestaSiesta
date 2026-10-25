@@ -14,6 +14,7 @@ import type {
 import { supabase, restoreParticipantSession } from '../lib/supabase'
 import { useOfflineQueue } from './useOfflineQueue'
 import { useRealtimeSync } from './useRealtimeSync'
+import { closeAllRealtimeChannels } from '../lib/realtimeBus'
 import { useToast } from '../context/ToastContext'
 import { logError } from '../lib/logger'
 import { readCache, writeCache, clearCacheForList } from '../lib/readCache'
@@ -430,10 +431,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements])
 
   // ── Ausfallsicherung gegen stilles Realtime ─────────────────────────
-  // Wenn der Tab wieder sichtbar wird oder das Netz zurückkommt, frisch
-  // nachladen: Realtime liefert ggf. keine Events (z. B. nach Suspend oder
-  // offline Phase). Ohne force → kein Ladebalken, der Guard verhindert
-  // Doppel-Fetches.
+  // Realtime läuft seit v0.37.0 über den Broadcast-Trigger; wenn die
+  // WebSocket-Verbindung hängt (Suspend, offline, Netzwechsel), kommt trotzdem
+  // nichts an. Deshalb zusätzlich: beim Sichtbarwerden, bei zurückkommendem
+  // Netz und in einem ruhigen 90-Sekunden-Takt nachladen. Ohne force → kein
+  // Ladebalken, der Guard verhindert Doppel-Fetches.
   useEffect(() => {
     if (!list) return
     const refetch = () => { fetchAll(list.id) }
@@ -447,9 +449,14 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     }
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('online', refetch)
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      refetch()
+    }, 90_000)
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('online', refetch)
+      window.clearInterval(timer)
     }
   }, [list, fetchAll])
 
@@ -975,6 +982,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     // Ohne Reset bleibt ein evtl. noch laufender Fetch als „läuft" markiert und
     // der nächste Join lädt gar nicht erst.
     isFetchingRef.current = false
+    // Realtime-Kanal der alten Liste schließen — sonst hört die abgemeldete
+    // Sitzung weiter mit und hält eine WebSocket-Verbindung offen.
+    closeAllRealtimeChannels()
     if (list) clearCacheForList(list.id)
     localStorage.removeItem('user_name')
     localStorage.removeItem('participant_id')

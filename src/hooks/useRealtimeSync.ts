@@ -1,82 +1,61 @@
-import { useEffect, useRef, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { useEffect, useRef } from 'react'
+import { subscribeList } from '../lib/realtimeBus'
 
-type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes'
+type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes' | 'packlist_items'
 
 interface UseRealtimeSyncOptions {
   listId: string | null
   onTableChange: (table: TableName, payload: any) => void
-  /** eigener Kanalname, wenn ein zweiter Sync parallel läuft (z. B. Reiseplan) */
+  /**
+   * Historisch: mehrere Kanäle pro Liste. Seit dem Broadcast-Umbau (v0.37.0)
+   * gibt es nur noch EINEN Kanal pro Liste (`lib/realtimeBus.ts`), der alle
+   * Hörer bedient — das Argument wird ignoriert und bleibt nur, damit die
+   * Aufrufer unverändert bleiben.
+   */
   channelSuffix?: string
-  /** nur diese Tabellen abonnieren */
+  /** nur diese Tabellen melden */
   tables?: TableName[]
 }
-
-/** Tabellen ohne list_id-Spalte: `expense_splits` hängt nur über expense_id
- * an expenses (ON DELETE CASCADE — sql/expenses_migration.sql). Ein
- * `list_id=eq.…`-Filter würde deren Abo NIE auslösen lassen. Deshalb: Abo ohne
- * Filter, die RLS-Policies filtern über den Eltern-Expense.
- * `trip_votes` hat dagegen DOCH eine list_id (sql/110_trip_plan.sql) und
- * bleibt daher gefiltert. */
-const TABLES_WITHOUT_LIST_ID: ReadonlySet<TableName> = new Set(['expense_splits'])
 
 const DEFAULT_TABLES: TableName[] = [
   'items', 'categories', 'notes', 'expenses', 'expense_splits', 'expense_quotas',
   'participants', 'settlements',
 ]
 
-export function useRealtimeSync({ listId, onTableChange, channelSuffix = '', tables: onlyTables }: UseRealtimeSyncOptions) {
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const onTableChangeRef = useRef(onTableChange)
-  onTableChangeRef.current = onTableChange
+/**
+ * Live-Sync über den Datenbank-Broadcast (`sql/140_realtime_broadcast.sql`).
+ *
+ * Warum kein `postgres_changes` mehr: die RLS aller Tabellen hängt an
+ * `request.headers ->> 'x-join-code'`. Realtime prüft RLS beim Abo ohne diese
+ * Header, also kam **kein einziges Event** an (am 25.10.2026 mit `items` und
+ * `trip_proposals` gegen die laufende DB nachgewiesen). Jetzt schickt ein
+ * Trigger die geänderte Zeile auf den privaten Kanal
+ * `list:<list_id>:<join_code>`; die Policy auf `realtime.messages` prüft die
+ * Topic gegen `public.lists`. Die Tabellen-RLS bleibt unverändert.
+ *
+ * Das Payload wird auf die alte postgres_changes-Form normalisiert
+ * (`eventType` / `new` / `old`), damit die Aufrufer unverändert bleiben.
+ */
+export function useRealtimeSync({ listId, onTableChange, tables: onlyTables }: UseRealtimeSyncOptions) {
+  const callbackRef = useRef(onTableChange)
+  callbackRef.current = onTableChange
 
-  const cleanup = useCallback(() => {
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current)
-      channelRef.current = null
-    }
-  }, [])
-
-  // Stabilisierung: inline übergebene Arrays (z. B. in TripPlanScreen) erzeugen
-  // pro Render eine neue Referenz — das würde bei Dependency `onlyTables` den
-  // Kanal jedes Mal neu aufsetzen. Deshalb hier nur der Join-Schlüssel als
-  // Dependency; im Effekt wird das Array aus dem Schlüssel rekonstruiert.
+  // Nur der Join-Schlüssel als Dependency: inline übergebene Arrays erzeugen
+  // pro Render eine neue Referenz und würden den Bus jedes Mal neu anmelden.
   const tablesKey = (onlyTables ?? DEFAULT_TABLES).join(',')
 
   useEffect(() => {
     if (!listId) return
+    const watched = new Set(tablesKey.split(','))
 
-    const tables = tablesKey.split(',') as TableName[]
-    // NOTE: Ein `config.headers`-Block ({ 'x-join-code': joinCode }) wird von
-    // realtime-js verworfen und erreicht den Realtime-Server nie — der
-    // join-code-basierte RLS-Zugriff läuft über die global gesetzten
-    // Supabase-Header (lib/supabase.ts). Deshalb bewusst KEIN config-Objekt.
-    const channel = supabase.channel(`list:${listId}${channelSuffix}`)
-
-    for (const table of tables) {
-      channel.on(
-        'postgres_changes' as any,
-        {
-          event: '*',
-          schema: 'public',
-          table,
-          // Nur Tabellen MIT list_id-Spalte bekommen den Filter (s. oben)
-          ...(TABLES_WITHOUT_LIST_ID.has(table) ? {} : { filter: `list_id=eq.${listId}` }),
-        },
-        (payload: any) => {
-          onTableChangeRef.current(table, payload)
-        }
-      )
-    }
-
-    channel.subscribe()
-    channelRef.current = channel
-
-    return cleanup
-  }, [listId, cleanup, channelSuffix, tablesKey])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return cleanup
-  }, [cleanup])
+    return subscribeList(listId, (event) => {
+      if (!watched.has(event.table)) return
+      callbackRef.current(event.table as TableName, {
+        eventType: event.eventType,
+        new: event.new,
+        old: event.old,
+        table: event.table,
+      })
+    })
+  }, [listId, tablesKey])
 }

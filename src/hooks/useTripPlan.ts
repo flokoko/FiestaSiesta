@@ -22,11 +22,9 @@ export interface TripPlanState {
  * Heute + Reise durchgereicht. Bewusst EIN Aufruf: ein zweiter Hook im selben
  * Baum bekäme denselben Realtime-Kanal und würde werfen (siehe SKILL.md).
  *
- * `activeTab`: Die RLS-Policies hängen an `request.headers->>'x-join-code'`,
- * Realtime wertet sie ohne diese Header aus und liefert deshalb KEINE Events
- * (am 25.10.2026 mit `items` und `trip_proposals` gegengeprüft). Der Plan wird
- * darum beim Betreten der Screens, beim Zurückkehren in die App und alle 30 s
- * nachgeladen — ohne diesen Fallback bliebe ein fremder Vorschlag unsichtbar.
+ * `activeTab`: Der Plan wird beim Betreten der Screens nachgeladen, beim
+ * Zurückkehren in die App und (als Ausfallsicherung zum Broadcast-Sync aus
+ * `sql/140_realtime_broadcast.sql`) im 90-Sekunden-Takt.
  */
 export function useTripPlan(
   listId: string | null | undefined,
@@ -88,8 +86,8 @@ export function useTripPlan(
     void load()
   }, [activeTab, load])
 
-  // Realtime ist hier tot (siehe oben): Zurückkehren in die App und ein
-  // ruhiger 30-Sekunden-Takt halten den Plan trotzdem frisch.
+  // Realtime läuft jetzt über den Broadcast-Trigger (sql/140). Der Takt hier ist
+  // nur die Ausfallsicherung, wenn die WebSocket-Verbindung hängt.
   useEffect(() => {
     const wake = () => {
       if (!document.hidden) void load()
@@ -99,7 +97,7 @@ export function useTripPlan(
     window.addEventListener('focus', wake)
     const timer = window.setInterval(() => {
       if (!document.hidden) void load()
-    }, 30_000)
+    }, 90_000)
     return () => {
       document.removeEventListener('visibilitychange', wake)
       window.removeEventListener('online', wake)
