@@ -161,12 +161,9 @@ body::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 25%, rgba(170, 21, 27, 0.10) 0%, transparent 45%),
-    radial-gradient(circle at 85% 20%, rgba(170, 21, 27, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 50% 75%, rgba(212, 160, 23, 0.07) 0%, transparent 45%),
-    radial-gradient(circle at 30% 60%, rgba(170, 21, 27, 0.05) 0%, transparent 40%),
-    var(--bg-gradient);
+  /* Nur die Aurora: die alten Rot/Gold-Blobs aus index.css lagen darueber und
+     haben die Pastelltöne zu Grau gedämpft (Bella-Rest, bewusst entfernt). */
+  background: var(--bg-gradient);
 }
 
 #root .app {

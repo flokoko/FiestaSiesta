@@ -119,8 +119,9 @@ export default function App() {
     sw.addEventListener('controllerchange', onControllerChange)
 
     sw.ready.then((registration) => {
-      // A worker already waiting to activate is a genuine update.
-      if (registration.waiting) {
+      // A waiting worker only matters for sessions that were already controlled
+      // (a fresh install claims the page and must not show the banner).
+      if (registration.waiting && hadController) {
         setUpdateAvailable(true)
       }
       registration.addEventListener('updatefound', () => {
