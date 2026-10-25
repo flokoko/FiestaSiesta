@@ -12,7 +12,7 @@ export interface TripInfo {
 
 export const TRIP: TripInfo = {
   name: 'Gran Canaria',
-  place: 'Norden · Las Palmas',
+  place: 'Temisas · Südosten',
   start: '2026-11-29',
   end: '2026-12-06',
 }
