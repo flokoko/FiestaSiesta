@@ -1,5 +1,5 @@
-import { useState, useMemo, type ReactNode } from 'react'
-import { Trash2, ExternalLink, GripVertical, Star } from 'lucide-react'
+import { useState, useMemo, useRef, useLayoutEffect, useCallback, type ReactNode } from 'react'
+import { Trash2, ExternalLink, GripVertical, Star, Plus, X, Search, StickyNote } from 'lucide-react'
 import type { QuickNote } from '../types'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -69,6 +69,9 @@ export default function NotesScreen({
   const [editTitle, setEditTitle] = useState('')
   const [editContent, setEditContent] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  // Composer ist zugeklappt, sobald es Notizen gibt: die Seite startet ruhig.
+  const [composerOpen, setComposerOpen] = useState(notes.length === 0)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const {
     dragState,
@@ -86,6 +89,42 @@ export default function NotesScreen({
       n.content.toLowerCase().includes(q),
     )
   }, [notes, searchQuery])
+
+  // ── FLIP-Animation: Karten gleiten an ihre neue Position ──────────────
+  // Ohne das springt die Reihenfolge beim Loslassen hart um. Gemessen wird
+  // vor dem Commit (prevRects), animiert nach dem Commit (useLayoutEffect),
+  // damit nichts zwischen zwei Frames flackert.
+  const rowRefs = useRef(new Map<string, HTMLElement>())
+  const prevRects = useRef(new Map<string, number>())
+
+  const trackRow = useCallback((id: string, el: HTMLElement | null) => {
+    registerItem(id, el)
+    if (el) rowRefs.current.set(id, el)
+    else rowRefs.current.delete(id)
+  }, [registerItem])
+
+  useLayoutEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const next = new Map<string, number>()
+    for (const [id, el] of rowRefs.current) {
+      next.set(id, el.getBoundingClientRect().top)
+    }
+    if (!reduce) {
+      for (const [id, top] of next) {
+        const prevTop = prevRects.current.get(id)
+        if (prevTop === undefined) continue
+        const dy = prevTop - top
+        if (Math.abs(dy) < 2) continue
+        const el = rowRefs.current.get(id)
+        if (!el) continue
+        el.animate(
+          [{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }],
+          { duration: 280, easing: 'cubic-bezier(.22,.9,.28,1)' },
+        )
+      }
+    }
+    prevRects.current = next
+  }, [filteredNotes])
 
   const handleSave = async () => {
     const content = formContent.trim()
@@ -115,6 +154,7 @@ export default function NotesScreen({
     }
     setFormTitle('')
     setFormContent('')
+    setComposerOpen(false)
     onNotesChange()
   }
 
@@ -185,154 +225,213 @@ export default function NotesScreen({
     onNotesChange()
   }
 
+  const countLabel = notes.length === 0
+    ? 'Noch keine Notiz'
+    : `${notes.length} ${notes.length === 1 ? 'Notiz' : 'Notizen'}`
+
   return (
     <div className="notes-screen">
       <header className="note-head">
         <div className="note-head-text">
           <h1>Notizen</h1>
-          <p>
-            {notes.length === 0
-              ? 'Noch keine Notiz'
-              : `${notes.length} ${notes.length === 1 ? 'Notiz' : 'Notizen'}`}
-          </p>
+          <p>{countLabel}</p>
+        </div>
+        <div className="notes-head-actions">
+          {notes.length >= 4 && (
+            <button
+              type="button"
+              className={`notes-icon-btn ${searchOpen ? 'is-on' : ''}`}
+              onClick={() => { setSearchOpen(v => !v); if (searchOpen) setSearchQuery('') }}
+              aria-label={searchOpen ? 'Suche schließen' : 'Notizen durchsuchen'}
+              aria-pressed={searchOpen}
+            >
+              {searchOpen ? <X size={17} strokeWidth={2.2} /> : <Search size={17} strokeWidth={2.2} />}
+            </button>
+          )}
+          <button
+            type="button"
+            className={`notes-icon-btn is-accent ${composerOpen ? 'is-on' : ''}`}
+            onClick={() => {
+              if (composerOpen) { setComposerOpen(false); setFormTitle(''); setFormContent('') }
+              else setComposerOpen(true)
+            }}
+            aria-label={composerOpen ? 'Neue Notiz schließen' : 'Neue Notiz'}
+            aria-expanded={composerOpen}
+          >
+            {composerOpen ? <X size={17} strokeWidth={2.2} /> : <Plus size={18} strokeWidth={2.4} />}
+          </button>
         </div>
       </header>
 
-      {/* ── Neue Notiz: ruhige Glas-Karte, immer sichtbar ── */}
-      <div className="dash-note-form">
-        <input
-          className="dash-note-input"
-          type="text"
-          placeholder="Titel (z.B. Hausadresse)"
-          value={formTitle}
-          onChange={(e) => setFormTitle(e.target.value)}
-          maxLength={200}
-        />
-        <textarea
-          className="dash-note-textarea"
-          placeholder="Notiz eingeben…"
-          value={formContent}
-          onChange={(e) => setFormContent(e.target.value)}
-          maxLength={200}
-          rows={3}
-        />
-        <div className="dash-note-form-actions">
-          {editingId && (
-            <button
-              type="button"
-              className="dash-btn-cancel"
-              onClick={() => { setEditingId(null); setFormTitle(''); setFormContent('') }}
-            >
-              Abbrechen
+      {searchOpen && (
+        <div className="notes-search">
+          <Search size={15} strokeWidth={2.2} className="notes-search-icon" />
+          <input
+            type="text"
+            aria-label="Notizen durchsuchen"
+            className="notes-search-input"
+            placeholder="Notizen durchsuchen…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* ── Neue Notiz: Glas-Karte, nur auf Wunsch ── */}
+      {composerOpen && (
+        <div className="dash-note-form notes-composer">
+          <span className="notes-composer-kicker">Neue Notiz</span>
+          <input
+            className="dash-note-input"
+            type="text"
+            placeholder="Titel (optional)"
+            value={formTitle}
+            onChange={(e) => setFormTitle(e.target.value)}
+            maxLength={200}
+            aria-label="Titel der Notiz"
+          />
+          <textarea
+            className="dash-note-textarea"
+            placeholder="Was willst du festhalten?"
+            value={formContent}
+            onChange={(e) => setFormContent(e.target.value)}
+            maxLength={200}
+            rows={3}
+            aria-label="Notiztext"
+          />
+          <div className="dash-note-form-actions">
+            <span className="notes-counter" aria-hidden="true">{formContent.length}/200</span>
+            <button className="dash-btn-save" onClick={handleSave} disabled={!formContent.trim()}>
+              Speichern
             </button>
-          )}
-          <button className="dash-btn-save" onClick={handleSave} disabled={!formContent.trim()}>
-            Speichern
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="notes-card">
+          <SkeletonNote />
+          <SkeletonNote />
+        </div>
+      ) : notes.length === 0 ? (
+        // Bei offenem Composer wäre der Leerzustand eine zweite Botschaft
+        // über dieselbe Sache — dann bleibt nur das Formular stehen.
+        composerOpen ? null : (
+        <div className="notes-empty">
+          <span className="notes-empty-icon"><StickyNote size={22} strokeWidth={1.8} /></span>
+          <p className="notes-empty-title">Noch keine Notizen</p>
+          <p className="notes-empty-text">Hausadresse, WLAN-Passwort, Abflugzeit — alles, was später keiner suchen will.</p>
+          <button type="button" className="notes-empty-btn" onClick={() => setComposerOpen(true)}>
+            Erste Notiz anlegen
           </button>
         </div>
-      </div>
-
-      {/* ── Notizliste ── */}
-      {isLoading ? (
-        <div className="dash-notes-list">
-          <SkeletonNote />
-          <SkeletonNote />
-        </div>
+        )
+      ) : filteredNotes.length === 0 ? (
+        <p className="dash-notes-empty">Keine Treffer für „{searchQuery}“</p>
       ) : (
-        <>
-          {notes.length > 0 && (
-            <input
-              type="text"
-              aria-label="Notizen durchsuchen"
-              className="dash-notes-search"
-              placeholder="Suchen…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          )}
+        <div className="notes-card">
+          {filteredNotes.map((note) => {
+            const isEditing = editingId === note.id
+            const isDragging = dragState.draggingId === note.id
+            const isTarget = dragState.dragOverId === note.id
 
-          {notes.length === 0 && (
-            <p className="dash-notes-empty">Noch keine Notizen — füge Infos wie die Hausadresse hinzu!</p>
-          )}
-
-          {notes.length > 0 && filteredNotes.length === 0 && (
-            <p className="dash-notes-empty">Keine Notizen gefunden für „{searchQuery}“</p>
-          )}
-
-          <div className="dash-notes-list">
-            {filteredNotes.map((note) => {
-              const isEditing = editingId === note.id
-              const isDragging = dragState.draggingId === note.id
-              const isDragOver = dragState.dragOverId === note.id
-              if (isEditing) {
-                return (
-                  <div key={note.id} className="dash-note-card dash-note-card-editing">
-                    <input
-                      className="dash-note-input"
-                      type="text"
-                      placeholder="Titel (optional)"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      maxLength={200}
-                    />
-                    <textarea
-                      className="dash-note-textarea"
-                      placeholder="Notiz eingeben…"
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      maxLength={200}
-                      rows={3}
-                    />
-                    <div className="dash-note-form-actions">
-                      <button className="dash-btn-cancel" onClick={cancelEdit}>Abbrechen</button>
-                      <button className="dash-btn-save" onClick={() => handleUpdate(note)} disabled={!editContent.trim()}>
-                        Speichern
-                      </button>
-                    </div>
-                  </div>
-                )
-              }
+            if (isEditing) {
               return (
-                <div
-                  key={note.id}
-                  ref={(el) => registerItem(note.id, el)}
-                  className={`dash-note-card ${isDragging ? 'dash-note-dragging' : ''} ${isDragOver ? 'dash-note-dragover' : ''} ${note.is_favorite ? 'dash-note-favorite' : ''}`}
-                >
-                  <div className="dash-note-card-top">
-                    <div
-                      className="dash-note-drag-handle"
-                      onPointerDown={(e) => { e.stopPropagation(); handlePointerDown(e, note.id) }}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      style={{ touchAction: 'none' }}
-                    >
-                      <GripVertical size={14} strokeWidth={2} />
-                    </div>
-                    <button
-                      className="dash-note-star"
-                      onClick={(e) => { e.stopPropagation(); onToggleFavorite(note.id) }}
-                      aria-label={note.is_favorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
-                    >
-                      <Star size={16} strokeWidth={2} fill={note.is_favorite ? 'currentColor' : 'none'} />
-                    </button>
-                    <div className="dash-note-card-content" onClick={() => startEdit(note)}>
-                      {note.title && <div className="dash-note-title">{note.title}</div>}
-                      <div className="dash-note-text">{renderTextWithLinks(note.content)}</div>
-                    </div>
-                    <button
-                      className="dash-note-delete"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(note) }}
-                      aria-label="Löschen"
-                    >
-                      <Trash2 size={16} strokeWidth={2} />
+                <div key={note.id} className="notes-row is-editing" ref={(el) => trackRow(note.id, el)}>
+                  <input
+                    className="dash-note-input"
+                    type="text"
+                    placeholder="Titel (optional)"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    maxLength={200}
+                    aria-label="Titel der Notiz"
+                  />
+                  <textarea
+                    className="dash-note-textarea"
+                    placeholder="Notiz eingeben…"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    maxLength={200}
+                    rows={3}
+                    aria-label="Notiztext"
+                  />
+                  <div className="dash-note-form-actions">
+                    <button className="dash-btn-cancel" onClick={cancelEdit}>Abbrechen</button>
+                    <button className="dash-btn-save" onClick={() => handleUpdate(note)} disabled={!editContent.trim()}>
+                      Speichern
                     </button>
                   </div>
-                  {note.created_by && <div className="dash-note-by">von {note.created_by}</div>}
                 </div>
               )
-            })}
-          </div>
-        </>
+            }
+
+            return (
+              <div
+                key={note.id}
+                ref={(el) => trackRow(note.id, el)}
+                className={[
+                  'notes-row',
+                  isDragging ? 'is-dragging' : '',
+                  isTarget ? 'is-target' : '',
+                  note.is_favorite ? 'is-favorite' : '',
+                ].filter(Boolean).join(' ')}
+                style={isDragging ? { transform: `translateY(${dragState.offsetY}px) scale(1.015)` } : undefined}
+              >
+                <div
+                  className="notes-grip"
+                  onPointerDown={(e) => { e.stopPropagation(); handlePointerDown(e, note.id) }}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  style={{ touchAction: 'none' }}
+                  role="button"
+                  tabIndex={-1}
+                  aria-label="Notiz verschieben"
+                >
+                  <GripVertical size={16} strokeWidth={2} />
+                </div>
+
+                <div className="notes-body" onClick={() => startEdit(note)}>
+                  {note.title && (
+                    <div className="dash-note-title">
+                      {note.is_favorite && <span className="notes-fav-dot" aria-hidden="true" />}
+                      {note.title}
+                    </div>
+                  )}
+                  <div className="dash-note-text">{renderTextWithLinks(note.content)}</div>
+                  {note.created_by && (
+                    <div className="notes-meta">
+                      {note.is_favorite && !note.title && <span className="notes-fav-dot" aria-hidden="true" />}
+                      <span>von {note.created_by}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="notes-actions">
+                  <button
+                    type="button"
+                    className={`dash-note-star ${note.is_favorite ? 'is-on' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(note.id) }}
+                    aria-label={note.is_favorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+                    aria-pressed={note.is_favorite}
+                  >
+                    <Star size={16} strokeWidth={2} fill={note.is_favorite ? 'currentColor' : 'none'} />
+                  </button>
+                  <button
+                    type="button"
+                    className="dash-note-delete"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(note) }}
+                    aria-label="Löschen"
+                  >
+                    <Trash2 size={16} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )

@@ -3,13 +3,15 @@ import { useState, useRef, useCallback } from 'react'
 interface DragState {
   draggingId: string | null
   dragOverId: string | null
+  /** Verschiebung des Zeigers seit dem Aufsetzen — für das „Karte folgt dem Finger“-Gefühl */
+  offsetY: number
 }
 
 export function useDragReorder<T extends { id: string }>(
   items: T[],
   onReorder: (newOrder: string[]) => void
 ) {
-  const [dragState, setDragState] = useState<DragState>({ draggingId: null, dragOverId: null })
+  const [dragState, setDragState] = useState<DragState>({ draggingId: null, dragOverId: null, offsetY: 0 })
   const dragStateRef = useRef<DragState>(dragState)
   dragStateRef.current = dragState
 
@@ -38,7 +40,7 @@ export function useDragReorder<T extends { id: string }>(
     }
     dragStartY.current = e.clientY
     dragItemIndex.current = items.findIndex(i => i.id === id)
-    setDragState({ draggingId: id, dragOverId: null })
+    setDragState({ draggingId: id, dragOverId: null, offsetY: 0 })
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }, [items])
 
@@ -56,9 +58,13 @@ export function useDragReorder<T extends { id: string }>(
         closestId = id
       }
     }
-    if (closestId && closestId !== ds.draggingId) {
-      setDragState(prev => ({ ...prev, dragOverId: closestId }))
-    }
+    const offsetY = Math.round(currentY - dragStartY.current)
+    setDragState(prev => ({
+      ...prev,
+      offsetY,
+      // Ziel nur wechseln, wenn wirklich eine andere Karte unter dem Finger liegt
+      dragOverId: closestId && closestId !== ds.draggingId ? closestId : prev.dragOverId,
+    }))
   }, [])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
@@ -76,7 +82,7 @@ export function useDragReorder<T extends { id: string }>(
         onReorder(ids)
       }
     }
-    setDragState({ draggingId: null, dragOverId: null })
+    setDragState({ draggingId: null, dragOverId: null, offsetY: 0 })
     ;(e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId)
   }, [items, onReorder])
 

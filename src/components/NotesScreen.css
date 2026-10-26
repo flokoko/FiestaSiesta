@@ -1,140 +1,480 @@
 /*
- * NotesScreen — eigenständiger Notizen-Tab.
+ * NotesScreen — eigener Notizen-Tab.
  *
- * Die gemeinsamen Notiz-Klassen (note-head, dash-note-*, dash-notes-*,
- * dash-btn-save/cancel) kommen aus src/design.css. Hier stehen NUR die
- * Regeln, die bisher ausschließlich in DashboardScreen.css existierten
- * (Karten-Layout, Drag-/Interaktions-Feedback) und nach dessen Entfernung
- * sonst fehlen würden.
+ * Aufbau (v0.39):
+ *   .note-head            Titel + Anzahl, rechts zwei runde Knöpfe (Suche, Neu)
+ *   .notes-search         Glas-Pille, nur bei Bedarf
+ *   .notes-composer       Glas-Karte für eine neue Notiz (eingeklappt by default)
+ *   .notes-card           EINE Glaskarte, darin die Zeilen mit Haarlinien
+ *   .notes-row            Griff · Inhalt · Stern/Löschen
+ *   .notes-empty          eigener Leerzustand statt loser Textzeile
+ *
+ * Die gemeinsamen Klassen (dash-note-*, note-head, dash-btn-*) kommen aus
+ * design.css; hier stehen die #root-Overrides, die diese Schicht schlagen muss.
  */
 
-.notes-screen {
-  padding: 0.5rem 0 1.5rem;
+#root .notes-screen {
+  padding: 0.5rem 0 1.75rem;
 }
 
-/* ── Notiz-Karte: Kopfreihe (Griff · Stern · Inhalt · Löschen) ── */
-.dash-note-card-top {
+/* ── Kopfzeile ─────────────────────────────────────────────────────── */
+#root .notes-screen .note-head {
+  /* .note-head ist in design.css ein Block-Hero — hier zur Zeile machen,
+     damit die beiden Knöpfe rechts oben sitzen statt unter der Anzahl. */
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 2px;
 }
 
-.dash-note-card-content {
-  flex: 1;
+#root .notes-screen .note-head-text {
   min-width: 0;
 }
 
-.dash-note-card {
+#root .notes-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+#root .notes-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  /* liegt auf der roten Hero-Fläche → hell-transluzent, nicht --surface */
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: none;
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
+  transition: background 0.22s var(--ease), color 0.22s var(--ease), transform 0.22s var(--ease);
 }
 
-.dash-note-card-editing {
-  cursor: default;
+#root .notes-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
-.dash-note-title {
-  margin-bottom: 0.15rem;
+#root .notes-icon-btn:active {
+  transform: scale(0.94);
 }
 
-.dash-note-by {
-  margin-top: 0.2rem;
+#root .notes-icon-btn.is-accent {
+  background: rgba(255, 255, 255, 0.92);
+  color: #8C2640;
 }
 
-/* ── Drag-Reorder-Zustände ── */
-.dash-note-dragging {
-  opacity: 0.5;
+#root .notes-icon-btn.is-accent:hover {
+  background: #fff;
+  color: #8C2640;
 }
 
-.dash-note-dragover {
-  transform: translateY(2px);
+#root .notes-icon-btn.is-on {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
-.dash-note-drag-handle {
+/* ── Suche ─────────────────────────────────────────────────────────── */
+#root .notes-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 2px;
+  padding: 0 14px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+#root .notes-search-icon {
+  flex-shrink: 0;
+  color: var(--ink-3);
+}
+
+#root .notes-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+#root .notes-search-input::placeholder {
+  color: var(--ink-3);
+}
+
+/* ── Composer ──────────────────────────────────────────────────────── */
+#root .notes-composer {
+  margin: 14px 0 4px;
+  padding: 14px 15px 12px;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  animation: notesComposerIn 0.24s var(--ease);
+}
+
+@keyframes notesComposerIn {
+  from { opacity: 0.6; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#root .notes-composer-kicker {
+  display: block;
+  margin: 0 2px 10px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Felder brauchen eine eigene Fläche: --surface-2 liegt auf einer
+   --surface-Karte fast unsichtbar darunter („sieht unaufgeräumt aus“). */
+#root .notes-composer .dash-note-input,
+#root .notes-composer .dash-note-textarea,
+#root .notes-row.is-editing .dash-note-input,
+#root .notes-row.is-editing .dash-note-textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-3);
+  font-size: 14px;
+}
+
+#root .notes-composer .dash-note-textarea,
+#root .notes-row.is-editing .dash-note-textarea {
+  resize: none;
+  min-height: 76px;
+  line-height: 1.45;
+}
+
+#root .notes-composer .dash-note-input:focus,
+#root .notes-composer .dash-note-textarea:focus,
+#root .notes-row.is-editing .dash-note-input:focus,
+#root .notes-row.is-editing .dash-note-textarea:focus {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  outline: none;
+}
+
+#root .notes-composer .dash-note-form-actions {
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+#root .notes-counter {
+  margin-right: auto;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Karte mit den Zeilen ──────────────────────────────────────────── */
+#root .notes-card {
+  margin-top: 16px;
+  padding: 2px 16px;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+#root .notes-composer + .notes-card {
+  margin-top: 12px;
+}
+
+#root .notes-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.2s var(--ease);
+  will-change: transform;
+}
+
+#root .notes-row:last-child {
+  border-bottom: none;
+}
+
+#root .notes-row.is-editing {
+  display: block;
+  padding: 14px 0;
+}
+
+#root .notes-row.is-dragging {
+  /* schwebende Karte unter dem Finger */
+  position: relative;
+  z-index: 3;
+  background: var(--surface-3);
+  border-radius: 14px;
+  border-bottom-color: transparent;
+  box-shadow: var(--shadow-3);
+  opacity: 0.96;
+  transition: box-shadow 0.18s var(--ease);
+}
+
+#root .notes-row.is-target {
+  position: relative;
+}
+
+#root .notes-row.is-target::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  top: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+/* ── Griff ─────────────────────────────────────────────────────────── */
+#root .notes-grip {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 26px;
+  height: 30px;
+  margin-left: -6px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  color: var(--ink-3);
+  opacity: 0.35;
   cursor: grab;
-  opacity: 0.45;
-  border-radius: 6px;
-  transition: opacity 0.2s, color 0.2s;
+  transition: opacity 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
-.dash-note-card:hover .dash-note-drag-handle {
-  opacity: 0.8;
+#root .notes-row:hover .notes-grip {
+  opacity: 0.75;
 }
 
-.dash-note-drag-handle:hover {
-  opacity: 1;
-  color: var(--accent);
-}
-
-.dash-note-drag-handle:active {
+#root .notes-grip:active {
   cursor: grabbing;
+  color: var(--accent);
+  background: var(--surface-3);
 }
 
-/* ── Favorit-Stern ── */
-.dash-note-star {
+/* ── Inhalt ────────────────────────────────────────────────────────── */
+#root .notes-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+  cursor: text;
+}
+
+#root .notes-body .dash-note-title {
   display: flex;
   align-items: center;
+  gap: 7px;
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+
+#root .notes-body .dash-note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#root .notes-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+#root .notes-fav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gold);
   flex-shrink: 0;
+}
+
+/* ── Aktionen rechts ────────────────────────────────────────────────── */
+#root .notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+#root .notes-actions .dash-note-star,
+#root .notes-actions .dash-note-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-3);
+  opacity: 0.4;
+  box-shadow: none;
   cursor: pointer;
-  opacity: 0.45;
-  transition: opacity 0.2s, color 0.2s, transform 0.2s;
+  transition: opacity 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
-.dash-note-card:hover .dash-note-star {
-  opacity: 0.8;
+#root .notes-row:hover .notes-actions .dash-note-star,
+#root .notes-row:hover .notes-actions .dash-note-delete {
+  opacity: 0.7;
 }
 
-.dash-note-star:hover {
+#root .notes-actions .dash-note-star:hover {
   opacity: 1;
   color: var(--gold);
-  transform: scale(1.15);
+  background: var(--surface-3);
+  transform: none;
 }
 
-.dash-note-star:active {
+#root .notes-actions .dash-note-delete:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--surface-3);
+  transform: none;
+}
+
+#root .notes-actions .dash-note-star:active,
+#root .notes-actions .dash-note-delete:active {
   transform: scale(0.9);
 }
 
-.dash-note-favorite .dash-note-star {
+#root .notes-actions .dash-note-star.is-on {
   opacity: 1;
+  color: var(--gold);
 }
 
-/* ── Löschen-Symbol ── */
-.dash-note-delete {
+/* ── Leerzustand ────────────────────────────────────────────────────── */
+#root .notes-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  opacity: 0.3;
-  transition: opacity 0.3s, color 0.3s, transform 0.3s;
+  text-align: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 30px 22px 26px;
+  border-radius: var(--r-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
 }
 
-.dash-note-card:hover .dash-note-delete {
-  opacity: 0.6;
-}
-
-.dash-note-delete:hover {
-  opacity: 1;
+#root .notes-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(206, 43, 55, 0.12));
   color: var(--accent);
-  transform: scale(1.2) rotate(-5deg);
 }
 
-.dash-note-delete:active {
-  transform: scale(0.9) rotate(0deg);
+#root .notes-empty-title {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
-/* ── Links in Notiz-Text ── */
-.dash-note-link-icon {
+#root .notes-empty-text {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink-3);
+  max-width: 30ch;
+}
+
+#root .notes-empty-btn {
+  margin-top: 10px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(206, 43, 55, 0.12));
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+#root .notes-empty-btn:active {
+  transform: scale(0.96);
+}
+
+/* ── Links ─────────────────────────────────────────────────────────── */
+#root .dash-note-link-icon {
   display: inline;
-  margin-left: 1px;
+  margin-left: 2px;
   vertical-align: middle;
+  opacity: 0.7;
 }
 
-/* ── Gespeicherter Button deaktiviert ── */
-.dash-btn-save:disabled {
+/* ── Speichern deaktiviert ─────────────────────────────────────────── */
+#root .dash-btn-save:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ── Touch: Aktionen sichtbar lassen, größere Trefferflächen ───────── */
+@media (hover: none), (pointer: coarse) {
+  #root .notes-actions .dash-note-star,
+  #root .notes-actions .dash-note-delete {
+    opacity: 0.55;
+    width: 36px;
+    height: 36px;
+  }
+
+  #root .notes-grip {
+    opacity: 0.6;
+    width: 30px;
+    height: 36px;
+  }
+
+  #root .notes-search-input {
+    font-size: 16px;
+  }
+}
+
+/* ── Dunkelmodus ───────────────────────────────────────────────────── */
+/* Die Kopfknöpfe liegen auf der roten Hero-Fläche und bleiben dort hell —
+   nur Flächen auf dem Seitenhintergrund brauchen Dark-Werte. */
+:root[data-theme='dark'] #root .notes-empty-icon,
+:root[data-theme='dark'] #root .notes-empty-btn {
+  background: rgba(226, 112, 95, 0.18);
+  color: #F0A79A;
+}
+
+:root[data-theme='dark'] #root .notes-row.is-dragging {
+  background: rgba(38, 34, 45, 0.98);
 }
