@@ -20,12 +20,37 @@
 /* ── Kopfzeile ─────────────────────────────────────────────────────── */
 #root .notes-screen .note-head {
   /* .note-head ist in design.css ein Block-Hero — hier zur Zeile machen,
-     damit die beiden Knöpfe rechts oben sitzen statt unter der Anzahl. */
+     damit die beiden Knöpfe neben dem Titel sitzen statt darunter.
+     Die Innenabstände kommen vollständig von hier: ein früheres
+     `padding-bottom: 2px` ließ die Anzahl am unteren Rand kleben. */
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 2px;
+  /* 16 px links/rechts: gleiche Kante wie die Notizkarte darunter (die Zeilen
+     ziehen ihre eigene Einrückung durch den Griff-Spalte, der Titel bleibt
+     bündig mit dem Kartenrand). */
+  padding: 18px 16px;
+}
+
+#root .notes-screen .note-head h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+/* Die Anzahl war als 10,5-px-Versalien mit Sperrung gesetzt und wirkte wie
+   ein Stempel unter dem Titel. Ruhiger: normale Schreibweise, 12 px, halb fett. */
+#root .notes-screen .note-head p {
+  margin: 4px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 #root .notes-screen .note-head-text {
