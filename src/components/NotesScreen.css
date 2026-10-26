@@ -187,6 +187,8 @@
 #root .notes-row.is-editing .dash-note-textarea {
   resize: none;
   min-height: 76px;
+  max-height: 320px;
+  overflow-y: auto;
   line-height: 1.45;
 }
 
@@ -344,11 +346,12 @@
 #root .notes-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   flex-shrink: 0;
   padding-top: 1px;
 }
 
+#root .notes-actions .dash-note-edit,
 #root .notes-actions .dash-note-star,
 #root .notes-actions .dash-note-delete {
   display: inline-flex;
@@ -367,9 +370,17 @@
   transition: opacity 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
+#root .notes-row:hover .notes-actions .dash-note-edit,
 #root .notes-row:hover .notes-actions .dash-note-star,
 #root .notes-row:hover .notes-actions .dash-note-delete {
   opacity: 0.7;
+}
+
+#root .notes-actions .dash-note-edit:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--surface-3);
+  transform: none;
 }
 
 #root .notes-actions .dash-note-star:hover {
@@ -386,6 +397,7 @@
   transform: none;
 }
 
+#root .notes-actions .dash-note-edit:active,
 #root .notes-actions .dash-note-star:active,
 #root .notes-actions .dash-note-delete:active {
   transform: scale(0.9);
@@ -532,6 +544,7 @@
 
 /* ── Touch: Aktionen sichtbar lassen, größere Trefferflächen ───────── */
 @media (hover: none), (pointer: coarse) {
+  #root .notes-actions .dash-note-edit,
   #root .notes-actions .dash-note-star,
   #root .notes-actions .dash-note-delete {
     opacity: 0.55;

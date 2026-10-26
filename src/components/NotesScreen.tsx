@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useLayoutEffect, useEffect, useCallback, type ReactNode } from 'react'
-import { Trash2, ExternalLink, GripVertical, Star, Plus, X, Search, StickyNote, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, ExternalLink, GripVertical, Star, Plus, X, Search, StickyNote, ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import type { QuickNote } from '../types'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -40,6 +40,14 @@ function renderTextWithLinks(text: string): ReactNode[] {
     result.push(text.slice(lastIndex))
   }
   return result
+}
+
+/** Textfeld an den Inhalt anpassen — bei 3 Zeilen rows schneidet der Text sonst
+ *  mitten in der Zeile ab, was im Bearbeiten-Zustand wie ein Fehler aussieht. */
+function growTextarea(el: HTMLTextAreaElement | null, max = 320) {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${Math.min(el.scrollHeight, max)}px`
 }
 
 interface NotesScreenProps {
@@ -401,6 +409,7 @@ export default function NotesScreen({
             if (isEditing) {
               return (
                 <div key={note.id} className="notes-row is-editing" ref={(el) => trackRow(note.id, el)}>
+                  <span className="notes-composer-kicker">Notiz bearbeiten</span>
                   <input
                     className="dash-note-input"
                     type="text"
@@ -411,13 +420,15 @@ export default function NotesScreen({
                     aria-label="Titel der Notiz"
                   />
                   <textarea
+                    ref={(el) => growTextarea(el)}
                     className="dash-note-textarea"
                     placeholder="Notiz eingeben…"
                     value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
+                    onChange={(e) => { setEditContent(e.target.value); growTextarea(e.target) }}
                     maxLength={200}
                     rows={3}
                     aria-label="Notiztext"
+                    autoFocus
                   />
                   <div className="dash-note-form-actions">
                     <button className="dash-btn-cancel" onClick={cancelEdit}>Abbrechen</button>
@@ -505,6 +516,14 @@ export default function NotesScreen({
                 </div>
 
                 <div className="notes-actions">
+                  <button
+                    type="button"
+                    className="dash-note-edit"
+                    onClick={(e) => { e.stopPropagation(); startEdit(note) }}
+                    aria-label="Notiz bearbeiten"
+                  >
+                    <Pencil size={15} strokeWidth={2} />
+                  </button>
                   <button
                     type="button"
                     className={`dash-note-star ${note.is_favorite ? 'is-on' : ''}`}
