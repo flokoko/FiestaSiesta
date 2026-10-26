@@ -611,14 +611,16 @@ export default function WeatherScreen() {
                   scrollWheelZoom={true}
                   dragging={true}
                 >
+                  {/* Basiskarte bewusst keyless: CARTO verlangt seit 2026 einen
+                      API-Key und liefert sonst Kacheln mit „API KEY REQUIRED"
+                      als Hintergrund (am 26.10.2026 geprüft). OpenStreetMap
+                      braucht keinen Key; für den Dunkelmodus wird dieselbe
+                      Kachel per CSS invertiert, damit es EINEN Anbieter gibt. */}
                   <TileLayer
                     key={isDark ? 'base-dark' : 'base-light'}
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                    url={
-                      isDark
-                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-                    }
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'
+                    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    className={isDark ? 'wx-radar-basemap is-dark' : 'wx-radar-basemap'}
                     maxNativeZoom={7}
                   />
                   {radarHost && radarFrames[radarIndex] && (

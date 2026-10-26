@@ -4333,3 +4333,11 @@ body::before {
 :root[data-theme='dark'] #root .trip-day-weather.is-wet em {
   color: #A8C8EE;
 }
+
+/* ── Regenradar: Basiskarte (v0.38) ──────────────────────────────────── */
+/* CARTO liefert ohne API-Key nur „API KEY REQUIRED"-Kacheln. Deshalb eine
+   keylose OSM-Karte; im Dunkelmodus invertiert, damit die Radarfarben
+   (eigene Kachel-Ebene, NICHT gefiltert) auf dunklem Grund sitzen. */
+#root .wx-radar-basemap.is-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.7) contrast(0.95);
+}
