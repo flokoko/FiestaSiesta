@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useLayoutEffect, useCallback, type ReactNode } from 'react'
-import { Trash2, ExternalLink, GripVertical, Star, Plus, X, Search, StickyNote } from 'lucide-react'
+import { useState, useMemo, useRef, useLayoutEffect, useEffect, useCallback, type ReactNode } from 'react'
+import { Trash2, ExternalLink, GripVertical, Star, Plus, X, Search, StickyNote, ChevronDown, ChevronUp } from 'lucide-react'
 import type { QuickNote } from '../types'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -72,6 +72,11 @@ export default function NotesScreen({
   // Composer ist zugeklappt, sobald es Notizen gibt: die Seite startet ruhig.
   const [composerOpen, setComposerOpen] = useState(notes.length === 0)
   const [searchOpen, setSearchOpen] = useState(false)
+  // Lange Notizen werden auf drei Zeilen gekürzt; welche ausgeklappt sind,
+  // merkt sich der Screen (nicht persistiert — nach Reload ist alles zu).
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+  const [longIds, setLongIds] = useState<Set<string>>(new Set())
+  const textRefs = useRef(new Map<string, HTMLElement>())
 
   const {
     dragState,
@@ -125,6 +130,63 @@ export default function NotesScreen({
     }
     prevRects.current = next
   }, [filteredNotes])
+
+  // ── Welche Notizen sind länger als drei Zeilen? ──────────────────────
+  // Gemessen wird `scrollHeight` (Inhalt) gegen 3 × Zeilenhöhe — unabhängig
+  // davon, ob die Notiz gerade offen ist oder ihre Höhe animiert. Ein
+  // clientHeight-Vergleich würde während der Klapp-Animation fälschlich
+  // „passt schon" melden und den Umschalter mitten im Zuklappen entfernen.
+  useEffect(() => {
+    const measure = () => {
+      setLongIds(prev => {
+        const next = new Set<string>()
+        for (const [id, el] of textRefs.current) {
+          const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 19.5
+          if (el.scrollHeight > lineHeight * 3 + 2) next.add(id)
+        }
+        const same = next.size === prev.size && [...next].every(id => prev.has(id))
+        return same ? prev : next
+      })
+    }
+    measure()
+    // Nach dem Laden der Webfont sind die Zeilen anders hoch — einmal neu messen.
+    document.fonts?.ready.then(measure).catch(() => {})
+  }, [filteredNotes])
+
+  const prevHeights = useRef(new Map<string, number>())
+
+  const toggleNote = useCallback((id: string) => {
+    // Höhe VOR dem Zustandswechsel merken — daraus wird die Animation gebaut.
+    const el = textRefs.current.get(id)
+    if (el) prevHeights.current.set(id, el.getBoundingClientRect().height)
+    setOpenIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  // Höhe animieren statt max-height: bei 4.5em → 60em springt der sichtbare
+  // Bereich fast das ganze Fenster der Transition unverändert und klappt erst
+  // am Ende zu. Mit gemessenen Pixeln wachsen und schrumpfen die Zeilen wirklich.
+  useLayoutEffect(() => {
+    if (prevHeights.current.size === 0) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    for (const [id, h0] of prevHeights.current) {
+      const el = textRefs.current.get(id)
+      if (!el) continue
+      const h1 = el.getBoundingClientRect().height
+      if (reduce || Math.abs(h1 - h0) < 2) continue
+      el.style.maxHeight = 'none'
+      const anim = el.animate(
+        [{ height: `${h0}px` }, { height: `${h1}px` }],
+        { duration: 240, easing: 'cubic-bezier(.22,.9,.28,1)' },
+      )
+      anim.onfinish = () => { el.style.maxHeight = ''; el.style.height = '' }
+    }
+    prevHeights.current.clear()
+  }, [openIds])
 
   const handleSave = async () => {
     const content = formContent.trim()
@@ -400,7 +462,40 @@ export default function NotesScreen({
                       {note.title}
                     </div>
                   )}
-                  <div className="dash-note-text">{renderTextWithLinks(note.content)}</div>
+                  {(() => {
+                    const isLong = longIds.has(note.id)
+                    const isOpen = openIds.has(note.id)
+                    return (
+                      <>
+                        <div
+                          ref={(el) => {
+                            if (el) textRefs.current.set(note.id, el)
+                            else textRefs.current.delete(note.id)
+                          }}
+                          className={[
+                            'dash-note-text',
+                            'notes-text',
+                            isLong ? 'is-long' : '',
+                            isLong && !isOpen ? 'is-clamped' : '',
+                            isOpen ? 'is-open' : '',
+                          ].filter(Boolean).join(' ')}
+                        >
+                          {renderTextWithLinks(note.content)}
+                        </div>
+                        {isLong && (
+                          <button
+                            type="button"
+                            className="notes-toggle"
+                            aria-expanded={isOpen}
+                            onClick={(e) => { e.stopPropagation(); toggleNote(note.id) }}
+                          >
+                            {isOpen ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                            {isOpen ? <ChevronUp size={13} strokeWidth={2.4} /> : <ChevronDown size={13} strokeWidth={2.4} />}
+                          </button>
+                        )}
+                      </>
+                    )
+                  })()}
                   {note.created_by && (
                     <div className="notes-meta">
                       {note.is_favorite && !note.title && <span className="notes-fav-dot" aria-hidden="true" />}

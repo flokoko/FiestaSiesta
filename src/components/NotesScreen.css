@@ -471,6 +471,65 @@
   cursor: not-allowed;
 }
 
+
+/* ── Lange Notizen: drei Zeilen, ausklappbar ────────────────────────── */
+/* `-webkit-line-clamp` kann keine Höhe animieren. Deshalb max-height mit
+   fester Zeilenhöhe: 3 × 1.5em. Der Schatten am unteren Rand zeigt an,
+   dass mehr Text da ist, ohne die Karte zu vergrößern. */
+#root .notes-text {
+  position: relative;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 4.5em;
+  overflow: hidden;
+}
+
+#root .notes-text.is-open {
+  /* genug Luft für alles, was ein 200-Zeichen-Feld hergibt */
+  max-height: 60em;
+}
+
+#root .notes-text:has(+ .notes-toggle) {
+  margin-bottom: 1px;
+}
+
+#root .notes-text.is-clamped::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5em;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--surface));
+}
+
+#root .notes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#root .notes-toggle:active {
+  opacity: 0.7;
+}
+
+:root[data-theme='dark'] #root .notes-text.is-clamped::after {
+  background: linear-gradient(to bottom, rgba(20, 17, 24, 0), rgba(20, 17, 24, 0.92));
+}
+
 /* ── Touch: Aktionen sichtbar lassen, größere Trefferflächen ───────── */
 @media (hover: none), (pointer: coarse) {
   #root .notes-actions .dash-note-star,
