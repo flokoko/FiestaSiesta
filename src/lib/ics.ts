@@ -82,8 +82,10 @@ export function foldIcsLine(line: string): string {
   return out.join('\r\n ')
 }
 
-/** Europe/Madrid: MEZ (letzter Sonntag im Oktober) und MESZ (letzter Sonntag im März) */
-const VTIMEZONE = [
+/** Europe/Madrid: MEZ (letzter Sonntag im Oktober) und MESZ (letzter Sonntag im März).
+ *  Als Zeilenliste, NICHT als ein Block: `foldIcsLine` arbeitet zeilenweise, ein
+ *  zusammengeklebter Block wurde mitten in `BEGIN:DAYLIGHT` gefaltet. */
+const VTIMEZONE_LINES = [
   'BEGIN:VTIMEZONE',
   'TZID:Europe/Madrid',
   'X-LIC-LOCATION:Europe/Madrid',
@@ -102,7 +104,7 @@ const VTIMEZONE = [
   'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
   'END:STANDARD',
   'END:VTIMEZONE',
-].join('\r\n')
+]
 
 /** '2026-11-29' + '09:00' → '20261129T090000' */
 export function icsStamp(day: string, time: string): string {
@@ -133,7 +135,7 @@ export function buildIcs({ calendarName, events, now = new Date() }: BuildIcsOpt
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcsText(calendarName)}`,
     'X-WR-TIMEZONE:Europe/Madrid',
-    VTIMEZONE,
+    ...VTIMEZONE_LINES,
   ]
 
   for (const event of events) {

@@ -140,9 +140,10 @@ export default function TripScreen({
         {tomorrowWx && (
           <p className="trip-rain-hint">
             <CloudRain size={13} strokeWidth={2} />
-            Morgen Regen: {tomorrowWx.rain} %
-            <span className="trip-rain-hint-sep">·</span>
-            Regenjacke einpacken, Ausflug mit Dach einplanen
+            <span>
+              Morgen Regen: {tomorrowWx.rain} % · Regenjacke einpacken,
+              Ausflug mit Dach einplanen
+            </span>
           </p>
         )}
         <div className="trip-days">

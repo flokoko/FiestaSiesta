@@ -84,6 +84,15 @@ describe('buildIcs', () => {
     expect(ics).toContain('DTSTAMP:20261029T041500Z')
   })
 
+  it('faltet keine Strukturzeilen (VTIMEZONE bleibt Zeile für Zeile)', () => {
+    // Vorher wurde der VTIMEZONE-Block als EINE Zeile gefaltet — mitten in
+    // BEGIN:DAYLIGHT. Jede Strukturzeile ist < 75 Oktette und bleibt heil.
+    expect(ics).toContain('BEGIN:DAYLIGHT\r\n')
+    expect(ics).toContain('END:VTIMEZONE\r\n')
+    expect(ics).not.toContain('\r\n YLIGHT')
+    expect(ics).not.toContain('\r\n DARD')
+  })
+
   it('escaped Sonderzeichen im Titel', () => {
     const out = buildIcs({
       calendarName: 'Test', now: fixed,

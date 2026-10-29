@@ -4269,8 +4269,8 @@ body::before {
 /* Regen-Hinweis: gleiche Familie wie die Wetter-Pille, aber als Zeile mit Fläche */
 #root .trip-rain-hint {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 7px;
   margin: 10px 0 0;
   padding: 9px 12px;
   border-radius: var(--r-2);
@@ -4283,10 +4283,13 @@ body::before {
 
 #root .trip-rain-hint svg {
   flex: none;
+  /* Icon sitzt auf der ersten Textzeile, nicht mittig im Umbruch */
+  margin-top: 1px;
 }
 
-#root .trip-rain-hint-sep {
-  opacity: 0.5;
+#root .trip-rain-hint span {
+  flex: 1;
+  min-width: 0;
 }
 
 :root[data-theme='dark'] #root .trip-rain-hint {
