@@ -136,33 +136,23 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
 
   const handleConfirm = (proposal: TripProposal) => {
     confirm(`„${proposal.title}“ als Plan übernehmen?`, async () => {
-      // Pro day+slot ist nur EINE Bestätigung erlaubt (partial unique index in
-      // sql/111_trip_plan_place_confirm.sql). Vor dem Setzen eine evtl.
-      // bestehende Bestätigung desselben day+slot zurücksetzen, dann die
-      // neue setzen; die 23505 fängt den Rennfall mit einem anderen Client ab.
-      const { error: clearError } = await supabase
-        .from('trip_proposals')
-        .update({ confirmed_at: null, confirmed_by: null })
-        .eq('list_id', listId)
-        .eq('day', proposal.day)
-        .eq('slot', proposal.slot)
-        .neq('id', proposal.id)
-        .not('confirmed_at', 'is', null)
-      if (clearError) {
-        toast(friendlyError(clearError), 'error')
+      // Serverseitig in EINER Transaktion (sql/151): erst die alte Bestätigung
+      // desselben Slots lösen, dann die neue setzen. Zwei Client-Statements
+      // hinterließen bei Abbruch einen Slot ganz ohne Plan und zwei Clients
+      // konnten sich gegenseitig überschreiben.
+      const { data, error } = await supabase.rpc('confirm_trip_proposal', {
+        p_list_id: listId,
+        p_proposal_id: proposal.id,
+        p_confirmed_by: userName,
+      })
+      if (error) {
+        toast(friendlyError(error), 'error')
         void load()
         return
       }
-      const { error } = await supabase
-        .from('trip_proposals')
-        .update({ confirmed_at: new Date().toISOString(), confirmed_by: userName })
-        .eq('id', proposal.id)
-      if (error) {
-        if (error.code === '23505') {
-          toast('Es ist bereits ein Plan für diese Zeit übernommen.', 'error')
-        } else {
-          toast(friendlyError(error), 'error')
-        }
+      const result = data as { error?: string } | null
+      if (result?.error) {
+        toast(result.error, 'error')
         void load()
         return
       }

@@ -56,7 +56,7 @@ function insertSortedBySortOrder(prev: ListItem[], restored: ListItem[]): ListIt
 
 export function useListData({ onActivity }: { onActivity?: (msg: string) => void } = {}) {
   // ── Offline queue ──────────────────────────────────────────────────
-  const { isOnline, enqueue, flushQueue, queueLength } = useOfflineQueue()
+  const { isOnline, enqueue, flushQueue, queueLength, failedCount } = useOfflineQueue()
 
   // ── Toast (App-Mechanismus aus dem ToastContext) ───────────────────
   const { toast } = useToast()
@@ -1075,6 +1075,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     // offline
     isOnline,
     queueLength,
+    failedCount,
     flushQueue,
     // derived
     isAdmin,

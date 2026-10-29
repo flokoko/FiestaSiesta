@@ -12,6 +12,7 @@ const NotesScreen = lazy(importNotesScreen)
 import { spanishSuccess } from './lib/espanaFlair'
 import { friendlyError } from './lib/friendlyError'
 import { useListData } from './hooks/useListData'
+import { clearFailedOps } from './hooks/useOfflineQueue'
 
 // Code splitting: lazy-load screens that aren't needed on first paint.
 // Die Import-Funktionen liegen separat, damit sie sich nach dem Login im
@@ -178,7 +179,7 @@ export default function App() {
     userName, list, participantId, shoppingItems, bringItems, categories,
     notes, expenses, expenseSplits, expenseQuotas, participants, adminUnlocked,
     isAdmin, shoppingCategories, bringCategories, knownPersons, userBalance,
-    expenseTotal, checkedCount, isLoading, isOnline, queueLength, flushQueue, restoringSession,
+    expenseTotal, checkedCount, isLoading, isOnline, queueLength, failedCount, flushQueue, restoringSession,
     setList, setAdminUnlocked,
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
     toggleShoppingItem, deleteShoppingItem, undoDelete, batchToggleShoppingItems, toggleBringItem, deleteBringItem, reorderItems, reorderNotes, toggleNoteFavorite,
@@ -340,7 +341,13 @@ export default function App() {
       toast(`Synchronisiere ${queueLength} offene Änderungen…`, 'info')
       flushQueue().then(({ success, failed }) => {
         if (failed > 0) {
-          toast('Einige Änderungen konnten nicht synchronisiert werden.', 'error')
+          // Gescheiterte Ops liegen jetzt in der Dead-Letter-Ablage; der Nutzer
+          // erfährt WAS und kann sie verwerfen, statt sie still zu verlieren.
+          toast(
+            `${failed} ${failed === 1 ? 'Änderung wurde' : 'Änderungen wurden'} nicht gesendet.`,
+            'error',
+            { label: 'Verwerfen', onClick: clearFailedOps },
+          )
         } else if (success > 0) {
           toast(`${spanishSuccess()} Synchronisiert!`, 'success')
           // Kein zusätzliches fetchAll hier: der verzögerte 'online'-Refetch in
@@ -350,6 +357,19 @@ export default function App() {
       })
     }
   }, [isOnline, queueLength, flushQueue, toast])
+
+  // Beim Start einmal darauf hinweisen, dass es ungesendete Änderungen gibt
+  // (Dead Letter aus einer früheren Sitzung) — mit der Möglichkeit, sie zu verwerfen.
+  const failedHintShownRef = useRef(false)
+  useEffect(() => {
+    if (failedCount <= 0 || failedHintShownRef.current) return
+    failedHintShownRef.current = true
+    toast(
+      `${failedCount} frühere ${failedCount === 1 ? 'Änderung wurde' : 'Änderungen wurden'} nicht gesendet.`,
+      'info',
+      { label: 'Verwerfen', onClick: clearFailedOps },
+    )
+  }, [failedCount, toast])
 
   // ── Confetti when all shopping items are checked off ───────────────
   const prevAllCheckedRef = useRef(false)

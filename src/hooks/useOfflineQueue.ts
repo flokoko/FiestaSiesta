@@ -17,6 +17,14 @@ export interface QueuedOp {
 
 const STORAGE_KEY = 'offline_queue'
 const LOCK_KEY = 'offline_queue_lock'
+/**
+ * „Dead Letter"-Ablage: Ops, die auch nach allen Retries scheitern, werden hier
+ * abgelegt statt gelöscht. Früher verschwand z. B. eine offline angelegte
+ * Ausgabe nach drei Fehlversuchen lautlos — der Nutzer sah nur „einige
+ * Änderungen konnten nicht synchronisiert werden" und wusste nicht, welche.
+ */
+const DEAD_KEY = 'offline_queue_dead'
+const DEAD_MAX = 20
 const PING_INTERVAL_MS = 60_000
 /** Gültigkeit des Cross-Tab-Flush-Locks; abgelaufene Locks werden ignoriert */
 const LOCK_TTL_MS = 20_000
@@ -38,6 +46,54 @@ function saveQueue(queue: QueuedOp[]) {
     // Klick-Handler fliegen — Queue im Speicher weiterführen.
     console.error('saveQueue failed:', e)
   }
+}
+
+export interface DeadOp extends QueuedOp {
+  /** Zeitpunkt des endgültigen Fehlschlags */
+  failedAt: number
+  /** letzte Fehlermeldung (für die Diagnose im UI) */
+  error: string
+}
+
+function loadDeadOps(): DeadOp[] {
+  try {
+    const raw = localStorage.getItem(DEAD_KEY)
+    return raw ? JSON.parse(raw) as DeadOp[] : []
+  } catch {
+    return []
+  }
+}
+
+function saveDeadOps(ops: DeadOp[]) {
+  try {
+    localStorage.setItem(DEAD_KEY, JSON.stringify(ops.slice(-DEAD_MAX)))
+  } catch {
+    // ignore — Dead-Letter ist Diagnose, kein Muss-Pfad
+  }
+}
+
+/** Gescheiterte Ops dauerhaft ablegen (statt sie zu löschen). */
+function parkFailedOp(op: QueuedOp, error: unknown): void {
+  const message = error instanceof Error
+    ? error.message
+    : (error && typeof error === 'object' && 'message' in error)
+      ? String((error as { message: unknown }).message)
+      : 'Unbekannter Fehler'
+  const dead = loadDeadOps()
+  dead.push({ ...op, failedAt: Date.now(), error: message.slice(0, 200) })
+  saveDeadOps(dead)
+}
+
+/** Öffentlich: gescheiterte Änderungen ansehen (Diagnose / Support). */
+export function getFailedOps(): DeadOp[] {
+  return loadDeadOps()
+}
+
+/** Öffentlich: gescheiterte Änderungen verwerfen. */
+export function clearFailedOps(): void {
+  saveDeadOps([])
+  failedCountState = 0
+  notifyListeners()
 }
 
 /**
@@ -62,6 +118,7 @@ async function checkConnectivity(): Promise<boolean> {
 // (doppelte Inserts) und jede Instanz zeigte eine andere queueLength.
 let isOnlineState = navigator.onLine
 let queueLengthState = loadQueue().length
+let failedCountState = loadDeadOps().length
 let isFlushing = false
 let opIdCounter = 0
 /** Einziger Ping-Timer des Tabs (wird beim ersten Abonnenten gestartet) */
@@ -76,6 +133,18 @@ function getIsOnlineSnapshot(): boolean {
 
 function getQueueLengthSnapshot(): number {
   return queueLengthState
+}
+
+function getFailedCountSnapshot(): number {
+  return failedCountState
+}
+
+/** Nach dem Ablegen eines gescheiterten Ops die Abonnenten informieren. */
+function refreshFailedCount(): void {
+  const next = loadDeadOps().length
+  if (next === failedCountState) return
+  failedCountState = next
+  notifyListeners()
 }
 
 function notifyListeners(): void {
@@ -185,12 +254,12 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
       if (!op) break
 
       let opError = false
+      let lastError: unknown = null
       try {
         await executeOp(op)
       } catch {
         // Retry mit exponentiellem Backoff (max 3 Versuche insgesamt)
         let retries = 0
-        let lastError: unknown = null
         while (retries < 2) {
           retries++
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries - 1)))
@@ -208,13 +277,14 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
       }
 
       // Nach Erfolg oder endgültigem Fehlschlag den Op aus der Queue entfernen.
-      // Ein dauerhaft scheiternder Op (z.B. RLS-Fehler, inzwischen gelöschte Zeile)
-      // darf die restliche Queue NICHT blockieren — sonst würden alle nachfolgenden
-      // Änderungen nie synchronisiert. Der fehlgeschlagene Op geht verloren, aber
-      // der Rest der Queue wird zuverlässig abgearbeitet.
+      // Ein dauerhaft scheiternder Op (z. B. RLS-Fehler, inzwischen gelöschte
+      // Zeile) darf die restliche Queue NICHT blockieren — sonst würden alle
+      // nachfolgenden Änderungen nie synchronisiert. Er wird aber nicht mehr
+      // stillschweigend verworfen, sondern in der Dead-Letter-Ablage geparkt.
       const remaining = loadQueue().filter(q => q.id !== op.id)
       saveQueue(remaining)
       if (opError) {
+        parkFailedOp(op, lastError ?? 'Unbekannter Fehler')
         failed++
       } else {
         success++
@@ -224,6 +294,7 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
     isFlushing = false
     releaseFlushLock()
     refreshQueueLength()
+    refreshFailedCount()
   }
   return { success, failed }
 }
@@ -348,13 +419,17 @@ export function useOfflineQueue(): {
   enqueue: (op: Omit<QueuedOp, 'id' | 'timestamp'>) => void
   flushQueue: () => Promise<{ success: number; failed: number }>
   queueLength: number
+  /** Änderungen, die endgültig nicht gesendet werden konnten (Dead Letter) */
+  failedCount: number
 } {
   const isOnline = useSyncExternalStore(subscribe, getIsOnlineSnapshot)
   const queueLength = useSyncExternalStore(subscribe, getQueueLengthSnapshot)
+  const failedCount = useSyncExternalStore(subscribe, getFailedCountSnapshot)
   return {
     isOnline,
     enqueue: enqueueOp,
     flushQueue,
     queueLength,
+    failedCount,
   }
 }
