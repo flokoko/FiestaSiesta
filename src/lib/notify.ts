@@ -12,7 +12,7 @@
 // Notifications are only delivered when the tab is hidden (document.hidden
 // === true) — the user sees changes live when the app is visible.
 
-import { supabase } from './supabase'
+import { supabase, getJoinCode } from './supabase'
 import { isPushConfigured } from './push'
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -197,6 +197,9 @@ async function deliverViaEdgeFunction(
 
   const { error } = await supabase.functions.invoke('send-push', {
     body: invokeBody,
+    // Die Edge Function autorisiert über den Join-Code (sie umgeht RLS mit dem
+    // Service-Role-Key). Ohne diesen Header antwortet sie mit 403.
+    headers: { 'x-join-code': getJoinCode() },
   })
 
   if (error) {

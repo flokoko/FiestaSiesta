@@ -86,7 +86,10 @@ export default function ExpenseForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submittingRef = useRef(false)
 
-  const amountNum = parseFloat(amount) || 0
+  // Betrag auf Cent normalisieren, BEVOR er in Splits und DB geht: sonst steht
+  // in `expenses.amount` z. B. 3.335, während die Splits auf 3.34 gerundet sind
+  // und die Salden nicht mehr auf 0 summieren.
+  const amountNum = Math.round((parseFloat(amount) || 0) * 100) / 100
 
   // ── Exact shares sum ──
   const exactSum = useMemo(() => {

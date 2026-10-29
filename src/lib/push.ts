@@ -174,15 +174,19 @@ export async function unsubscribeFromPush(
   // Nur das Abo DIESES Geräts löschen. Vorher wurden alle Zeilen von
   // list+participant entfernt — wer die Benachrichtigungen auf dem Handy
   // abschaltete, bekam auf dem Tablet ebenfalls keine Pushs mehr.
-  let query = supabase
+  // Ohne bekannten Endpoint wird NICHTS gelöscht: sonst reißt der Fall
+  // „Browser hat gerade kein Abo mehr" alle Geräte mit.
+  if (!endpoint) {
+    localStorage.removeItem('push_notifications_enabled')
+    return
+  }
+
+  await supabase
     .from('push_subscriptions')
     .delete()
     .eq('list_id', listId)
     .eq('participant_name', participantName)
-
-  if (endpoint) query = query.eq('endpoint', endpoint)
-
-  await query
+    .eq('endpoint', endpoint)
 
   localStorage.removeItem('push_notifications_enabled')
 }

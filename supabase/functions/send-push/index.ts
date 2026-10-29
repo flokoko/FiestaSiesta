@@ -60,31 +60,46 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 })
 
 // ── CORS headers ───────────────────────────────────────────────────
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// Fruehere Fassung: 'Access-Control-Allow-Origin': '*' — damit konnte JEDE Website
+// die Funktion aufrufen. Jetzt nur noch die App-Origin (GitHub Pages) und lokale
+// Entwicklungsserver.
+const ALLOWED_ORIGINS = [
+  'https://flokoko.github.io',
+  'http://127.0.0.1:5188',
+  'http://127.0.0.1:5201',
+  'http://localhost:5188',
+  'http://localhost:5201',
+]
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers':
+      'authorization, x-client-info, apikey, content-type, x-join-code',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 // ── Edge Function entry point ─────────────────────────────────────
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsFor(req) })
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsFor(req), 'Content-Type': 'application/json' },
     })
   }
 
   if (!VAPID_PRIVATE_KEY) {
     return new Response(
       JSON.stringify({ error: 'VAPID_PRIVATE_KEY not configured on the server.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
     )
   }
 
@@ -103,7 +118,7 @@ Deno.serve(async (req: Request) => {
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON body.' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 400, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
     )
   }
 
@@ -112,7 +127,33 @@ Deno.serve(async (req: Request) => {
   if (!list_id || !title) {
     return new Response(
       JSON.stringify({ error: 'Missing required fields: list_id, title.' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 400, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
+    )
+  }
+
+  // ── Autorisierung ────────────────────────────────────────────────
+  // Die Funktion arbeitet mit dem Service-Role-Key und umgeht damit RLS. Ohne
+  // diese Prüfung konnte jeder mit dem oeffentlichen anon-Key (verify_jwt:true
+  // akzeptiert ihn) Push-Nachrichten an beliebige Listen schicken.
+  // Erlaubt ist nur, wer den Join-Code der Liste im Header mitschickt.
+  const joinCode = req.headers.get('x-join-code') ?? ''
+  const { data: listRow, error: listError } = await supabase
+    .from('lists')
+    .select('join_code')
+    .eq('id', list_id)
+    .maybeSingle()
+
+  if (listError) {
+    return new Response(
+      JSON.stringify({ error: 'List lookup failed.' }),
+      { status: 500, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
+    )
+  }
+
+  if (!listRow || !joinCode || listRow.join_code !== joinCode) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden.' }),
+      { status: 403, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
     )
   }
 
@@ -131,14 +172,14 @@ Deno.serve(async (req: Request) => {
   if (queryError) {
     return new Response(
       JSON.stringify({ error: `DB query failed: ${queryError.message}` }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
     )
   }
 
   if (!subscriptions || subscriptions.length === 0) {
     return new Response(
       JSON.stringify({ sent: 0, failed: 0, results: [], message: 'No subscriptions found.' }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { status: 200, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
     )
   }
 
@@ -186,6 +227,6 @@ Deno.serve(async (req: Request) => {
 
   return new Response(
     JSON.stringify({ sent, failed, results }),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    { status: 200, headers: { ...corsFor(req), 'Content-Type': 'application/json' } },
   )
 })
