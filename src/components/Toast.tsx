@@ -19,6 +19,8 @@ function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) =>
   const confirmBtnRef = useRef<HTMLButtonElement | null>(null)
   const cancelBtnRef = useRef<HTMLButtonElement | null>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCancelRef = useRef(t.onCancel)
+  onCancelRef.current = t.onCancel
 
   // Bestätigungs-Toast: Fokus auf ABBRECHEN, nicht auf den destruktiven Knopf —
   // ein Gewohnheits-Enter direkt nach dem Auslösen löschte sonst sofort.
@@ -30,7 +32,7 @@ function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) =>
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        t.onCancel?.()
+        onCancelRef.current?.()
         onDismiss(t.id)
       }
     }
@@ -39,7 +41,7 @@ function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) =>
       window.removeEventListener('keydown', onKey)
       previousFocusRef.current?.focus?.()
     }
-  }, [t.type, t.id, t, onDismiss])
+  }, [t.type, t.id, onDismiss])
 
   const Icon = ICONS[t.type]
   return (

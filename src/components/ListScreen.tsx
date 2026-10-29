@@ -29,6 +29,9 @@ interface ListScreenProps {
   onCategoriesChange?: () => void
 }
 
+/** Stabile leere Liste — verhindert, dass useMemo im Kind bei jedem Render neu läuft. */
+const EMPTY_ITEMS: ListItem[] = []
+
 /** Wraps one category's items with independent drag-reorder + aggregation. */
 function DraggableCategorySection({
   catItems,
@@ -270,6 +273,19 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
     return query ? base.filter((i) => i.name.toLowerCase().includes(query)) : base
   }, [items, hideChecked, searchQuery])
 
+  // Items einmal nach Kategorie gruppieren. Vorher entstand `catItems` beim
+  // Rendern in der .map() jedes Mal neu — damit war jedes useMemo im Kind
+  // (aggregateItems, dragItems) wirkungslos und lief bei jedem Tipp neu.
+  const itemsByCategory = useMemo(() => {
+    const map = new Map<string, ListItem[]>()
+    for (const item of searchFiltered) {
+      const bucket = map.get(item.category)
+      if (bucket) bucket.push(item)
+      else map.set(item.category, [item])
+    }
+    return map
+  }, [searchFiltered])
+
   // Kategorie-Auswahl über die Wischleiste
   const shownCategories = activeCat ? categories.filter((c) => c.name === activeCat) : categories
   const chips = useMemo(
@@ -400,7 +416,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
         )}
 
         {shownCategories.map((cat) => {
-          const catItems = searchFiltered.filter((i) => i.category === cat.name)
+          const catItems = itemsByCategory.get(cat.name) ?? EMPTY_ITEMS
           if (catItems.length === 0) return null
           return (
             <DraggableCategorySection

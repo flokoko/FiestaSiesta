@@ -28,7 +28,11 @@
   --surface-3: rgba(23, 20, 26, 0.055);
   --glass-edge: rgba(255, 255, 255, 0.72);
   --glass-hi: rgba(255, 255, 255, 0.85);
-  --glass-blur: blur(26px) saturate(185%);
+  /* Zwei Tokens, zwei Zwecke: --glass-blur ist eine LÄNGE (in blur() einsetzbar),
+     --glass-filter der fertige Filter. Vorher war --glass-blur der ganze Filter,
+     und `blur(var(--glass-blur))` (Toast, .glass) ergab ungültiges CSS. */
+  --glass-blur: 26px;
+  --glass-filter: blur(26px) saturate(185%);
   --ink: #17141A;
   --ink-2: #4E4854;
   --ink-3: #6E6874; /* AA (Phase 3): 5,2:1 auf --surface (68–82 % Weiß), 4,75:1 direkt auf Aurora; vorher 4,2–4,4:1 */
@@ -1513,6 +1517,9 @@ body::before {
   align-items: center;
   gap: 12px;
   transition: opacity 0.2s var(--ease);
+  /* Kein slideIn: Idle-Panes sind display:none, jedes Zurückwechseln ließ
+     damit jede Zeile erneut einlaufen (zusätzlich zur Pane-Staffel). */
+  animation: none;
 }
 
 #root .list-screen .item-row:last-child,
@@ -3042,8 +3049,8 @@ body::before {
 #root .expense-empty,
 #root .dash-notes-empty {
   background: var(--surface);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-hi),

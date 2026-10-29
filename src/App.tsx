@@ -217,11 +217,17 @@ export default function App() {
   }, [])
 
   // Lazy-Chunks im Idle vorladen: der erste Besuch eines Tabs zeigt sonst den
-  // Loader und wirkt wie ein Neuaufbau. Kleine Screens sind ohnehin im
-  // SW-Precache, hier geht es nur um den Dynamic Import.
+  // Loader und wirkt wie ein Neuaufbau. Wetter (Leaflet, ~167 kB) und Bristol
+  // (Recharts, ~418 kB) nur, wenn die Verbindung es hergibt — im Mobilfunk
+  // (2G/3G oder Data-Saver) bleiben sie im Lazy-Chunk, bis der Tab geöffnet wird.
   useEffect(() => {
     if (!list?.id) return
     for (const load of SCREEN_CHUNKS_EAGER) void load().catch(() => {})
+    const conn = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string }
+    }).connection
+    const cheapLink = !conn || (!conn.saveData && !/2g|slow-2g|3g/.test(conn.effectiveType ?? ''))
+    if (!cheapLink) return
     const runIdle = () => {
       for (const load of SCREEN_CHUNKS_IDLE) void load().catch(() => {})
     }

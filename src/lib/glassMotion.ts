@@ -36,13 +36,23 @@ export function initGlassMotion(): void {
   let gy = 0
   let gsy = 0        // aktueller Scrollwert
   let writtenGsy = 0 // zuletzt geschriebener --gsy-Wert
+  let writtenGx = 0  // zuletzt geschriebene --gx/--gy-Werte
+  let writtenGy = 0
   let frame = 0
 
   const flush = () => {
     frame = 0
     if (document.hidden) return
-    root.style.setProperty('--gx', gx.toFixed(3))
-    root.style.setProperty('--gy', gy.toFixed(3))
+    // Schwelle wie bei --gsy: jeder setProperty am Root löst einen Style-Recalc
+    // über alle Konsumenten aus. Ohne Schwelle passiert das bis zu 60×/s.
+    if (Math.abs(gx - writtenGx) > 0.01) {
+      writtenGx = gx
+      root.style.setProperty('--gx', gx.toFixed(3))
+    }
+    if (Math.abs(gy - writtenGy) > 0.01) {
+      writtenGy = gy
+      root.style.setProperty('--gy', gy.toFixed(3))
+    }
     if (Math.abs(gsy - writtenGsy) > GSY_WRITE_THRESHOLD) {
       writtenGsy = gsy
       root.style.setProperty('--gsy', `${Math.round(gsy)}px`)

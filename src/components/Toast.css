@@ -171,6 +171,7 @@
 /* Toasts über der Bottom-Navigation halten */
 @media (max-width: 767px) {
   .toast-container {
-    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    /* Nav-Pille: bottom 10px + 62px Höhe = Oberkante 72px, plus Luft. */
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
   }
 }

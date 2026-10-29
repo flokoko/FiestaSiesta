@@ -92,6 +92,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
   // ── Realtime debounce: accumulate changed tables, refetch once ──────
   const pendingRealtimeTablesRef = useRef<Set<string>>(new Set())
+
+  // Welche Item-Liste (shopping/bring) hat sich geändert? Erspart den zweiten Refetch.
+
+  const pendingItemTypesRef = useRef<Set<string>>(new Set())
   const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Race guards für alle Fetches: ein Zähler pro Zustands-Slot ─────
@@ -526,13 +530,25 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
     // Accumulate the changed table and debounce the refetch
     pendingRealtimeTablesRef.current.add(table)
+    if (table === 'items') {
+      const lt = (payload?.new?.list_type ?? payload?.old?.list_type) as string | undefined
+      if (lt === 'shopping' || lt === 'bring') pendingItemTypesRef.current.add(lt)
+    }
     if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
     realtimeDebounceRef.current = setTimeout(() => {
       const tables = pendingRealtimeTablesRef.current
       const lid = list.id
       if (tables.has('items')) {
-        fetchItems(lid, 'shopping')
-        fetchItems(lid, 'bring')
+        // Nur die betroffene Liste nachladen (der Payload nennt list_type);
+        // unbekannt → beide, damit nichts verpasst wird.
+        const types = pendingItemTypesRef.current
+        if (types.size === 0) {
+          fetchItems(lid, 'shopping')
+          fetchItems(lid, 'bring')
+        } else {
+          for (const t of types) fetchItems(lid, t as ListType)
+        }
+        types.clear()
       }
       if (tables.has('categories')) {
         fetchCategories(lid)
