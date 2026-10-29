@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, formatDayLong, tripDay } from '../lib/trip'
+import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 import './TripPlanScreen.css'
 
@@ -190,6 +191,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const selectedDate = days.find((d) => isoDay(d) === selectedDay) ?? days[0]
+  // Plan eines Tages (bestätigt vor Favorit) — Grundlage für den Tagesexport.
+  const dayPlanFor = useCallback((iso: string): Partial<Record<TripSlot, TripProposal>> => {
+    const out: Partial<Record<TripSlot, TripProposal>> = {}
+    for (const slot of SLOTS) {
+      const winner = planFor(proposalsFor(proposals, iso, slot.key))
+      if (winner) out[slot.key] = winner
+    }
+    return out
+  }, [proposals])
   const proposalTotal = proposals.length
 
   return (
@@ -225,7 +235,30 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         })}
       </div>
 
-      <p className="plan-day-title">{formatDayLong(selectedDate)}</p>
+      <div className="plan-day-row">
+        <p className="plan-day-title">{formatDayLong(selectedDate)}</p>
+        <button
+          type="button"
+          className="plan-ics-btn"
+          aria-label={`Tagesplan ${formatDayShort(selectedDate)} als Kalenderdatei`}
+          onClick={() => {
+            // Einzelner Tag: derselbe Plan, nur auf dieses Datum gefiltert.
+            const dayPlan = { [selectedDay]: dayPlanFor(selectedDay) }
+            const events = eventsFromPlan(dayPlan)
+            if (events.length === 0) {
+              toast('Für diesen Tag ist noch nichts festgelegt.', 'info')
+              return
+            }
+            const name = `fiesta-siesta-${selectedDay}.ics`
+            downloadIcs(name, buildIcs({ calendarName: `Fiesta Siesta · ${formatDayShort(selectedDate)}`, events }))
+            navigator.vibrate?.(8)
+            toast('Kalenderdatei erstellt', 'success')
+          }}
+        >
+          <CalendarPlus size={13} strokeWidth={2} />
+          Tag
+        </button>
+      </div>
 
       {loading ? (
         <div className="plan-loading" role="status"><Loader2 size={18} className="spin" /> Lädt Vorschläge …</div>

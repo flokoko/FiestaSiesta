@@ -3,9 +3,12 @@ import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote } 
 import SlotIcon from './SlotIcon'
 import WeatherGlyph from './WeatherGlyph'
 import { isoDay, SLOTS } from '../lib/tripPlan'
+import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripPlanMap } from '../hooks/useTripPlan'
 import type { TripForecast } from '../lib/tripWeather'
+import { sunClock } from '../lib/tripWeather'
 import { getWeatherInfo } from '../lib/weatherCodes'
+import { Sunrise, Sunset, CalendarPlus, CloudRain } from 'lucide-react'
 import type { TabView } from '../types'
 import {
   TRIP, formatDayShort, formatDayLong, formatRange, tripDay, tripDays,
@@ -28,6 +31,16 @@ export default function TripScreen({
 }: TripScreenProps) {
   // tripDays() liefert bei jedem Render ein neues Array — deshalb memoisiert.
   const days = useMemo(() => tripDays(), [])
+  // Ganze Reise als Kalenderdatei — die Termine kommen aus dem bestätigten Plan.
+  const icsEvents = useMemo(() => eventsFromPlan(plan), [plan])
+  // Regen-Hinweis für morgen — dieselbe Schwelle wie der Push-Alarm (50 %).
+  const tomorrowWx = useMemo(() => {
+    const today = new Date()
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+    const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    const entry = weather[iso]
+    return entry && entry.rain >= 50 ? entry : null
+  }, [weather])
   const current = tripDay()
   const phase = tripPhase()
 
@@ -104,8 +117,34 @@ export default function TripScreen({
       <section className="trip-section">
         <div className="trip-section-head">
           <h2 className="trip-h2">Die Tage</h2>
-          {weatherHint && <span className="trip-weather-hint">{weatherHint}</span>}
+          <div className="trip-section-actions">
+            {weatherHint && <span className="trip-weather-hint">{weatherHint}</span>}
+            {icsEvents.length > 0 && (
+              <button
+                type="button"
+                className="trip-ics-btn"
+                onClick={() => {
+                  downloadIcs(
+                    `fiesta-siesta-${TRIP.start}.ics`,
+                    buildIcs({ calendarName: `Fiesta Siesta · ${TRIP.name}`, events: icsEvents }),
+                  )
+                  navigator.vibrate?.(8)
+                }}
+              >
+                <CalendarPlus size={13} strokeWidth={2} />
+                Kalender
+              </button>
+            )}
+          </div>
         </div>
+        {tomorrowWx && (
+          <p className="trip-rain-hint">
+            <CloudRain size={13} strokeWidth={2} />
+            Morgen Regen: {tomorrowWx.rain} %
+            <span className="trip-rain-hint-sep">·</span>
+            Regenjacke einpacken, Ausflug mit Dach einplanen
+          </p>
+        )}
         <div className="trip-days">
           {days.map((date, index) => {
             const isToday = current === index + 1
@@ -146,6 +185,15 @@ export default function TripScreen({
                   </ul>
                 ) : (
                   <p className="trip-day-empty">Noch nichts geplant</p>
+                )}
+                {wx && wx.sunrise && wx.sunset && (
+                  <p className="trip-day-sun">
+                    <Sunrise size={11} strokeWidth={2} className="trip-day-sun-icon" />
+                    <span>{sunClock(wx.sunrise)}</span>
+                    <span className="trip-day-sun-sep">·</span>
+                    <Sunset size={11} strokeWidth={2} className="trip-day-sun-icon" />
+                    <span>{sunClock(wx.sunset)}</span>
+                  </p>
                 )}
               </button>
             )

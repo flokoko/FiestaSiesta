@@ -15,6 +15,10 @@ export interface DayWeather {
   rain: number
   /** Windspitze in km/h */
   wind: number
+  /** Sonnenaufgang, ISO-lokal ('2026-11-29T07:41') oder '' wenn unbekannt */
+  sunrise: string
+  /** Sonnenuntergang, ISO-lokal ('2026-11-29T18:03') oder '' */
+  sunset: string
 }
 
 /** Schlüssel: ISO-Datum (YYYY-MM-DD) */
@@ -77,7 +81,7 @@ export async function fetchTripForecast(force = false): Promise<TripForecast> {
   const url =
     'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${TRIP_LAT}&longitude=${TRIP_LON}`
-    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max'
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset'
     + '&timezone=Europe%2FMadrid&forecast_days=16'
 
   try {
@@ -95,6 +99,8 @@ export async function fetchTripForecast(force = false): Promise<TripForecast> {
         tMin: Number(data.daily.temperature_2m_min?.[i] ?? 0),
         rain: Number(data.daily.precipitation_probability_max?.[i] ?? 0),
         wind: Number(data.daily.wind_speed_10m_max?.[i] ?? 0),
+        sunrise: String(data.daily.sunrise?.[i] ?? ''),
+        sunset: String(data.daily.sunset?.[i] ?? ''),
       }
     })
     writeCache({ at: Date.now(), days })
@@ -102,4 +108,11 @@ export async function fetchTripForecast(force = false): Promise<TripForecast> {
   } catch {
     return cached?.days ?? {}
   }
+}
+
+/** '2026-11-29T07:41' → '07:41'. Leer, wenn der Wert fehlt (alte Cache-Stände). */
+export function sunClock(iso: string | undefined): string {
+  if (!iso) return ''
+  const m = /T(\d{2}):(\d{2})/.exec(iso)
+  return m ? `${m[1]}:${m[2]}` : ''
 }

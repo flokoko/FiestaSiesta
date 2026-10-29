@@ -4266,6 +4266,66 @@ body::before {
   gap: 10px;
 }
 
+/* Regen-Hinweis: gleiche Familie wie die Wetter-Pille, aber als Zeile mit Fläche */
+#root .trip-rain-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: var(--r-2);
+  background: rgba(58, 122, 200, 0.12);
+  color: #2C5C93;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+#root .trip-rain-hint svg {
+  flex: none;
+}
+
+#root .trip-rain-hint-sep {
+  opacity: 0.5;
+}
+
+:root[data-theme='dark'] #root .trip-rain-hint {
+  background: rgba(120, 170, 230, 0.16);
+  color: #A8C6E8;
+}
+
+#root .trip-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Export-Knopf: gleiche Sprache wie die Chips, aber klar als Aktion erkennbar */
+#root .trip-ics-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+#root .trip-ics-btn:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+#root .trip-ics-btn:active {
+  transform: scale(0.97);
+}
+
 #root .trip-weather-hint {
   font-size: 10.5px;
   font-weight: 600;
@@ -4321,6 +4381,35 @@ body::before {
 
 #root .trip-day.is-today .trip-day-weather-icon {
   color: #fff;
+}
+
+/* Sonnenzeiten: leise Zeile am Kartenfuß, gleiche Sprache wie die Wetter-Pille */
+#root .trip-day-sun {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 9px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .trip-day-sun-icon {
+  flex: none;
+  color: var(--ink-3);
+  opacity: 0.85;
+  margin-top: -1px;
+}
+
+#root .trip-day-sun-sep {
+  opacity: 0.5;
+  margin: 0 1px;
+}
+
+#root .trip-day.is-today .trip-day-sun,
+#root .trip-day.is-today .trip-day-sun-icon {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 #root .trip-day.is-today .trip-day-weather {

@@ -351,3 +351,41 @@
 .plan-vote:disabled {
   opacity: 0.35;
 }
+
+/* Tageskopf mit Export-Knopf: Titel links, Aktion rechts (Haarlinien-Muster) */
+#root .plan-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 2px 2px;
+}
+
+#root .plan-day-row .plan-day-title {
+  margin: 0;
+}
+
+#root .plan-ics-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#root .plan-ics-btn:active {
+  transform: scale(0.97);
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .plan-ics-btn {
+    min-height: 32px;
+  }
+}
