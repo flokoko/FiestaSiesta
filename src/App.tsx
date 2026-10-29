@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 const importNotesScreen = () => import('./components/NotesScreen')
 const NotesScreen = lazy(importNotesScreen)
 import { spanishSuccess } from './lib/espanaFlair'
+import { friendlyError } from './lib/friendlyError'
 import { useListData } from './hooks/useListData'
 
 // Code splitting: lazy-load screens that aren't needed on first paint.
@@ -365,18 +366,20 @@ export default function App() {
   }
 
   const handleSetAdminPassword = async (password: string) => {
-    if (!list) return
+    if (!list) return { error: 'Keine Liste geladen' }
     const { data, error } = await supabase.rpc('set_admin_password', {
       p_list_id: list.id,
       p_password: password,
     })
     if (error || !data) {
-      toast(`Fehler beim Speichern: ${error?.message || 'Unbekannter Fehler'}`, 'error')
-      return
+      // Fehler an den Aufrufer zurückgeben — der zeigt ihn im Formular an,
+      // statt „gesetzt" zu behaupten.
+      return { error: friendlyError(error ?? { message: 'Unbekannter Fehler' }) }
     }
     setList({ ...list, admin_password: 'hashed' })
     setAdminUnlocked(true)
     navigator.vibrate?.(10)
+    return { success: true }
   }
 
   const handleChangeOwnPassword = async (oldPassword: string, newPassword: string) => {

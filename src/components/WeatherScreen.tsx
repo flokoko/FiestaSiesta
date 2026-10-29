@@ -171,8 +171,11 @@ export default function WeatherScreen() {
   const [radarTick, setRadarTick] = useState(0)
   const lastRadarTsRef = useRef(Date.now())
 
-  // ── Read stored location from localStorage ──
-  const storedLocation = useMemo(() => getStoredLocation(), [])
+  // ── Ort als State, nicht als einmaliges Memo ──
+  // Vorher `useMemo(getStoredLocation, [])`: nach „Ort ändern" zeigten Karte,
+  // Radar-Zentrum und der 10-Minuten-Refresh weiter den alten Ort (der Pane
+  // bleibt gemountet, das Memo lief nie wieder).
+  const [storedLocation, setStoredLocationState] = useState(() => getStoredLocation())
 
   // ── Fetch weather data (rich API for screen) ──
   const fetchWeather = useCallback(async (lat: number, lon: number, name: string) => {
@@ -333,6 +336,7 @@ export default function WeatherScreen() {
       const result = await geocodeCity(query)
       const displayName = formatLocationName(result)
       setStoredLocation(result.lat, result.lon, displayName)
+      setStoredLocationState({ lat: result.lat, lon: result.lon, name: displayName })
       cacheRef.current = null
       setShowLocationInput(false)
       setLocationQuery('')

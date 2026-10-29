@@ -35,9 +35,11 @@ export function useToastState() {
     if (id) {
       clearTimer(id)
       setToasts((prev) => prev.map((t) => t.id === id ? { ...t, dismissing: true } : t))
+      // 500 ms = Länge von toast-slide-out; bei 300 ms verschwand der Toast
+      // mitten in seiner eigenen Animation.
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id))
-      }, 300)
+      }, 500)
     } else {
       timersRef.current.forEach((timer) => clearTimeout(timer))
       timersRef.current.clear()

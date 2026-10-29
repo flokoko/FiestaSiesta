@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { SLOTS, isoDay, planFor, proposalsFor } from '../lib/tripPlan'
 import { tripDays } from '../lib/trip'
@@ -79,9 +79,14 @@ export function useTripPlan(
   }, [load])
 
   // Beim Betreten der betroffenen Screens nachladen (der Pane bleibt sonst
-  // stundenlang mit dem Stand vom ersten Mount stehen).
+  // stundenlang mit dem Stand vom ersten Mount stehen). Der erste Lauf wird
+  // übersprungen — sonst lädt der Mount-Effekt oben und dieser hier dieselben
+  // zwei Tabellen direkt hintereinander.
+  const tabRef = useRef<string | undefined>(activeTab)
   useEffect(() => {
     if (!activeTab) return
+    if (tabRef.current === activeTab) return
+    tabRef.current = activeTab
     if (activeTab !== 'home' && activeTab !== 'trip' && activeTab !== 'plan') return
     void load()
   }, [activeTab, load])
@@ -108,14 +113,24 @@ export function useTripPlan(
 
   // Kanal bleibt abonniert: falls die RLS-Seite irgendwann Header durchreicht,
   // greift er sofort — bis dahin ist er ein stiller Mitläufer.
+  // Debounce: eine Vote-Runde erzeugt sonst pro Event zwei Vollabfragen.
+  const realtimeTimerRef = useRef<number | null>(null)
   useRealtimeSync({
     listId: listId ?? null,
     tables: ['trip_proposals', 'trip_votes'],
     channelSuffix: ':planfeed',
     onTableChange: () => {
-      void load()
+      if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+      realtimeTimerRef.current = window.setTimeout(() => {
+        realtimeTimerRef.current = null
+        void load()
+      }, 400)
     },
   })
+
+  useEffect(() => () => {
+    if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+  }, [])
 
   return { plan, proposalCount, loading }
 }

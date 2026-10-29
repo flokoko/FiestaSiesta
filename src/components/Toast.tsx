@@ -17,20 +17,36 @@ const ICONS = {
 
 function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) => void }) {
   const confirmBtnRef = useRef<HTMLButtonElement | null>(null)
+  const cancelBtnRef = useRef<HTMLButtonElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
-  // Bestätigungs-Toast: Fokus direkt auf den Bestätigen-Knopf setzen,
-  // damit Tastatur-/Screenreader-Nutzer sofort entscheiden können.
+  // Bestätigungs-Toast: Fokus auf ABBRECHEN, nicht auf den destruktiven Knopf —
+  // ein Gewohnheits-Enter direkt nach dem Auslösen löschte sonst sofort.
+  // Escape bricht ab; danach geht der Fokus zurück auf das auslösende Element.
   useEffect(() => {
-    if (t.type === 'confirm') {
-      confirmBtnRef.current?.focus()
+    if (t.type !== 'confirm') return
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+    cancelBtnRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        t.onCancel?.()
+        onDismiss(t.id)
+      }
     }
-  }, [t.type])
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      previousFocusRef.current?.focus?.()
+    }
+  }, [t.type, t.id, t, onDismiss])
 
   const Icon = ICONS[t.type]
   return (
     <div
       className={`toast toast-${t.type} ${t.dismissing ? 'toast-dismissing' : ''}`}
       role={t.type === 'confirm' ? 'alertdialog' : t.type === 'info' ? 'status' : 'alert'}
+      aria-label={t.type === 'confirm' ? t.message : undefined}
       aria-live={t.type === 'confirm' ? 'assertive' : undefined}
       aria-atomic={t.type === 'confirm' ? undefined : true}
     >
@@ -41,6 +57,7 @@ function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) =>
       {t.type === 'confirm' ? (
         <div className="toast-actions">
           <button
+            ref={cancelBtnRef}
             className="toast-btn toast-btn-cancel"
             onClick={(e) => {
               e.stopPropagation()

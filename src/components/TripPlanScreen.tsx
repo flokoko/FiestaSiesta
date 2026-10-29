@@ -359,7 +359,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                     <button
                       type="button"
                       className="plan-btn"
-                      onClick={() => { setAddSlot(null); setDraft(''); setDraftNote('') }}
+                      onClick={() => { setAddSlot(null); setDraft(''); setDraftNote(''); setDraftPlace('') }}
                     >
                       Abbrechen
                     </button>
@@ -377,7 +377,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                 <button
                   type="button"
                   className="plan-add"
-                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); setDraft(''); setDraftNote('') }}
+                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); setDraft(''); setDraftNote(''); setDraftPlace('') }}
                 >
                   <Plus size={15} strokeWidth={2.2} />
                   Vorschlag

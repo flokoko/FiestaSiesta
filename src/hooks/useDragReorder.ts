@@ -78,7 +78,11 @@ export function useDragReorder<T extends { id: string }>(
       const toIdx = ids.indexOf(dragOverId)
       if (fromIdx !== -1 && toIdx !== -1) {
         ids.splice(fromIdx, 1)
-        ids.splice(toIdx, 0, draggingId)
+        // Beim Ziehen NACH UNTEN wandert das Ziel durch das Entfernen einen
+        // Platz nach oben — ohne das -1 landet die Karte hinter dem Ziel,
+        // obwohl die Markierung eine Linie davor zeichnet.
+        const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx
+        ids.splice(insertAt, 0, draggingId)
         onReorder(ids)
       }
     }

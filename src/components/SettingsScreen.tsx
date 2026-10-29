@@ -37,7 +37,7 @@ interface SettingsScreenProps {
   isAdmin: boolean
   adminUnlocked: boolean
   hasAdminPassword: boolean
-  onSetAdminPassword: (password: string) => void
+  onSetAdminPassword: (password: string) => Promise<{ success?: boolean; error?: string }>
   onUnlockAdmin: (password: string) => Promise<boolean>
   onChangeOwnPassword: (oldPassword: string, newPassword: string) => Promise<{ success?: boolean; error?: string }>
   onChangeAdminPassword: (oldPassword: string, newPassword: string) => Promise<{ success?: boolean; error?: string }>
@@ -75,6 +75,7 @@ export default function SettingsScreen({
   const [adminPasswordInput, setAdminPasswordInput] = useState('')
   const [showSetPassword, setShowSetPassword] = useState(false)
   const [newAdminPassword, setNewAdminPassword] = useState('')
+  const savingPwRef = useRef(false)
   const [adminError, setAdminError] = useState('')
   // Account-Bereich: eigenes Passwort ändern (separate State vom Admin-Bereich)
   const [showChangeOwnPw, setShowChangeOwnPw] = useState(false)
@@ -263,13 +264,21 @@ export default function SettingsScreen({
     }
   }
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
+    if (savingPwRef.current) return
     const pw = newAdminPassword.trim()
     if (pw.length < 3) {
       setAdminError('Passwort muss mindestens 3 Zeichen lang sein.')
       return
     }
-    onSetAdminPassword(pw)
+    savingPwRef.current = true
+    const result = await onSetAdminPassword(pw)
+    savingPwRef.current = false
+    // Vorher kam „gesetzt" auch dann, wenn der RPC scheiterte (kein await).
+    if (result?.error) {
+      setAdminError(result.error)
+      return
+    }
     setNewAdminPassword('')
     setShowSetPassword(false)
     setAdminError('')

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Trash2, GripVertical, Plus, Copy, MoreHorizontal, Search, X, Settings2, Backpack, Luggage } from 'lucide-react'
 import type { BringFilter, ListItem, ItemCategory, ListType } from '../types'
-import { supabase, getJoinCode } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
@@ -11,6 +11,7 @@ import AddItemForm from './AddItemForm'
 import CategoryManager from './CategoryManager'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSheetFocus } from '../hooks/useSheetFocus'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SkeletonItemRow } from './Skeleton'
 import './BringScreen.css'
 
@@ -150,7 +151,6 @@ export default function BringScreen({ items, categories, listId, userName, onIte
   useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
 
   // ── Refs ──
-  const packChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   // ── Fetch personal packing items ──
   const fetchPackItems = useCallback(async () => {
@@ -177,25 +177,14 @@ export default function BringScreen({ items, categories, listId, userName, onIte
     }
   }, [subTab, fetchPackItems])
 
-  // ── Realtime sync for packlist_items (only while packlist tab is active) ──
-  useEffect(() => {
-    if (subTab !== 'packlist') return
-    const joinCode = getJoinCode()
-    const channel = supabase.channel(`packlist:${listId}:${userName}`, {
-      config: { headers: { 'x-join-code': joinCode } },
-    } as any)
-    channel.on(
-      'postgres_changes' as any,
-      { event: '*', schema: 'public', table: 'packlist_items', filter: `list_id=eq.${listId}` },
-      () => { fetchPackItems() }
-    )
-    channel.subscribe()
-    packChannelRef.current = channel
-    return () => {
-      supabase.removeChannel(channel)
-      packChannelRef.current = null
-    }
-  }, [listId, userName, subTab, fetchPackItems])
+  // ── Realtime für die eigene Packliste — über den Broadcast-Bus (v0.37) ──
+  // Der frühere eigene `postgres_changes`-Kanal mit x-join-code-Header bekam
+  // nie ein Event. Änderungen von anderen Geräten erscheinen jetzt sofort.
+  useRealtimeSync({
+    listId,
+    tables: ['packlist_items'],
+    onTableChange: () => { fetchPackItems() },
+  })
 
   // ── Add a packing item ──
   const handleAddPackItem = useCallback(async () => {
@@ -295,6 +284,8 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           toast(friendlyError(error), 'error')
           // Re-fetch to restore correct state
           fetchPackItems()
+          // Kein Erfolgs-Toast nach einem Fehler (vorher kamen beide).
+          return
         }
       } else {
         enqueue({

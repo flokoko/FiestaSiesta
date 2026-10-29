@@ -71,6 +71,7 @@ export default function NotesScreen({
 }: NotesScreenProps) {
   const { toast, confirm } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
+  const submitRef = useRef(false)
   const [formTitle, setFormTitle] = useState('')
   const [formContent, setFormContent] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -93,6 +94,11 @@ export default function NotesScreen({
     handlePointerUp,
     registerItem,
   } = useDragReorder(notes, onReorderNotes)
+
+  // Ziehen nur ohne Suchfilter: der Hit-Test arbeitet auf den sichtbaren
+  // Karten, die Zielreihenfolge würde aber in der VOLLEN Liste gespliced —
+  // bei aktiver Suche landete die Karte an einer anderen Stelle als angezeigt.
+  const searchActive = searchQuery.trim().length > 0
 
   const filteredNotes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -197,8 +203,10 @@ export default function NotesScreen({
   }, [openIds])
 
   const handleSave = async () => {
+    if (submitRef.current) return
     const content = formContent.trim()
     if (!content) return
+    submitRef.current = true
     if (isOnline) {
       const { error } = await supabase.from('notes').insert({
         list_id: listId,
@@ -207,6 +215,7 @@ export default function NotesScreen({
         created_by: userName,
       })
       if (error) {
+        submitRef.current = false
         toast(friendlyError(error), 'error')
         return
       }
@@ -225,6 +234,7 @@ export default function NotesScreen({
     setFormTitle('')
     setFormContent('')
     setComposerOpen(false)
+    submitRef.current = false
     onNotesChange()
   }
 
@@ -265,8 +275,10 @@ export default function NotesScreen({
   }
 
   const handleUpdate = async (note: QuickNote) => {
+    if (submitRef.current) return
     const content = editContent.trim()
     if (!content) return
+    submitRef.current = true
     if (isOnline) {
       const { error } = await supabase
         .from('notes')
@@ -276,6 +288,7 @@ export default function NotesScreen({
         })
         .eq('id', note.id)
       if (error) {
+        submitRef.current = false
         toast(friendlyError(error), 'error')
         return
       }
@@ -292,6 +305,7 @@ export default function NotesScreen({
       })
     }
     cancelEdit()
+    submitRef.current = false
     onNotesChange()
   }
 
@@ -454,7 +468,11 @@ export default function NotesScreen({
               >
                 <div
                   className="notes-grip"
-                  onPointerDown={(e) => { e.stopPropagation(); handlePointerDown(e, note.id) }}
+                  onPointerDown={(e) => {
+                    if (searchActive) return
+                    e.stopPropagation()
+                    handlePointerDown(e, note.id)
+                  }}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
@@ -466,7 +484,17 @@ export default function NotesScreen({
                   <GripVertical size={16} strokeWidth={2} />
                 </div>
 
-                <div className="notes-body" onClick={() => startEdit(note)}>
+                <div
+                  className="notes-body"
+                  onClick={() => {
+                    // Nur bei leerer Selektion in den Editor springen — sonst
+                    // landet man beim Markieren/Kopieren (WLAN-Passwort) sofort
+                    // im Bearbeiten-Zustand. Der Stift-Knopf bleibt der Weg.
+                    const sel = window.getSelection?.()
+                    if (sel && sel.toString().length > 0) return
+                    startEdit(note)
+                  }}
+                >
                   {note.title && (
                     <div className="dash-note-title">
                       {note.is_favorite && <span className="notes-fav-dot" aria-hidden="true" />}

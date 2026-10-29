@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
-import { supabase, getJoinCode } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { useSheetFocus } from '../hooks/useSheetFocus'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import type { BristolEntry } from '../types'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -96,25 +97,16 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     fetchEntries()
   }, [fetchEntries])
 
-  // ── Realtime sync: refetch when bristol_entries change in this list ──
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  useEffect(() => {
-    const joinCode = getJoinCode()
-    const channel = supabase.channel(`bristol:${listId}`, {
-      config: { headers: { 'x-join-code': joinCode } },
-    } as any)
-    channel.on(
-      'postgres_changes' as any,
-      { event: '*', schema: 'public', table: 'bristol_entries', filter: `list_id=eq.${listId}` },
-      () => { fetchEntries() }
-    )
-    channel.subscribe()
-    channelRef.current = channel
-    return () => {
-      supabase.removeChannel(channel)
-      channelRef.current = null
-    }
-  }, [listId, fetchEntries])
+  // ── Realtime: über den zentralen Broadcast-Bus (v0.37) ──
+  // Vorher ein eigener `postgres_changes`-Kanal mit x-join-code-Header — der
+  // bekommt seit dem RLS-Umbau NIE ein Event (Realtime prüft Policies ohne
+  // diese Header). Der Trigger aus sql/140 feuert bristol_entries auf den
+  // Listen-Kanal, hier wird nur noch mitgehört.
+  useRealtimeSync({
+    listId,
+    tables: ['bristol_entries'],
+    onTableChange: () => { fetchEntries() },
+  })
 
   const handleSubmitEntry = useCallback(async (value: number) => {
     // Doppeltipp auf eine Skala-Kachel erzeugte zwei Einträge (kein Guard am
@@ -134,8 +126,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           entry_time: entryTime,
         })
       submittingRef.current = false
-      submittingRef.current = false
-    setSubmitting(false)
+      setSubmitting(false)
       if (error) {
         toast(`Fehler: ${error.message}`, 'error')
         return
@@ -153,8 +144,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         },
       })
       submittingRef.current = false
-      submittingRef.current = false
-    setSubmitting(false)
+      setSubmitting(false)
     }
     const isToday = selectedDate === today
     const dateLabel = isToday ? '' : ` (${new Date(selectedDate).toLocaleDateString('de-DE')})`
@@ -211,8 +201,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         .update({ value })
         .eq('id', entryId)
       submittingRef.current = false
-      submittingRef.current = false
-    setSubmitting(false)
+      setSubmitting(false)
       if (error) {
         toast(`Fehler: ${error.message}`, 'error')
         return
@@ -226,8 +215,7 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
         filterValue: entryId,
       })
       submittingRef.current = false
-      submittingRef.current = false
-    setSubmitting(false)
+      setSubmitting(false)
     }
     toast(`${spanishSuccess()} Bristol-Wert auf ${value} (${BRISTOL_ADJECTIVES[value]}) geändert!`, 'success')
     navigator.vibrate?.(20)
