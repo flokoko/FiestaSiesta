@@ -6,7 +6,7 @@ import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
-import { tripDays, formatDayShort, formatDayLong, tripDay } from '../lib/trip'
+import { tripDays, formatDayShort, tripDay } from '../lib/trip'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 import './TripPlanScreen.css'
@@ -202,6 +202,21 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }, [proposals])
   const proposalTotal = proposals.length
 
+  // Tagesexport: derselbe Plan, auf den ausgewählten Tag gefiltert.
+  const exportSelectedDay = () => {
+    const events = eventsFromPlan({ [selectedDay]: dayPlanFor(selectedDay) })
+    if (events.length === 0) {
+      toast('Für diesen Tag ist noch nichts festgelegt.', 'info')
+      return
+    }
+    downloadIcs(
+      `fiesta-siesta-${selectedDay}.ics`,
+      buildIcs({ calendarName: `Fiesta Siesta · ${formatDayShort(selectedDate)}`, events }),
+    )
+    navigator.vibrate?.(8)
+    toast('Kalenderdatei erstellt', 'success')
+  }
+
   return (
     <div className="plan-screen">
       <header className="list-head">
@@ -215,6 +230,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
             {proposalTotal === 1 ? 'Vorschlag' : 'Vorschläge'}
           </p>
         </div>
+        <button
+          type="button"
+          className="plan-ics-icon"
+          aria-label={`Tagesplan ${formatDayShort(selectedDate)} als Kalenderdatei`}
+          title="Diesen Tag in den Kalender"
+          onClick={exportSelectedDay}
+        >
+          <CalendarPlus size={17} strokeWidth={2} />
+        </button>
       </header>
 
       <div className="cat-strip plan-days">
@@ -233,31 +257,6 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
             </button>
           )
         })}
-      </div>
-
-      <div className="plan-day-row">
-        <p className="plan-day-title">{formatDayLong(selectedDate)}</p>
-        <button
-          type="button"
-          className="plan-ics-btn"
-          aria-label={`Tagesplan ${formatDayShort(selectedDate)} als Kalenderdatei`}
-          onClick={() => {
-            // Einzelner Tag: derselbe Plan, nur auf dieses Datum gefiltert.
-            const dayPlan = { [selectedDay]: dayPlanFor(selectedDay) }
-            const events = eventsFromPlan(dayPlan)
-            if (events.length === 0) {
-              toast('Für diesen Tag ist noch nichts festgelegt.', 'info')
-              return
-            }
-            const name = `fiesta-siesta-${selectedDay}.ics`
-            downloadIcs(name, buildIcs({ calendarName: `Fiesta Siesta · ${formatDayShort(selectedDate)}`, events }))
-            navigator.vibrate?.(8)
-            toast('Kalenderdatei erstellt', 'success')
-          }}
-        >
-          <CalendarPlus size={13} strokeWidth={2} />
-          Tag
-        </button>
       </div>
 
       {loading ? (
