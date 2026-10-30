@@ -179,7 +179,17 @@ function DraggableCategorySection({
             </label>
             <div
               className="item-content"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedGroups.has(agg.groupKey)}
+              aria-label={`${agg.name} — Einzelposten anzeigen`}
               onClick={() => toggleExpand(agg.groupKey)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  toggleExpand(agg.groupKey)
+                }
+              }}
               style={{ cursor: 'pointer' }}
             >
               <span className="item-name">

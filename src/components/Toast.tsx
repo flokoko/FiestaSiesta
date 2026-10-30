@@ -30,11 +30,15 @@ function ToastEntry({ t, onDismiss }: { t: ToastItem; onDismiss: (id: string) =>
     previousFocusRef.current = document.activeElement as HTMLElement | null
     cancelBtnRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onCancelRef.current?.()
-        onDismiss(t.id)
-      }
+      if (e.key !== 'Escape') return
+      // Nur die oberste/aktive Frage abbrechen: liegen zwei Bestätigungen
+      // übereinander, gehört Escape dem, in dem der Fokus gerade steht.
+      const active = document.activeElement
+      const own = cancelBtnRef.current?.parentElement
+      if (active && own && !own.contains(active)) return
+      e.preventDefault()
+      onCancelRef.current?.()
+      onDismiss(t.id)
     }
     window.addEventListener('keydown', onKey)
     return () => {

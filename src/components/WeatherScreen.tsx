@@ -357,8 +357,9 @@ export default function WeatherScreen() {
   // ── Hourly forecast: next 24 hours from current time ──
   const hourlyForecast = useMemo(() => {
     if (!weather) return []
-    const now = new Date()
-    const currentHour = now.toISOString().slice(0, 13)
+    // Ortszeit der API (timezone=auto) statt Geräte-UTC: sonst startet die
+    // Stundenliste in Zeitzonen mit Sommerzeit eine Stunde versetzt.
+    const currentHour = weather.current.time.slice(0, 13)
     const startIndex = weather.hourly.time.findIndex((t: string) => t.slice(0, 13) >= currentHour)
     const start = startIndex >= 0 ? startIndex : 0
     return weather.hourly.time.slice(start, start + 24).map((t: string, i: number) => ({

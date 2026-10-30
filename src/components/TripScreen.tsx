@@ -159,7 +159,7 @@ export default function TripScreen({
                 className={`trip-day${isToday ? ' is-today' : ''}`}
                 onClick={() => onNavigate('plan')}
               >
-                <header className="trip-day-head">
+                <span className="trip-day-head">
                   <span className="trip-day-num">Tag {index + 1}</span>
                   <span className="trip-day-meta">
                     {wx && (
@@ -174,27 +174,27 @@ export default function TripScreen({
                     )}
                     <span className="trip-day-date">{isToday ? formatDayLong(date) : formatDayShort(date)}</span>
                   </span>
-                </header>
+                </span>
                 {dayPlan ? (
-                  <ul className="trip-day-plan">
+                  <span className="trip-day-plan">
                     {SLOTS.filter((slot) => dayPlan[slot.key]).map((slot) => (
-                      <li key={slot.key}>
+                      <span className="trip-day-plan-row" key={slot.key}>
                         <SlotIcon slot={slot.key} size={10} className="trip-day-plan-emoji" />
                         {dayPlan[slot.key]?.title}
-                      </li>
+                      </span>
                     ))}
-                  </ul>
+                  </span>
                 ) : (
-                  <p className="trip-day-empty">Noch nichts geplant</p>
+                  <span className="trip-day-empty">Noch nichts geplant</span>
                 )}
                 {wx && wx.sunrise && wx.sunset && (
-                  <p className="trip-day-sun">
+                  <span className="trip-day-sun">
                     <Sunrise size={11} strokeWidth={2} className="trip-day-sun-icon" />
                     <span>{sunClock(wx.sunrise)}</span>
                     <span className="trip-day-sun-sep">·</span>
                     <Sunset size={11} strokeWidth={2} className="trip-day-sun-icon" />
                     <span>{sunClock(wx.sunset)}</span>
-                  </p>
+                  </span>
                 )}
               </button>
             )

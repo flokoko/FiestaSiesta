@@ -667,6 +667,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
                     <input
                       type="checkbox"
                       checked={item.is_checked}
+                      aria-label={`${item.name} abhaken`}
                       onChange={() => handleTogglePackItem(item)}
                     />
                     <span className="packlist-checkmark" />

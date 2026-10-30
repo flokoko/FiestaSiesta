@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ListItem, ItemCategory } from '../types'
 import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { spanishSuccess } from '../lib/espanaFlair'
 import { useToast } from '../context/ToastContext'
+import { useSheetFocus } from '../hooks/useSheetFocus'
 import './AddItemForm.css'
 
 interface EditItemFormProps {
@@ -20,6 +21,9 @@ export default function EditItemForm({ item, categories, onSaved, onCancel }: Ed
   const [quantity, setQuantity] = useState(item.quantity)
   const [category, setCategory] = useState(item.category)
   const [saving, setSaving] = useState(false)
+  // Wie jedes andere Sheet: Fokusfalle, Escape schließt, Fokus zurück zum Auslöser.
+  const cardRef = useRef<HTMLDivElement | null>(null)
+  useSheetFocus(cardRef, true, onCancel)
 
   const handleSave = async () => {
     const n = name.trim()
@@ -41,7 +45,15 @@ export default function EditItemForm({ item, categories, onSaved, onCancel }: Ed
 
   return (
     <div className="edit-item-overlay" onClick={onCancel}>
-      <div className="edit-item-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="edit-item-card"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Eintrag bearbeiten"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="add-item-expanded">
           <input
             className="add-input"
@@ -65,6 +77,7 @@ export default function EditItemForm({ item, categories, onSaved, onCancel }: Ed
             />
             <select
               className="add-select"
+              aria-label="Kategorie"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >

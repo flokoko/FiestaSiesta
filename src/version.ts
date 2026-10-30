@@ -1,2 +1,2 @@
 // IMPORTANT: Also update CACHE_NAME in public/sw.js when bumping!
-export const APP_VERSION = '0.46.3'
+export const APP_VERSION = '0.47.0'

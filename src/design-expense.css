@@ -717,3 +717,24 @@
   color: #17141A;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
+
+/* ── Touch: 44px auch in der Geld-Schicht (v0.47) ───────────────────── */
+/* design.css hebt .xp-settle-btn/.expense-cat-chip im Touch-Modus auf 44px;
+   diese Datei wird NACH design.css importiert und setzte mit gleicher
+   Spezifität wieder 32px — der „Begleichen"-Knopf war damit zu klein. */
+@media (hover: none), (pointer: coarse) {
+  #root .xp-settle-btn,
+  #root .expense-cat-chip {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #root .expense-settle-save,
+  #root .expense-settle-cancel,
+  #root .expense-settle-delete {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

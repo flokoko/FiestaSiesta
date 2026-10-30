@@ -884,12 +884,14 @@ body::before {
 #root .trip-day.is-today .trip-day-num,
 #root .trip-day.is-today .trip-day-date,
 #root .trip-day.is-today .trip-day-plan li,
+#root .trip-day.is-today .trip-day-plan-row,
 #root .trip-day.is-today .trip-day-empty {
   color: #fff;
 }
 
 #root .trip-day-head {
   display: flex;
+  width: 100%;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
@@ -922,7 +924,8 @@ body::before {
   gap: 4px;
 }
 
-#root .trip-day-plan li {
+#root .trip-day-plan li,
+#root .trip-day-plan-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -936,6 +939,7 @@ body::before {
 }
 
 #root .trip-day-empty {
+  display: block;
   margin: 6px 0 0;
   font-size: 12.5px;
   color: var(--ink-3);
@@ -1571,7 +1575,10 @@ body::before {
 
 #root .item-delete,
 #root .item-edit,
-#root .item-drag-handle {
+#root .item-drag-handle,
+#root .bring-item-delete,
+#root .packlist-item-delete,
+#root .bring-drag-handle {
   background: none;
   border: none;
   color: var(--ink-3);
@@ -1972,11 +1979,20 @@ body::before {
   padding-left: 12px;
 }
 
+/* Badge im Slot-Kopf („Favorit" / „Bestätigt"). Vorher standen hier
+   background/padding auf none — damit war die Badge-Pille aus
+   TripPlanScreen.css unsichtbar und der Text hing nackt in der Zeile. */
 #root .plan-slot-plan {
   border: none;
-  background: none;
-  border-radius: 0;
-  padding: 0;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 7px;
+  padding: 2px 8px;
+}
+
+#root .plan-slot-plan.is-fixed {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--ink);
 }
 
 #root .plan-slot-action {
@@ -3664,6 +3680,12 @@ body::before {
   #root .item-delete,
   #root .item-edit,
   #root .item-drag-handle,
+  #root .bring-item-delete,
+  #root .packlist-item-delete,
+  #root .bring-drag-handle,
+  #root .plan-vote,
+  #root .plan-mini,
+  #root .plan-ics-icon,
   #root .bottom-nav-item,
   /* Dauerkontrollen, die vorher 20–38 px hoch waren */
   #root .xp-settle-btn,
@@ -3686,16 +3708,34 @@ body::before {
   #root .bristol-history-edit-btn,
   #root .more-leave,
   #root .plan-back,
+  #root .plan-vote,
+  #root .plan-mini,
+  #root .plan-ics-icon,
+  #root .bring-item-delete,
+  #root .packlist-item-delete,
+  #root .bring-drag-handle,
   #root .toast-close {
     min-width: 44px;
   }
 
   #root .item-delete,
   #root .item-edit,
-  #root .item-drag-handle {
+  #root .item-drag-handle,
+  #root .bring-item-delete,
+  #root .packlist-item-delete,
+  #root .bring-drag-handle {
     margin: -8px -4px;
   }
 }
+
+/* Toast-Typ-Streifen: Toast.css setzt border-left, aber der Kurzschluss
+   `#root .toast { border: 1px solid … }` (höhere Spezifität) hat ihn bisher
+   jede Farbe gekostet. Hier mit #root erneut setzen, damit der Typ sichtbar ist. */
+#root .toast { border-left-width: 4px; }
+#root .toast-success { border-left-color: var(--green); }
+#root .toast-error { border-left-color: var(--accent); }
+#root .toast-info { border-left-color: var(--ink-3); }
+#root .toast-confirm { border-left-color: var(--gold); }
 
 /* Reduzierte Bewegung: auch die Seiten- und Sheet-Animationen aus. */
 @media (prefers-reduced-motion: reduce) {

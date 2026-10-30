@@ -58,12 +58,15 @@ export function useToastState() {
     const newItem: ToastItem = { id, message, type, action, duration }
 
     setToasts((prev) => {
-      // Max 3 toasts — dismiss oldest
+      // Max 3 Toasts. Bestätigungs- und Aktions-Toasts werden nie
+      // weggeschoben — sonst verschwindet mitten im Löschen das „Abbrechen"
+      // bzw. das „Rückgängig". Notfalls bleibt die Schlange kurz länger.
       let next = [...prev, newItem]
       while (next.length > 3) {
-        const oldest = next[0]
-        clearTimer(oldest.id)
-        next = next.slice(1)
+        const idx = next.findIndex((t) => !t.onConfirm && !t.action)
+        if (idx < 0) break
+        clearTimer(next[idx].id)
+        next.splice(idx, 1)
       }
       return next
     })
@@ -93,10 +96,14 @@ export function useToastState() {
 
     setToasts((prev) => {
       let next = [...prev, newItem]
+      // Bestätigungen nie wegwerfen (siehe toast()): nur informative Toasts
+      // rotieren. Bleiben mehr als 3 offene Fragen stehen, ist das ehrlicher
+      // als eine stillschweigend verschwundene Entscheidung.
       while (next.length > 3) {
-        const oldest = next[0]
-        clearTimer(oldest.id)
-        next = next.slice(1)
+        const idx = next.findIndex((t) => !t.onConfirm && !t.action)
+        if (idx < 0) break
+        clearTimer(next[idx].id)
+        next.splice(idx, 1)
       }
       return next
     })
