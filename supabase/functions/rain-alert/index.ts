@@ -101,7 +101,8 @@ Deno.serve(async (req) => {
     const url = 'https://api.open-meteo.com/v1/forecast'
       + `?latitude=${TRIP_LAT}&longitude=${TRIP_LON}`
       + '&daily=precipitation_probability_max,precipitation_sum,weather_code,temperature_2m_max'
-      + '&timezone=Europe%2FMadrid&forecast_days=3'
+      // Kanaren, nicht Madrid: sonst liegen die Tagesgrenzen eine Stunde daneben.
+      + '&timezone=Atlantic%2FCanary&forecast_days=3'
     const wxRes = await fetch(url)
     if (!wxRes.ok) {
       return new Response(JSON.stringify({ error: `Open-Meteo HTTP ${wxRes.status}` }), {

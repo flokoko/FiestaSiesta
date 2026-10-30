@@ -82,7 +82,10 @@ export async function fetchTripForecast(force = false): Promise<TripForecast> {
     'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${TRIP_LAT}&longitude=${TRIP_LON}`
     + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset'
-    + '&timezone=Europe%2FMadrid&forecast_days=16'
+    // Atlantic/Canary, NICHT Europe/Madrid: Temisas liegt auf den Kanaren (UTC+0,
+    // im Winter eine Stunde hinter Madrid). Mit Madrid kamen Sonnenauf-/-untergang
+    // exakt eine Stunde zu spät an (am 30.10.2026 gemessen: 08:11 vs. 07:11).
+    + '&timezone=Atlantic%2FCanary&forecast_days=16'
 
   try {
     const res = await fetchWithTimeout(url, 10000)
