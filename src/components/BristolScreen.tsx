@@ -71,7 +71,9 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     [entries, userName]
   )
 
+  const lastFetchRef = useRef(0)
   const fetchEntries = useCallback(async () => {
+    lastFetchRef.current = Date.now()
     const { data, error } = await supabase
       .from('bristol_entries')
       .select('*')
@@ -95,6 +97,18 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
 
   useEffect(() => {
     fetchEntries()
+  }, [fetchEntries])
+
+  // Pane bleibt gemountet: ohne diesen Refetch zeigt Bristol nach einem
+  // Verbindungsabbruch stundenlang alte Einträge (Realtime kommt nicht nach).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastFetchRef.current < 30_000) return
+      void fetchEntries()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [fetchEntries])
 
   // ── Realtime: über den zentralen Broadcast-Bus (v0.37) ──

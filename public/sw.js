@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.47.0';
+const CACHE_NAME = 'fiesta-siesta-v0.48.0';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -93,6 +93,34 @@ self.addEventListener('push', (e) => {
 });
 
 // Handle notification click: focus existing window or open new one.
+// Push-Dienst tauscht den Endpoint (z. B. GCM -> FCM). Ohne diesen Handler
+// bleibt in push_subscriptions der alte Endpoint stehen und es kommt nie
+// wieder etwas an — ohne Fehlermeldung. Der neue Abo-Datensatz wird im Cache
+// abgelegt; push.ts zieht ihn beim naechsten App-Start nach Supabase.
+self.addEventListener('pushsubscriptionchange', (e) => {
+  e.waitUntil((async () => {
+    try {
+      const oldOptions = e.oldSubscription && e.oldSubscription.options;
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: oldOptions && oldOptions.applicationServerKey
+          ? oldOptions.applicationServerKey
+          : undefined,
+      });
+      const cache = await caches.open('fiesta-push-meta');
+      await cache.put(
+        '/__push_subscription',
+        new Response(JSON.stringify({ subscription: subscription.toJSON(), at: Date.now() }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    } catch {
+      // Ohne Key/Erlaubnis nicht erneut abonnierbar — beim naechsten Start
+      // fragt die Einstellungen-Seite den Status ohnehin neu ab.
+    }
+  })());
+});
+
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
 
@@ -140,7 +168,17 @@ self.addEventListener('fetch', (e) => {
       (async () => {
         const cache = await caches.open(CACHE_NAME);
         try {
-          const response = await fetch(e.request);
+          // Zeitlimit: ohne Abort wartet der Browser bei Captive Portal / NAT-
+          // Hänger minutenlang und die App startet scheinbar gar nicht, obwohl
+          // index.html und alle Assets im Cache liegen.
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 5000);
+          let response;
+          try {
+            response = await fetch(e.request, { signal: controller.signal });
+          } finally {
+            clearTimeout(timer);
+          }
           if (response && response.status === 200) {
             e.waitUntil(cache.put(e.request, response.clone()).catch(() => undefined));
             return response;

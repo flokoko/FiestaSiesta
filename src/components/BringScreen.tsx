@@ -234,6 +234,9 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           is_checked: false,
           sort_order: sortOrder,
         },
+        // Temp-ID mitgeben: Häkchen/Löschen davor werden beim Flush auf die
+        // echte UUID umgeschrieben.
+        clientId: tempId,
       })
     }
     setNewPackName('')
@@ -357,6 +360,7 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           type: 'insert',
           table: 'packlist_items',
           payload: rest,
+          clientId: row.id,
         })
       }
     }

@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
     )
   }
 
-  const { list_id, title, body: messageBody, to, tag, data } = body
+  const { list_id, title, body: messageBody, to, exclude, tag, data } = body
 
   if (!list_id || !title) {
     return new Response(
@@ -165,6 +165,13 @@ Deno.serve(async (req: Request) => {
 
   if (to) {
     query = query.eq('participant_name', to)
+  }
+
+  // `exclude` kommt vom Relay-Geraet (notify.ts): die Person, die die Aenderung
+  // ausgeloest hat, soll nicht selbst angepingt werden. Vorher wurde das Feld
+  // geschickt und hier nie gelesen — jeder Empfaenger bekam den Push doppelt.
+  if (exclude && typeof exclude === 'string' && !to) {
+    query = query.neq('participant_name', exclude)
   }
 
   const { data: subscriptions, error: queryError } = await query

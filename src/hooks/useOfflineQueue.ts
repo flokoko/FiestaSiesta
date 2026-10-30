@@ -12,6 +12,12 @@ export interface QueuedOp {
   filterValue?: string | string[]
   /** For rpc: the rpc function name */
   rpcName?: string
+  /**
+   * Insert mit vorläufiger id im UI (`temp-…`): hier steht die Temp-ID, damit
+   * spätere update/delete-Ops beim Flush auf die echte UUID umgeschrieben
+   * werden können.
+   */
+  clientId?: string
   timestamp: number
 }
 
@@ -161,13 +167,35 @@ function refreshQueueLength(): void {
   notifyListeners()
 }
 
-async function executeOp(op: QueuedOp): Promise<void> {
+/**
+ * Ist der Fehler ein Verbindungsproblem (Netz weg, Timeout, abgebrochener
+ * Fetch) und KEIN Serverbefall? Nur dann darf der Op in der Queue bleiben —
+ * ein echter Postgrest-Fehler (RLS, Constraint, gelöschte Zeile) würde sonst
+ * die Queue ewig blockieren.
+ */
+function isNetworkFailure(e: unknown): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true
+  if (e instanceof DOMException && (e.name === 'AbortError' || e.name === 'TimeoutError')) return true
+  if (e instanceof TypeError) return true // fetch failed / Failed to fetch
+  const anyE = e as { code?: unknown; status?: unknown; message?: unknown } | null
+  if (anyE && (typeof anyE.code === 'string' || typeof anyE.status === 'number')) return false
+  const msg = String((anyE?.message as string) ?? '')
+  return /network|failed to fetch|load failed|timeout|zeitlimit|abort/i.test(msg)
+}
+
+/** Ausführen eines Ops; Inserts geben die neue Zeilen-id zurück (Temp-ID-Mapping). */
+async function executeOp(op: QueuedOp): Promise<string | null> {
   if (op.type === 'rpc') {
     const { error } = await supabase.rpc(op.rpcName!, op.payload)
     if (error) throw error
+    return null
   } else if (op.type === 'insert') {
-    const { error } = await supabase.from(op.table).insert(op.payload)
+    // select('id') kostet nichts extra und liefert die echte UUID: Offline-Insert
+    // und späteres Häkchen/Löschen auf dieselbe Zeile hängen daran.
+    const { data, error } = await supabase.from(op.table).insert(op.payload).select('id').maybeSingle()
     if (error) throw error
+    const id = (data as { id?: string } | null)?.id
+    return typeof id === 'string' ? id : null
   } else if (op.type === 'update') {
     // filterValue als Array = Sammel-Update (eine Runde statt N): 30 abgehakte
     // Gruppen-Artikel waren vorher 30 Requests à ≥1 RTT.
@@ -183,6 +211,31 @@ async function executeOp(op: QueuedOp): Promise<void> {
       : await query.eq(op.filterColumn!, op.filterValue!)
     if (error) throw error
   }
+  return null
+}
+
+/**
+ * Ersetzt in der Queue alle Verweise auf eine Temp-ID (`temp-…`) durch die
+ * echte UUID, sobald der zugehörige Insert durch ist. Ohne das scheiterten
+ * Häkchen und Löschen offline angelegter Zeilen an der uuid-Spalte (22P02).
+ */
+function remapTempId(table: string, tempId: string, realId: string): void {
+  const queue = loadQueue()
+  let changed = false
+  const next = queue.map((q) => {
+    if (q.table !== table) return q
+    const values = Array.isArray(q.filterValue) ? q.filterValue : null
+    if (q.filterValue === tempId) {
+      changed = true
+      return { ...q, filterValue: realId }
+    }
+    if (values && values.includes(tempId)) {
+      changed = true
+      return { ...q, filterValue: values.map(v => (v === tempId ? realId : v)) }
+    }
+    return q
+  })
+  if (changed) saveQueue(next)
 }
 
 /**
@@ -255,21 +308,33 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
 
       let opError = false
       let lastError: unknown = null
+      let insertedId: string | null = null
       try {
-        await executeOp(op)
-      } catch {
+        insertedId = await executeOp(op)
+      } catch (firstError) {
+        lastError = firstError
+        // Verbindungsproblem: nicht weiterprobieren, nicht parken, Queue
+        // unangetastet lassen. Der nächste Ping versucht es erneut.
+        if (isNetworkFailure(firstError)) {
+          break
+        }
         // Retry mit exponentiellem Backoff (max 3 Versuche insgesamt)
         let retries = 0
         while (retries < 2) {
           retries++
           await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries - 1)))
           try {
-            await executeOp(op)
+            insertedId = await executeOp(op)
             lastError = null
             break // Erfolg
           } catch (e) {
             lastError = e
+            if (isNetworkFailure(e)) break
           }
+        }
+        if (lastError && isNetworkFailure(lastError)) {
+          // Nach einem Netzbruch mitten im Retry: Op bleibt vorne in der Queue.
+          break
         }
         if (lastError) {
           opError = true
@@ -281,6 +346,10 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
       // Zeile) darf die restliche Queue NICHT blockieren — sonst würden alle
       // nachfolgenden Änderungen nie synchronisiert. Er wird aber nicht mehr
       // stillschweigend verworfen, sondern in der Dead-Letter-Ablage geparkt.
+      if (!opError && insertedId && op.clientId) {
+        remapTempId(op.table, op.clientId, insertedId)
+      }
+
       const remaining = loadQueue().filter(q => q.id !== op.id)
       saveQueue(remaining)
       if (opError) {

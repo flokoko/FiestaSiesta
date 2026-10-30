@@ -65,6 +65,20 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     void load()
   }, [load])
 
+  // Refetch beim Zurückkehren in die App, wenn der letzte Ladevorgang her ist —
+  // der Screen bleibt als Pane gemountet, ein „Betreten" gibt es nicht.
+  const lastLoadRef = useRef(0)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastLoadRef.current < 30_000) return
+      lastLoadRef.current = Date.now()
+      void load()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [load])
+
   useRealtimeSync({
     listId,
     channelSuffix: ':plan',

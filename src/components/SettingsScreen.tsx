@@ -14,6 +14,7 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
   hasActiveSubscription,
+  syncRotatedSubscription,
 } from '../lib/push'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
@@ -104,6 +105,10 @@ export default function SettingsScreen({
     if ('Notification' in window) {
       setPushPermission(Notification.permission)
     }
+    // Ein vom Browser rotierter Endpoint (pushsubscriptionchange im SW) muss
+    // beim Start nach Supabase — sonst pusht der Server ins Leere.
+    void syncRotatedSubscription(listId, userName)
+
     // Check if there's an active push subscription on mount
     hasActiveSubscription().then((active) => {
       setPushEnabled(active)
@@ -114,7 +119,7 @@ export default function SettingsScreen({
         localStorage.removeItem('push_notifications_enabled')
       }
     })
-  }, [])
+  }, [listId, userName])
 
   useEffect(() => {
     localStorage.setItem('bristol_modus_enabled', bristolEnabled ? 'true' : 'false')

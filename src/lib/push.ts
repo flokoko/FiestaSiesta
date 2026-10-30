@@ -192,6 +192,44 @@ export async function unsubscribeFromPush(
 }
 
 /**
+ * Vom Service Worker rotierter Endpoint (pushsubscriptionchange) liegt im Cache
+ * 'fiesta-push-meta'. Beim Start nach Supabase nachziehen, sonst zeigt die UI
+ * „aktiv", während der Server an einen toten Endpoint pusht.
+ */
+export async function syncRotatedSubscription(
+  listId: string,
+  participantName: string,
+): Promise<boolean> {
+  try {
+    if (typeof caches === 'undefined') return false
+    const cache = await caches.open('fiesta-push-meta')
+    const res = await cache.match('/__push_subscription')
+    if (!res) return false
+    const data = await res.json() as {
+      subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } }
+    }
+    const endpoint = data?.subscription?.endpoint
+    const p256dh = data?.subscription?.keys?.p256dh
+    const auth = data?.subscription?.keys?.auth
+    if (!endpoint || !p256dh || !auth) return false
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert(
+        { list_id: listId, participant_name: participantName, endpoint, p256dh, auth },
+        { onConflict: 'list_id,participant_name,endpoint' },
+      )
+
+    if (error) return false
+    await cache.delete('/__push_subscription')
+    localStorage.setItem('push_notifications_enabled', 'true')
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Check whether the current browser has an active push subscription
  * AND it exists in Supabase for the given user.
  * For a lightweight check, just verify the browser subscription exists.

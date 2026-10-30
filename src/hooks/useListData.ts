@@ -640,11 +640,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     }
 
     let cancelled = false
-    // Sicherheitsnetz: hängt die Wiederherstellung (offline, langsames Netz),
-    // kommt nach 6 s die App statt eines ewigen Splashs.
+    // Sicherheitsnetz gegen einen ewigen Splash. Muss LÄNGER sein als der
+    // Request-Timeout in supabase.ts (12 s) — sonst blitzt bei halb-offenem
+    // Netz der Login-Screen auf, während restore_participant_session noch läuft.
     const guard = window.setTimeout(() => {
       if (!cancelled) setRestoringSession(false)
-    }, 6000)
+    }, 13_000)
 
     /** Offline-Start versuchen; false = kein lokaler Listen-Spiegel vorhanden. */
     const startOffline = (): boolean => {
@@ -912,6 +913,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       }
     } else {
       enqueue({ type: 'rpc', table: '', payload: { item_ids: newOrder }, rpcName: 'batch_reorder_items' })
+      // Offline NICHT nachladen: fetchItems fällt auf den letzten Cache zurück
+      // und würde die gerade gesetzte Reihenfolge sofort zurücksetzen.
+      return
     }
     // Refetch only the affected list type (not all 8 tables)
     if (list) fetchItems(list.id, listType)
@@ -940,6 +944,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       }
     } else {
       enqueue({ type: 'rpc', table: '', payload: { note_ids: newOrder }, rpcName: 'batch_reorder_notes' })
+      return // siehe reorderItems: offline kein Refetch
     }
     if (list) fetchNotes(list.id)
   }, [list, fetchNotes, isOnline, enqueue, toast])

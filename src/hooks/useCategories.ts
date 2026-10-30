@@ -78,6 +78,9 @@ export function useCategories(onChange: () => void) {
           filterValue: id,
         })
       }
+      // Offline kein onChange: das würde neu laden und den Cache-Stand
+      // (alte Reihenfolge) über die optimistische Sortierung schreiben.
+      return
     }
     onChange()
   }, [onChange, toast, isOnline, enqueue])
