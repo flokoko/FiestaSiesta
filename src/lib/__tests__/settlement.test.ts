@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeMatrix, computeSettlementProposals, calculateQuotaShares, type SettlementTxn } from '../settlement'
+import { computeMatrix, computeSettlementProposals, calculateQuotaShares, roundCents, type SettlementTxn } from '../settlement'
 import type { Expense, ExpenseSplit, ExpenseQuota, Settlement } from '../../types'
 
 const makeExpense = (id: string, paidBy: string, amount = 100): Expense => ({
@@ -209,5 +209,25 @@ describe('calculateQuotaShares', () => {
     const total = shares.reduce((s, r) => s + r.share_amount, 0)
     expect(Math.round(total * 100)).toBe(100000)
     expect(Math.max(...shares.map(s => s.share_amount)) - Math.min(...shares.map(s => s.share_amount))).toBeLessThanOrEqual(0.01)
+  })
+})
+
+describe('roundCents', () => {
+  it('rundet Halb-Cent-Beträge kaufmännisch statt float-bedingt ab', () => {
+    // 1.005 * 100 = 100.49999999999999 -> naive Rundung ergäbe 1,00
+    expect(roundCents(1.005)).toBe(1.01)
+    expect(roundCents(10.075)).toBe(10.08)
+    expect(roundCents(1.015)).toBe(1.02)
+  })
+
+  it('behandelt negative Beträge symmetrisch', () => {
+    expect(roundCents(-1.005)).toBe(-1.01)
+    expect(roundCents(-0.004)).toBe(0)
+  })
+
+  it('lässt saubere Centbeträge unverändert', () => {
+    expect(roundCents(41.99)).toBe(41.99)
+    expect(roundCents(0.1 + 0.2)).toBe(0.3)
+    expect(roundCents(0)).toBe(0)
   })
 })

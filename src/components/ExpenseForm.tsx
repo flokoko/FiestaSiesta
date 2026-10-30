@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
-import { calculateShareAmounts, calculateQuotaShares, fmtEUR } from '../lib/settlement'
+import { calculateShareAmounts, calculateQuotaShares, fmtEUR, roundCents } from '../lib/settlement'
 import { publishActivity, markOwnAction } from '../lib/activityBus'
 import { spanishPhrase } from '../lib/espanaFlair'
 
@@ -89,7 +89,7 @@ export default function ExpenseForm({
   // Betrag auf Cent normalisieren, BEVOR er in Splits und DB geht: sonst steht
   // in `expenses.amount` z. B. 3.335, während die Splits auf 3.34 gerundet sind
   // und die Salden nicht mehr auf 0 summieren.
-  const amountNum = Math.round((parseFloat(amount) || 0) * 100) / 100
+  const amountNum = roundCents(parseFloat(amount) || 0)
 
   // ── Exact shares sum ──
   const exactSum = useMemo(() => {

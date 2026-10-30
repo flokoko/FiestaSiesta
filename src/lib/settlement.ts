@@ -1,5 +1,18 @@
 import type { Expense, ExpenseSplit, ExpenseQuota, Settlement } from '../types'
 
+/**
+ * Auf Cent runden — ohne Float-Drift. `Math.round(x * 100) / 100` rundet
+ * 1.005 auf 1,00 und 10.075 auf 10,07, weil 1.005 * 100 = 100.49999999999999
+ * ist. Der Umweg über die Exponentialschreibweise ("1.005e2" = 100.5) ist exakt;
+ * Math.sign hält -1.005 bei -1,01 statt -1,00.
+ */
+export function roundCents(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  const scaled = Number(`${value}e2`)
+  if (!Number.isFinite(scaled)) return Math.round(value * 100) / 100
+  return Number(`${Math.sign(scaled) * Math.round(Math.abs(scaled))}e-2`) || 0
+}
+
 export interface SettlementTxn {
   from: string
   to: string
@@ -44,15 +57,15 @@ export function computeOpenBalances(
 ): Record<string, number> {
   const result: Record<string, number> = {}
   for (const [name, balance] of Object.entries(balances)) {
-    result[name] = Math.round(balance * 100) / 100
+    result[name] = roundCents(balance)
   }
   for (const s of settlements) {
     // payer's debt decreases → their balance goes up (toward zero)
     result[s.from] = (result[s.from] ?? 0) + s.amount
     // payee's credit decreases → their balance goes down (toward zero)
     result[s.to] = (result[s.to] ?? 0) - s.amount
-    result[s.from] = Math.round(result[s.from] * 100) / 100
-    result[s.to] = Math.round(result[s.to] * 100) / 100
+    result[s.from] = roundCents(result[s.from])
+    result[s.to] = roundCents(result[s.to])
   }
   return result
 }
@@ -84,7 +97,7 @@ export function computeSettlementProposals(
   for (const p of proposals) {
     const key = `${p.from}\u0000${p.to}`
     const paid = settledByPair.get(key) ?? 0
-    const remaining = Math.round((p.amount - paid) * 100) / 100
+    const remaining = roundCents(p.amount - paid)
     if (remaining > 0.001) {
       result.push({ from: p.from, to: p.to, amount: remaining })
     }
@@ -98,7 +111,7 @@ export function computeSettlement(balances: Record<string, number>): SettlementT
   const debtors: { name: string; amount: number }[] = []
 
   for (const [name, balance] of Object.entries(balances)) {
-    const rounded = Math.round(balance * 100) / 100
+    const rounded = roundCents(balance)
     // ±0,005-Schwelle: ein offener Cent (±0,01 nach Cent-Rundung) ist eine
     // echte Schuld/Forderung — vorher verschwand er mit der 0,01-Schwelle still.
     if (rounded >= 0.005) creditors.push({ name, amount: rounded })
@@ -115,12 +128,12 @@ export function computeSettlement(balances: Record<string, number>): SettlementT
   while (ci < creditors.length && di < debtors.length) {
     const c = creditors[ci]
     const d = debtors[di]
-    const payment = Math.round(Math.min(c.amount, d.amount) * 100) / 100
+    const payment = roundCents(Math.min(c.amount, d.amount))
     if (payment > 0) {
       txns.push({ from: d.name, to: c.name, amount: payment })
     }
-    c.amount = Math.round((c.amount - payment) * 100) / 100
-    d.amount = Math.round((d.amount - payment) * 100) / 100
+    c.amount = roundCents(c.amount - payment)
+    d.amount = roundCents(d.amount - payment)
     if (c.amount < 0.01) ci++
     if (d.amount < 0.01) di++
   }
@@ -131,7 +144,7 @@ export function computeSettlement(balances: Record<string, number>): SettlementT
 /** Sorted balance entries (highest positive first) */
 export function sortedBalanceEntries(balances: Record<string, number>): BalanceEntry[] {
   return Object.entries(balances)
-    .map(([name, balance]) => ({ name, balance: Math.round(balance * 100) / 100 }))
+    .map(([name, balance]) => ({ name, balance: roundCents(balance) }))
     .sort((a, b) => b.balance - a.balance)
 }
 
@@ -177,7 +190,15 @@ export function computeMatrix(
       delete debtGrid[s.payer][s.payee]
       if (Object.keys(debtGrid[s.payer]).length === 0) delete debtGrid[s.payer]
     } else {
-      debtGrid[s.payer][s.payee] = Math.round(remaining * 100) / 100
+      const rounded = roundCents(remaining)
+      // Float-Rest (4e-17) darf keine leere Schuldner-Zeile in der Matrix
+      // hinterlassen: alles unter einem halben Cent ist ausgeglichen.
+      if (rounded === 0) {
+        delete debtGrid[s.payer][s.payee]
+        if (Object.keys(debtGrid[s.payer]).length === 0) delete debtGrid[s.payer]
+      } else {
+        debtGrid[s.payer][s.payee] = rounded
+      }
     }
   }
 

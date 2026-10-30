@@ -32,28 +32,3 @@
 .trip-day-plan-emoji {
   font-size: 10.5px;
 }
-
-.trip-day-plan {
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.trip-day-plan li,
-.trip-day-plan-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trip-day-plan-emoji {
-  font-size: 10.5px;
-}

@@ -223,11 +223,15 @@ export default function App() {
   // (2G/3G oder Data-Saver) bleiben sie im Lazy-Chunk, bis der Tab geöffnet wird.
   useEffect(() => {
     if (!list?.id) return
-    for (const load of SCREEN_CHUNKS_EAGER) void load().catch(() => {})
     const conn = (navigator as Navigator & {
       connection?: { saveData?: boolean; effectiveType?: string }
     }).connection
     const cheapLink = !conn || (!conn.saveData && !/2g|slow-2g|3g/.test(conn.effectiveType ?? ''))
+    // Auch die leichten Screens nicht ins Mobilfunk-Datenvolumen drücken:
+    // sechs parallele Chunk-Downloads direkt nach dem Login sind ein Burst.
+    if (cheapLink) {
+      for (const load of SCREEN_CHUNKS_EAGER) void load().catch(() => {})
+    }
     if (!cheapLink) return
     const runIdle = () => {
       for (const load of SCREEN_CHUNKS_IDLE) void load().catch(() => {})
@@ -536,11 +540,6 @@ export default function App() {
               </span>
             </div>
           </div>
-        </div>
-        <div className="header-flag-bar-full">
-          <span className="header-flag-red"></span>
-          <span className="header-flag-yellow"></span>
-          <span className="header-flag-red bottom"></span>
         </div>
       </header>
 

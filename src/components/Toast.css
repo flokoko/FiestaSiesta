@@ -94,11 +94,6 @@
   filter: brightness(0.92);
 }
 
-.toast-btn-action {
-  background: var(--accent, #AA151B);
-  color: #fff;
-}
-
 .toast-btn-confirm {
   background: var(--danger, #AA151B);
   color: #fff;

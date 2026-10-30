@@ -31,12 +31,21 @@ export function readCache<T>(listId: string, table: string): T | null {
   }
 }
 
+/** Zuletzt geschriebene Nutzdaten je Cache-Key (nur im Speicher). */
+const lastWritten = new Map<string, string>()
+
 /** Write a value to the cache. Wraps in try/catch so a full localStorage
  *  quota never crashes the caller. */
 export function writeCache<T>(listId: string, table: string, data: T): void {
   try {
+    const key = cacheKey(listId, table)
+    const payload = JSON.stringify(data)
+    // Diff statt Blindschreiben: der 90-s-Poll liefert meist identische Daten,
+    // und JSON.stringify + synchrones setItem blockieren sonst den Main-Thread.
+    if (lastWritten.get(key) === payload) return
     const entry: ReadCacheEntry<T> = { v: SCHEMA_VERSION, ts: Date.now(), data }
-    localStorage.setItem(cacheKey(listId, table), JSON.stringify(entry))
+    localStorage.setItem(key, JSON.stringify(entry))
+    lastWritten.set(key, payload)
   } catch {
     // localStorage full or unavailable — silently ignore
   }
