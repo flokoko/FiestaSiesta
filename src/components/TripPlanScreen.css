@@ -383,3 +383,32 @@
     height: 40px;
   }
 }
+
+
+/* Hinweis unter dem Ortsfeld: „Ziel erkannt" bzw. „wird aufgelöst" */
+#root .plan-coord-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -2px 0 2px;
+  padding-left: 2px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+#root .plan-coord-hint.is-busy {
+  color: var(--ink-3);
+}
+
+#root .plan-coord-hint .spin {
+  animation: plan-spin 0.9s linear infinite;
+}
+
+@keyframes plan-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .plan-coord-hint .spin { animation: none; }
+}

@@ -25,6 +25,7 @@ const importSettingsScreen = () => import('./components/SettingsScreen')
 const importBristolScreen = () => import('./components/BristolScreen')
 const importWeatherScreen = () => import('./components/WeatherScreen')
 const importTripPlanScreen = () => import('./components/TripPlanScreen')
+const importOpeningHoursScreen = () => import('./components/OpeningHoursScreen')
 
 const ListScreen = lazy(importListScreen)
 const BringScreen = lazy(importBringScreen)
@@ -33,6 +34,7 @@ const SettingsScreen = lazy(importSettingsScreen)
 const BristolScreen = lazy(importBristolScreen)
 const WeatherScreen = lazy(importWeatherScreen)
 const TripPlanScreen = lazy(importTripPlanScreen)
+const OpeningHoursScreen = lazy(importOpeningHoursScreen)
 
 // Besuchte Panes bleiben gemountet (idle = display:none). Ohne memo rendert
 // jedes App-Update (Realtime-Refetch, Toast, Theme- oder Tab-Wechsel) ALLE
@@ -57,7 +59,7 @@ const SCREEN_CHUNKS_EAGER = [
   importExpenseScreen,
   importNotesScreen,
 ]
-const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen]
+const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen, importOpeningHoursScreen]
 import TodayScreen from './components/TodayScreen'
 import TripScreen from './components/TripScreen'
 import EmergencySheet from './components/EmergencySheet'
@@ -497,7 +499,9 @@ export default function App() {
       ? 'lists'
       : tab === 'notes' || tab === 'weather' || tab === 'settings'
         ? 'home'
-        : null
+        : tab === 'offen'
+          ? 'trip'
+          : null
 
   const bringBrought = bringItems.filter(i => i.is_brought).length
 
@@ -599,6 +603,15 @@ export default function App() {
               isAdmin={isAdmin}
               onBack={handlePlanBack}
             />
+          </Suspense>
+          </ErrorBoundary>
+            </ScreenPane>
+          )}
+          {visited.has('offen') && (
+            <ScreenPane id="offen" active={tab === 'offen'} direction={screenDir}>
+          <ErrorBoundary compact>
+          <Suspense fallback={<TabLoader />}>
+            <OpeningHoursScreen />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>

@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity, ShieldAlert } from 'lucide-react'
+import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity, ShieldAlert, Clock } from 'lucide-react'
 import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -43,6 +43,12 @@ export default function MoreSheet({
       hint: 'Skala, Statistik, Gag',
       icon: Activity,
       action: () => { onNavigate('bristol'); onClose() },
+    },
+    {
+      label: 'Offen jetzt',
+      hint: 'Öffnungszeiten-Ampel',
+      icon: Clock,
+      action: () => { onNavigate('offen'); onClose() },
     },
     {
       label: 'Notfall',

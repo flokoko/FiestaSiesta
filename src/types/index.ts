@@ -39,6 +39,7 @@ export type TabView =
   | 'home'   // Heute-Cockpit
   | 'trip'   // Reise-Domäne (Plan, Fotos, Karte …)
   | 'plan'   // Reiseplan: Vorschläge + Abstimmung
+  | 'offen'  // Öffnungszeiten-Ampel (Läden, Apotheken, Tankstellen)
   | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
   | 'list'
   | 'bring'
@@ -132,6 +133,11 @@ export interface TripProposal {
   note: string | null
   /** optionaler Ort, antippbar → Google Maps */
   place: string | null
+  /** Koordinaten des Ziels (aus Maps-Link oder Geocoding) — Grundlage fürs Ziel-Wetter */
+  place_lat: number | null
+  place_lon: number | null
+  /** der eingefügte Maps-Link, falls einer gesetzt wurde */
+  place_url: string | null
   created_by: string
   created_at: string
   /** gesetzt, wenn der Vorschlag fest als Plan übernommen wurde */

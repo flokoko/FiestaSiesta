@@ -1,10 +1,13 @@
 import { useMemo } from 'react'
-import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote } from 'lucide-react'
+import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote, Clock } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import WeatherGlyph from './WeatherGlyph'
 import { isoDay, SLOTS } from '../lib/tripPlan'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripPlanMap } from '../hooks/useTripPlan'
+import { usePoiWeather } from '../hooks/usePoiWeather'
+import { pointKey } from '../lib/poiWeather'
+import type { TripProposal } from '../types'
 import type { TripForecast } from '../lib/tripWeather'
 import { sunClock } from '../lib/tripWeather'
 import { getWeatherInfo } from '../lib/weatherCodes'
@@ -41,6 +44,46 @@ export default function TripScreen({
     const entry = weather[iso]
     return entry && entry.rain >= 50 ? entry : null
   }, [weather])
+  // Ziel-Wetter: nur Planzeilen mit Koordinaten. Maximal zwei Zeilen pro Tag —
+  // drei Wetterzeilen auf einer Tageskarte liest niemand mehr.
+  const poiTargets = useMemo(() => {
+    const rows: Array<{ proposal: TripProposal; day: string }> = []
+    for (const [iso, dayPlan] of Object.entries(plan)) {
+      for (const slot of SLOTS) {
+        const proposal = dayPlan[slot.key]
+        if (proposal && typeof proposal.place_lat === 'number' && typeof proposal.place_lon === 'number') {
+          rows.push({ proposal, day: iso })
+        }
+      }
+    }
+    return rows
+  }, [plan])
+
+  const poiForecast = usePoiWeather(
+    useMemo(
+      () => poiTargets.map((t) => ({ day: t.day, lat: t.proposal.place_lat, lon: t.proposal.place_lon })),
+      [poiTargets],
+    ),
+  )
+
+  const poiLinesFor = (iso: string) =>
+    poiTargets
+      .filter((t) => t.day === iso)
+      .map((t) => {
+        const key = pointKey(t.proposal.place_lat as number, t.proposal.place_lon as number)
+        const weather = poiForecast[key]?.days[iso]
+        if (!weather) return null
+        return {
+          id: t.proposal.id,
+          label: t.proposal.place?.split('·')[0].trim() || t.proposal.title,
+          elevation: poiForecast[key]?.elevation ?? null,
+          weather,
+        }
+      })
+      .filter((line): line is NonNullable<typeof line> => line !== null)
+      .sort((a, b) => (b.elevation ?? 0) - (a.elevation ?? 0))
+      .slice(0, 2)
+
   const current = tripDay()
   const phase = tripPhase()
 
@@ -86,6 +129,14 @@ export default function TripScreen({
             <span className="trip-hub-text">
               <strong>Notizen</strong>
               <small>{notesCount === 1 ? '1 Eintrag' : `${notesCount} Einträge`}</small>
+            </span>
+            <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
+          </button>
+          <button type="button" className="trip-hub-row" onClick={() => onNavigate('offen')}>
+            <span className="trip-hub-icon"><Clock size={16} strokeWidth={2} /></span>
+            <span className="trip-hub-text">
+              <strong>Offen jetzt</strong>
+              <small>Läden, Apotheke, Tankstelle</small>
             </span>
             <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
           </button>
@@ -186,6 +237,26 @@ export default function TripScreen({
                   </span>
                 ) : (
                   <span className="trip-day-empty">Noch nichts geplant</span>
+                )}
+                {poiLinesFor(isoDay(date)).length > 0 && (
+                  <span className="trip-day-poi">
+                    {poiLinesFor(isoDay(date)).map((line) => (
+                      <span className="trip-day-poi-row" key={line.id}>
+                        <WeatherGlyph code={line.weather.code} size={11} className="trip-day-poi-icon" />
+                        <span className="trip-day-poi-name">{line.label}</span>
+                        <span
+                          className="trip-day-poi-value"
+                          title={line.elevation !== null ? 'Höhe aus dem Geländemodell (Open-Meteo) — Näherung' : undefined}
+                        >
+                          {line.elevation !== null
+                            ? `≈${Math.round(line.elevation / 10) * 10} m · `
+                            : ''}
+                          {Math.round(line.weather.tMax)}°
+                          {line.weather.wind >= 40 ? ` · ${Math.round(line.weather.wind)} km/h` : ''}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
                 )}
                 {wx && wx.sunrise && wx.sunset && (
                   <span className="trip-day-sun">

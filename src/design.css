@@ -4458,6 +4458,53 @@ body::before {
   color: rgba(255, 255, 255, 0.85);
 }
 
+/* Ziel-Wetter: eine leise Zeile je geplantem Ort mit Koordinaten.
+   Höhe + Temperatur am Ziel, nicht am Bergdorf — Roque Nublo ist im Dezember
+   gut zehn Grad kälter als Temisas. */
+#root .trip-day-poi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  margin: 7px 0 0;
+}
+
+#root .trip-day-poi-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+#root .trip-day-poi-icon {
+  flex: none;
+  color: var(--ink-3);
+  margin-top: -1px;
+}
+
+#root .trip-day-poi-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .trip-day-poi-value {
+  margin-left: auto;
+  padding-left: 6px;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .trip-day.is-today .trip-day-poi-row,
+#root .trip-day.is-today .trip-day-poi-icon,
+#root .trip-day.is-today .trip-day-poi-value {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 :root[data-theme='dark'] #root .trip-day-weather.is-wet {
   background: rgba(58, 122, 200, 0.22);
   color: #A8C8EE;

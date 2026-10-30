@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, tripDay } from '../lib/trip'
+import { coordsFromMapsUrl, isMapsUrl, reverseLabel, resolvePlaceCoords, type Coords } from '../lib/poiCoords'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 import './TripPlanScreen.css'
@@ -29,6 +30,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const [draft, setDraft] = useState('')
   const [draftNote, setDraftNote] = useState('')
   const [draftPlace, setDraftPlace] = useState('')
+  const [placeCoords, setPlaceCoords] = useState<Coords | null>(null)
+  const [placeUrl, setPlaceUrl] = useState<string | null>(null)
+  const [placeBusy, setPlaceBusy] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string>(() => {
     const today = tripDay()
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
@@ -88,6 +92,40 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
 
   const fixedCount = useMemo(() => proposals.filter((p) => p.confirmed_at).length, [proposals])
 
+  /** Eingefügter Maps-Link: Koordinaten lesen und einen lesbaren Ortsnamen holen. */
+  const handlePlaceChange = (value: string) => {
+    setDraftPlace(value)
+    if (!isMapsUrl(value)) {
+      // Von Hand getippter Name: Koordinaten werden erst beim Speichern gesucht.
+      if (placeCoords) setPlaceCoords(null)
+      if (placeUrl) setPlaceUrl(null)
+      return
+    }
+    const coords = coordsFromMapsUrl(value)
+    if (!coords) {
+      // Kurzlink (maps.app.goo.gl): keine Zahlen im Link, Name bleibt Handarbeit.
+      toast('Kurzlink erkannt — bitte den Ortsnamen tippen', 'info')
+      return
+    }
+    setPlaceCoords(coords)
+    setPlaceUrl(value.trim())
+    setPlaceBusy(true)
+    void reverseLabel(coords.lat, coords.lon)
+      .then((label) => {
+        if (label) setDraftPlace(label)
+      })
+      .finally(() => setPlaceBusy(false))
+  }
+
+  const resetDraft = () => {
+    setDraft('')
+    setDraftNote('')
+    setDraftPlace('')
+    setPlaceCoords(null)
+    setPlaceUrl(null)
+    setPlaceBusy(false)
+  }
+
   const handleAdd = async (slot: TripSlot) => {
     const title = draft.trim()
     if (!title) return
@@ -96,13 +134,23 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     addingRef.current = true
     setBusyId(`new-${slot}`)
     try {
+      const placeLabel = draftPlace.trim()
+      let coords = placeCoords
+      if (!coords && placeLabel) {
+        // Kein Link, aber ein Name: einmal auflösen, damit auch getippte Orte
+        // ein Ziel-Wetter bekommen. Scheitert still (unbekannter Ort).
+        coords = (await resolvePlaceCoords(placeLabel, null)).coords
+      }
       const { error } = await supabase.from('trip_proposals').insert({
         list_id: listId,
         day: selectedDay,
         slot,
         title,
         note: draftNote.trim() || null,
-        place: draftPlace.trim() || null,
+        place: placeLabel || null,
+        place_lat: coords?.lat ?? null,
+        place_lon: coords?.lon ?? null,
+        place_url: placeUrl,
         created_by: userName,
       })
       if (error) {
@@ -110,9 +158,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         return
       }
       navigator.vibrate?.(10)
-      setDraft('')
-      setDraftNote('')
-      setDraftPlace('')
+      resetDraft()
       setAddSlot(null)
       void load()
     } finally {
@@ -326,7 +372,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                           {proposal.place && (
                             <a
                               className="plan-row-place"
-                              href={mapsUrl(proposal.place)}
+                              href={proposal.place_url ?? mapsUrl(proposal.place)}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -380,10 +426,21 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                   <input
                     className="plan-input"
                     type="text"
-                    placeholder="Ort (optional)"
+                    placeholder="Ort oder Maps-Link (optional)"
                     value={draftPlace}
-                    onChange={(e) => setDraftPlace(e.target.value)}
+                    onChange={(e) => handlePlaceChange(e.target.value)}
                   />
+                  {placeBusy && (
+                    <span className="plan-coord-hint is-busy">
+                      <Loader2 size={11} className="spin" /> Ort wird aufgelöst …
+                    </span>
+                  )}
+                  {!placeBusy && placeCoords && (
+                    <span className="plan-coord-hint">
+                      <MapPin size={11} strokeWidth={2.2} />
+                      Ziel erkannt · {placeCoords.lat.toFixed(4)}, {placeCoords.lon.toFixed(4)}
+                    </span>
+                  )}
                   <input
                     className="plan-input"
                     type="text"
@@ -395,7 +452,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                     <button
                       type="button"
                       className="plan-btn"
-                      onClick={() => { setAddSlot(null); setDraft(''); setDraftNote(''); setDraftPlace('') }}
+                      onClick={() => { setAddSlot(null); resetDraft() }}
                     >
                       Abbrechen
                     </button>
@@ -413,7 +470,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                 <button
                   type="button"
                   className="plan-add"
-                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); setDraft(''); setDraftNote(''); setDraftPlace('') }}
+                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); resetDraft() }}
                 >
                   <Plus size={15} strokeWidth={2.2} />
                   Vorschlag

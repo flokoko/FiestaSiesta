@@ -1,0 +1,194 @@
+/* Öffnungszeiten-Ampel — Glaszeilen im Aire-Muster.
+   Alles mit #root-Prefix: Screen-CSS wird lazy geladen und landet nach
+   design.css, deshalb gewinnt hier nur die ID im Selektor. */
+
+#root .oh-screen {
+  padding-bottom: 96px;
+}
+
+/* Kopflatte: die App-Kopfzeile trägt den Zurück-Pfeil. Der Titel bleibt links
+   ausgerichtet (standardmäßig schiebt space-between ihn nach rechts). */
+#root .oh-screen .list-head {
+  justify-content: flex-start;
+  padding-bottom: 6px;
+}
+
+#root .oh-screen .list-head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+#root .oh-screen .list-head h1 {
+  font-size: 27px;
+  line-height: 1.1;
+}
+
+#root .oh-screen .list-head p {
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+}
+
+#root .oh-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 16px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: var(--accent-light);
+  color: var(--accent-ink, var(--accent));
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#root .oh-hint-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+#root .oh-group {
+  margin-bottom: 16px;
+}
+
+#root .oh-group-head {
+  margin: 0 0 6px;
+  padding-left: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+#root .oh-rows {
+  border-radius: 18px;
+  background: var(--surface-glass, rgba(255, 255, 255, 0.68));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft, 0 8px 24px rgba(20, 12, 24, 0.06));
+  overflow: hidden;
+}
+
+#root .oh-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  border-top: 1px solid var(--line);
+}
+
+#root .oh-row:first-child {
+  border-top: 0;
+}
+
+#root .oh-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+#root .oh-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+#root .oh-name-icon {
+  color: var(--ink-3);
+  opacity: 0.7;
+}
+
+/* Icon + Text müssen zusammen umbrechen: als Flex-Kinder rutscht das Label
+   sonst allein in die zweite Zeile und das Icon bleibt oben stehen. */
+#root .oh-meta,
+#root .oh-address {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+#root .oh-meta svg,
+#root .oh-address svg {
+  display: inline-block;
+  vertical-align: -1px;
+  margin-right: 4px;
+}
+
+
+
+#root .oh-note {
+  margin-top: 1px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ink-2);
+  opacity: 0.9;
+}
+
+#root .oh-pill {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#root .oh-pill.is-open {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+#root .oh-pill.is-soon {
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  color: color-mix(in srgb, var(--gold) 72%, #4a3400);
+}
+
+#root .oh-pill.is-closed {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-3);
+}
+
+#root .oh-pill.is-unknown {
+  background: transparent;
+  color: var(--ink-3);
+  padding: 0;
+  font-weight: 500;
+}
+
+#root .oh-source {
+  margin: 6px 0 0;
+  padding: 0 6px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+/* Im Dunkeln sind die Pillen auf der Glasfläche zu blass — Tinte aufhellen. */
+:root[data-theme='dark'] #root .oh-pill.is-soon {
+  background: color-mix(in srgb, var(--gold) 26%, transparent);
+  color: color-mix(in srgb, var(--gold) 88%, #fff);
+}
+
+:root[data-theme='dark'] #root .oh-pill.is-closed {
+  background: color-mix(in srgb, #fff 10%, transparent);
+  color: var(--ink-2);
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .oh-row {
+    min-height: 56px;
+  }
+}
