@@ -412,3 +412,171 @@
 @media (prefers-reduced-motion: reduce) {
   #root .plan-coord-hint .spin { animation: none; }
 }
+
+
+/* ── Wecker ─────────────────────────────────────────────────────────
+   Formular und Zeilen-Editor teilen sich Zeitfeld, Vorlauf-Auswahl und
+   Glockenknopf. Der Editor hängt als 100-%-Kind in der Zeile, damit er unter
+   dem Vorschlag aufspannt statt daneben zu quetschen. */
+#root .plan-row {
+  flex-wrap: wrap;
+}
+
+#root .plan-row-time {
+  margin-left: 5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+#root .plan-row-bell {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+#root .plan-row-bell.is-on {
+  color: var(--accent);
+}
+
+#root .plan-wake {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+#root .plan-wake-time,
+#root .plan-wake-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+#root .plan-wake-time > span,
+#root .plan-wake-lead > span {
+  padding-left: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+#root .plan-time-input {
+  width: 104px;
+  padding-right: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bei 16 px (iOS zoomt sonst beim Fokus) braucht „08:30" plus Uhr-Icon mehr Platz. */
+@media (hover: none), (pointer: coarse) {
+  #root .plan-time-input {
+    width: 122px;
+  }
+}
+
+#root .plan-lead-select {
+  flex: 1;
+  min-width: 0;
+}
+
+#root .plan-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+#root .plan-bell.is-on {
+  border-color: transparent;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+#root .plan-alarm-box {
+  flex: 1 1 100%;
+  margin: 8px 0 2px;
+  padding: 10px 11px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+#root .plan-alarm-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Zeitfeld fest, Vorlauf gibt nach, Glocke bleibt — sonst schiebt die Summe
+   den Glockenknopf aus der Box (bei 390 px knapp 6 px zu breit). */
+#root .plan-alarm-row .plan-wake-time {
+  flex: 0 0 auto;
+}
+
+#root .plan-alarm-row .plan-wake-lead {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+#root .plan-alarm-row .plan-lead-select {
+  width: 100%;
+}
+
+#root .plan-alarm-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+#root .plan-alarm-hint {
+  flex: 1 1 100%;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+#root .plan-alarm-foot .plan-btn {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+#root .plan-btn.is-primary {
+  background: var(--accent-grad);
+  color: #fff;
+  border-color: transparent;
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .plan-bell,
+  #root .plan-time-input,
+  #root .plan-lead-select {
+    min-height: 44px;
+  }
+  #root .plan-row-bell {
+    min-height: 44px;
+    min-width: 44px;
+    margin: -12px -8px -12px 2px;
+    justify-content: flex-end;
+  }
+}

@@ -174,7 +174,8 @@ export function eventsFromPlan(plan: TripPlanMap, only?: string): IcsEvent[] {
       events.push({
         uid: `${iso}-${slot.key}@fiesta-siesta`,
         day: iso,
-        time: SLOT_TIME[slot.key],
+        // Die im Wecker gesetzte Los-Zeit gewinnt gegen die Slot-Vorgabe.
+        time: entry.starts_at ? entry.starts_at.slice(0, 5) : SLOT_TIME[slot.key],
         durationMin: SLOT_DURATION[slot.key],
         title: entry.title,
         description: parts.length > 0 ? parts.join('\n') : undefined,

@@ -6,6 +6,7 @@ import {
 import type { ItemCategory, ListType, Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
 import { getTheme, setTheme } from '../lib/theme'
+import { LEAD_OPTIONS, readDefaultLead, writeDefaultLead } from '../lib/wake'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
 import {
@@ -90,6 +91,8 @@ export default function SettingsScreen({
   const [adminPwError, setAdminPwError] = useState('')
   const [localCatNames, setLocalCatNames] = useState<Record<string, string>>({})
   const [bristolEnabled, setBristolEnabled] = useState(() => localStorage.getItem('bristol_modus_enabled') === 'true')
+  // Vorlauf für neue Wecker — gilt für dieses Gerät, deshalb localStorage
+  const [wakeLead, setWakeLead] = useState(() => readDefaultLead())
   const [menuOpen, setMenuOpen] = useState(false)
   const [catsOpen, setCatsOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
@@ -459,6 +462,37 @@ export default function SettingsScreen({
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="set-group">
+        <h2 className="set-group-title">Wecker</h2>
+        <div className="set-rows">
+          <div className="set-row">
+            <Bell size={17} strokeWidth={2} className="set-icon" />
+            <span className="set-label">Vorlauf</span>
+            <select
+              className="set-select"
+              value={wakeLead}
+              onChange={(e) => {
+                const value = Number(e.target.value)
+                navigator.vibrate?.(8)
+                setWakeLead(value)
+                writeDefaultLead(value)
+              }}
+              aria-label="Vorlauf für neue Wecker"
+            >
+              {LEAD_OPTIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes === 0 ? 'pünktlich' : `${minutes} Min vorher`}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="set-hint">
+            Vorgabe für neue Programmpunkte im Reiseplan — dort lässt sich jeder Wecker
+            einzeln umstellen. Der Push kommt auch bei geschlossener App (Prüfung alle 5 Minuten).
+          </p>
         </div>
       </section>
 

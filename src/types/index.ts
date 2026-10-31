@@ -138,6 +138,12 @@ export interface TripProposal {
   place_lon: number | null
   /** der eingefügte Maps-Link, falls einer gesetzt wurde */
   place_url: string | null
+  /** Los-Zeit als 'HH:MM:SS' (Kanaren-Zeit) — Grundlage für Wecker und ICS */
+  starts_at: string | null
+  /** Minuten Vorlauf für den Wecker (0–180) */
+  remind_before: number | null
+  /** Wecker aktiv? */
+  remind_enabled: boolean
   created_by: string
   created_at: string
   /** gesetzt, wenn der Vorschlag fest als Plan übernommen wurde */

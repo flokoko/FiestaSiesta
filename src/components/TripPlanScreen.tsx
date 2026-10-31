@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus } from 'lucide-react'
+import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -8,6 +8,7 @@ import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, tripDay } from '../lib/trip'
 import { coordsFromMapsUrl, isMapsUrl, reverseLabel, resolvePlaceCoords, type Coords } from '../lib/poiCoords'
+import { DEFAULT_LEAD, LEAD_OPTIONS, SLOT_START, hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 import './TripPlanScreen.css'
@@ -33,6 +34,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const [placeCoords, setPlaceCoords] = useState<Coords | null>(null)
   const [placeUrl, setPlaceUrl] = useState<string | null>(null)
   const [placeBusy, setPlaceBusy] = useState(false)
+  // Wecker: Los-Zeit und Vorlauf im Anlege-Formular, Standard aus den Einstellungen
+  const [draftStart, setDraftStart] = useState(SLOT_START.morning)
+  const [draftLead, setDraftLead] = useState(() => readDefaultLead())
+  const [draftBell, setDraftBell] = useState(true)
+  // welcher Vorschlag gerade seinen Wecker-Editor offen hat (+ Entwurf)
+  const [alarmFor, setAlarmFor] = useState<string | null>(null)
+  const [alarmDraft, setAlarmDraft] = useState<{ start: string; lead: number; on: boolean }>(
+    { start: SLOT_START.morning, lead: DEFAULT_LEAD, on: true },
+  )
   const [selectedDay, setSelectedDay] = useState<string>(() => {
     const today = tripDay()
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
@@ -124,6 +134,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     setPlaceCoords(null)
     setPlaceUrl(null)
     setPlaceBusy(false)
+    setDraftBell(true)
+    setDraftLead(readDefaultLead())
   }
 
   const handleAdd = async (slot: TripSlot) => {
@@ -151,6 +163,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         place_lat: coords?.lat ?? null,
         place_lon: coords?.lon ?? null,
         place_url: placeUrl,
+        starts_at: `${draftStart || SLOT_START[slot]}:00`,
+        remind_before: draftLead,
+        remind_enabled: draftBell,
         created_by: userName,
       })
       if (error) {
@@ -163,6 +178,50 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       void load()
     } finally {
       addingRef.current = false
+      setBusyId(null)
+    }
+  }
+
+  const openAlarm = (proposal: TripProposal) => {
+    if (alarmFor === proposal.id) {
+      setAlarmFor(null)
+      return
+    }
+    navigator.vibrate?.(6)
+    setAlarmDraft({
+      start: hhmm(proposal.starts_at) || SLOT_START[proposal.slot],
+      lead: proposal.remind_before ?? readDefaultLead(),
+      on: proposal.remind_enabled,
+    })
+    setAlarmFor(proposal.id)
+  }
+
+  const saveAlarm = async (proposal: TripProposal) => {
+    if (busyId === proposal.id) return
+    setBusyId(proposal.id)
+    try {
+      const { error } = await supabase
+        .from('trip_proposals')
+        .update({
+          starts_at: `${alarmDraft.start}:00`,
+          remind_before: alarmDraft.lead,
+          remind_enabled: alarmDraft.on,
+        })
+        .eq('id', proposal.id)
+      if (error) {
+        toast(friendlyError(error), 'error')
+        return
+      }
+      navigator.vibrate?.(10)
+      setAlarmFor(null)
+      toast(
+        alarmDraft.on
+          ? `Wecker ${reminderClock(alarmDraft.start, alarmDraft.lead)} · ${alarmDraft.start} los`
+          : 'Wecker aus',
+        'success',
+      )
+      void load()
+    } finally {
       setBusyId(null)
     }
   }
@@ -368,7 +427,24 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                       <div className={`plan-row${isLeader ? ' is-plan' : ''}`} key={proposal.id}>
                         <div className="plan-row-main">
                           <span className="plan-row-title">{proposal.title}</span>
-                          <span className="plan-row-meta">von {proposal.created_by}</span>
+                          <span className="plan-row-meta">
+                            von {proposal.created_by}
+                            {proposal.starts_at && (
+                              <span className="plan-row-time">{hhmm(proposal.starts_at)}</span>
+                            )}
+                            <button
+                              type="button"
+                              className={`plan-row-bell${proposal.remind_enabled ? ' is-on' : ''}`}
+                              onClick={() => openAlarm(proposal)}
+                              aria-expanded={alarmFor === proposal.id}
+                              aria-label={proposal.remind_enabled ? 'Wecker ändern' : 'Wecker setzen'}
+                            >
+                              <Bell size={9} strokeWidth={2.4} />
+                              {proposal.remind_enabled && proposal.starts_at
+                                ? reminderClock(proposal.starts_at, proposal.remind_before ?? readDefaultLead())
+                                : 'Wecker'}
+                            </button>
+                          </span>
                           {proposal.place && (
                             <a
                               className="plan-row-place"
@@ -406,6 +482,62 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                             : <ThumbsUp size={13} strokeWidth={2.2} />}
                           {voteCount(proposal)}
                         </button>
+                        {alarmFor === proposal.id && (
+                          <div className="plan-alarm-box">
+                            <div className="plan-alarm-row">
+                              <label className="plan-wake-time">
+                                <span>Los um</span>
+                                <input
+                                  type="time"
+                                  className="plan-input plan-time-input"
+                                  value={alarmDraft.start}
+                                  onChange={(e) => setAlarmDraft((d) => ({ ...d, start: e.target.value || d.start }))}
+                                  aria-label="Los-Zeit"
+                                />
+                              </label>
+                              <label className="plan-wake-lead">
+                                <span>Wecker</span>
+                                <select
+                                  className="plan-input plan-lead-select"
+                                  value={alarmDraft.lead}
+                                  onChange={(e) => setAlarmDraft((d) => ({ ...d, lead: Number(e.target.value) }))}
+                                  aria-label="Vorlauf für den Wecker"
+                                  disabled={!alarmDraft.on}
+                                >
+                                  {LEAD_OPTIONS.map((m) => (
+                                    <option key={m} value={m}>
+                                      {m === 0 ? '0 Min' : `${m} Min`}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <button
+                                type="button"
+                                className={`plan-bell${alarmDraft.on ? ' is-on' : ''}`}
+                                onClick={() => { navigator.vibrate?.(8); setAlarmDraft((d) => ({ ...d, on: !d.on })) }}
+                                aria-pressed={alarmDraft.on}
+                                aria-label={alarmDraft.on ? 'Wecker ausschalten' : 'Wecker einschalten'}
+                              >
+                                {alarmDraft.on
+                                  ? <Bell size={15} strokeWidth={2.2} />
+                                  : <BellOff size={15} strokeWidth={2.2} />}
+                              </button>
+                            </div>
+                            <div className="plan-alarm-foot">
+                              <span className="plan-alarm-hint">
+                                {alarmDraft.on
+                                  ? `Push um ${reminderClock(alarmDraft.start, alarmDraft.lead)} — Kanaren-Zeit`
+                                  : 'Kein Push für diesen Programmpunkt'}
+                              </span>
+                              <button type="button" className="plan-btn" onClick={() => setAlarmFor(null)}>
+                                Abbrechen
+                              </button>
+                              <button type="button" className="plan-btn is-primary" onClick={() => saveAlarm(proposal)}>
+                                Speichern
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -441,6 +573,43 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                       Ziel erkannt · {placeCoords.lat.toFixed(4)}, {placeCoords.lon.toFixed(4)}
                     </span>
                   )}
+                  <div className="plan-wake">
+                    <label className="plan-wake-time">
+                      <span>Los um</span>
+                      <input
+                        type="time"
+                        className="plan-input plan-time-input"
+                        value={draftStart}
+                        onChange={(e) => setDraftStart(e.target.value || SLOT_START[slot.key])}
+                        aria-label="Los-Zeit"
+                      />
+                    </label>
+                    <label className="plan-wake-lead">
+                      <span>Wecker</span>
+                      <select
+                        className="plan-input plan-lead-select"
+                        value={draftLead}
+                        onChange={(e) => setDraftLead(Number(e.target.value))}
+                        aria-label="Vorlauf für den Wecker"
+                        disabled={!draftBell}
+                      >
+                        {LEAD_OPTIONS.map((m) => (
+                          <option key={m} value={m}>
+                            {m === 0 ? '0 Min' : `${m} Min`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      className={`plan-bell${draftBell ? ' is-on' : ''}`}
+                      onClick={() => { navigator.vibrate?.(8); setDraftBell((v) => !v) }}
+                      aria-pressed={draftBell}
+                      aria-label={draftBell ? 'Wecker ausschalten' : 'Wecker einschalten'}
+                    >
+                      {draftBell ? <Bell size={15} strokeWidth={2.2} /> : <BellOff size={15} strokeWidth={2.2} />}
+                    </button>
+                  </div>
                   <input
                     className="plan-input"
                     type="text"

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote, Clock } from 'lucide-react'
+import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote, Clock, Bell } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import WeatherGlyph from './WeatherGlyph'
 import { isoDay, SLOTS } from '../lib/tripPlan'
@@ -7,6 +7,7 @@ import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripPlanMap } from '../hooks/useTripPlan'
 import { usePoiWeather } from '../hooks/usePoiWeather'
 import { pointKey } from '../lib/poiWeather'
+import { hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import type { TripProposal } from '../types'
 import type { TripForecast } from '../lib/tripWeather'
 import { sunClock } from '../lib/tripWeather'
@@ -231,7 +232,23 @@ export default function TripScreen({
                     {SLOTS.filter((slot) => dayPlan[slot.key]).map((slot) => (
                       <span className="trip-day-plan-row" key={slot.key}>
                         <SlotIcon slot={slot.key} size={10} className="trip-day-plan-emoji" />
-                        {dayPlan[slot.key]?.title}
+                        <span className="trip-day-plan-title">{dayPlan[slot.key]?.title}</span>
+                        {dayPlan[slot.key]?.starts_at && (
+                          <span className="trip-day-plan-time">
+                            {hhmm(dayPlan[slot.key]?.starts_at)}
+                            {dayPlan[slot.key]?.remind_enabled && (
+                              <Bell size={9} strokeWidth={2.4} className="trip-day-plan-bell" />
+                            )}
+                            {dayPlan[slot.key]?.remind_enabled && (
+                              <span className="trip-day-plan-alarm">
+                                {reminderClock(
+                                  dayPlan[slot.key]?.starts_at ?? null,
+                                  dayPlan[slot.key]?.remind_before ?? readDefaultLead(),
+                                )}
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </span>
                     ))}
                   </span>

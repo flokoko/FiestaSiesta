@@ -2079,6 +2079,26 @@ body::before {
   line-height: 1.5;
 }
 
+/* Auswahlfeld in einer Einstellungszeile (z. B. Wecker-Vorlauf) */
+#root .set-select {
+  flex: 0 0 auto;
+  max-width: 55%;
+  padding: 7px 10px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+#root .set-rows .set-hint {
+  margin: 2px 0 0;
+  padding: 0 2px 4px;
+  font-size: 11.5px;
+}
+
 #root .set-toggle {
   margin: 0;
   padding: 3px;
@@ -4461,6 +4481,40 @@ body::before {
 /* Ziel-Wetter: eine leise Zeile je geplantem Ort mit Koordinaten.
    Höhe + Temperatur am Ziel, nicht am Bergdorf — Roque Nublo ist im Dezember
    gut zehn Grad kälter als Temisas. */
+/* Los-Zeit und Wecker in der Planzeile der Tageskarte */
+#root .trip-day-plan-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .trip-day-plan-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding-left: 6px;
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+
+#root .trip-day-plan-bell {
+  color: var(--accent);
+}
+
+#root .trip-day-plan-alarm {
+  color: var(--ink-3);
+}
+
+#root .trip-day.is-today .trip-day-plan-time,
+#root .trip-day.is-today .trip-day-plan-bell,
+#root .trip-day.is-today .trip-day-plan-alarm {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 #root .trip-day-poi {
   display: flex;
   flex-direction: column;

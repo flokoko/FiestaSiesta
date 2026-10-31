@@ -64,6 +64,7 @@ import TodayScreen from './components/TodayScreen'
 import TripScreen from './components/TripScreen'
 import EmergencySheet from './components/EmergencySheet'
 import { useTripPlan } from './hooks/useTripPlan'
+import { useWakeTimer } from './hooks/useWakeTimer'
 import { useTripWeather } from './hooks/useTripWeather'
 import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
@@ -200,6 +201,8 @@ export default function App() {
   // zweiten subscribe) und die Vorschläge zweimal laden. `tab` mitgeben, damit
   // der Plan beim Betreten der Screens nachgeladen wird.
   const { plan: tripPlan, proposalCount: tripProposalCount } = useTripPlan(list?.id, tab)
+  // Wecker klingelt lokal, solange die App offen ist; sonst übernimmt der Cron-Push.
+  useWakeTimer(tripPlan)
   const tripWeather = useTripWeather()
 
   const tabRef = useRef<TabView>('home')
