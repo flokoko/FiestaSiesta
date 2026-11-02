@@ -20,15 +20,19 @@ export function useTripWeather(): TripForecast {
     tripPhase() !== 'after' && daysUntilTrip() <= FORECAST_WINDOW_DAYS,
   )
 
+  // Solange die Reise außerhalb des Fensters liegt, gibt es nichts zu laden —
+  // aber der Übergang ins Fenster muss bemerkt werden (PWA bleibt tagelang offen).
   useEffect(() => {
-    const refreshGate = () => {
-      if (document.hidden) return
-      setNear(tripPhase() !== 'after' && daysUntilTrip() <= FORECAST_WINDOW_DAYS)
+    if (near) return
+    const check = () => {
+      if (!document.hidden) setNear(tripPhase() !== 'after' && daysUntilTrip() <= FORECAST_WINDOW_DAYS)
     }
-    document.addEventListener('visibilitychange', refreshGate)
-    return () => document.removeEventListener('visibilitychange', refreshGate)
-  }, [])
+    document.addEventListener('visibilitychange', check)
+    return () => document.removeEventListener('visibilitychange', check)
+  }, [near])
 
+  // EIN Listener für beides: das Fenster neu bestimmen und nachladen. Zwei
+  // getrennte visibilitychange-Handler feuerten bisher beide bei jedem Wechsel.
   useEffect(() => {
     if (!near) return
     let cancelled = false
@@ -38,7 +42,9 @@ export function useTripWeather(): TripForecast {
     }
     void load()
     const onVisible = () => {
-      if (!document.hidden) void load()
+      if (document.hidden) return
+      setNear(tripPhase() !== 'after' && daysUntilTrip() <= FORECAST_WINDOW_DAYS)
+      void load()
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {

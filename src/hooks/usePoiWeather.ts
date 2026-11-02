@@ -3,7 +3,7 @@
 // der Cache in poiWeather.ts hält die letzte Antwort auch offline.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { fetchPoiWeather, pointKey, readPoiCache, type PoiForecast } from '../lib/poiWeather'
+import { fetchPoiWeather, pointKey, poiCacheStale, readPoiCache, type PoiForecast } from '../lib/poiWeather'
 
 export interface PoiTarget {
   /** ISO-Datum des Plans */
@@ -40,11 +40,24 @@ export function usePoiWeather(targets: PoiTarget[]): PoiForecast {
     const days = rows.filter((t) => typeof t.lat === 'number').map((t) => t.day)
     if (points.length === 0) return
 
-    void fetchPoiWeather(points, days).then((next) => {
-      if (!cancelled) setForecast(next)
-    })
+    const refresh = () => {
+      void fetchPoiWeather(points, days).then((next) => {
+        if (!cancelled) setForecast(next)
+      })
+    }
+    refresh()
+
+    // Vorher lud der Effekt nur beim ersten Mal bzw. bei neuer Zielmenge: eine
+    // tagelang offene PWA zeigte dieselben Temperaturen. Jetzt beim Zurückkehren
+    // nachladen, sobald der Cache älter als eine Stunde ist.
+    const onVisible = () => {
+      if (document.hidden || !poiCacheStale()) return
+      refresh()
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [key])
 

@@ -8,6 +8,7 @@ import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, tripDay } from '../lib/trip'
 import { coordsFromMapsUrl, isMapsUrl, reverseLabel, resolvePlaceCoords, type Coords } from '../lib/poiCoords'
+import { hasActiveSubscription } from '../lib/push'
 import { DEFAULT_LEAD, LEAD_OPTIONS, SLOT_START, hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
@@ -41,6 +42,18 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const [alarmFor, setAlarmFor] = useState<string | null>(null)
   const [savingAlarmId, setSavingAlarmId] = useState<string | null>(null)
   const alarmSavingRef = useRef(false)
+  const placeLookupRef = useRef(0)
+  // Ohne Push-Abo klingelt der Wecker nur bei geöffneter App — das muss im
+  // Editor stehen, sonst verspricht die Zeile etwas, das nicht kommt.
+  const [pushReady, setPushReady] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void hasActiveSubscription().then((active) => {
+      if (!cancelled) setPushReady(active)
+    })
+    return () => { cancelled = true }
+  }, [])
   const [alarmDraft, setAlarmDraft] = useState<{ start: string; lead: number; on: boolean }>(
     { start: SLOT_START.morning, lead: DEFAULT_LEAD, on: true },
   )
@@ -121,11 +134,17 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     setPlaceCoords(coords)
     setPlaceUrl(value.trim())
     setPlaceBusy(true)
+    // Zwei schnell hintereinander eingefügte Links: nur die Antwort zum ZULETZT
+    // eingefügten Link darf Name und Spinner setzen, sonst speichert die Zeile
+    // den Namen von Link A mit den Koordinaten von Link B.
+    const requestId = ++placeLookupRef.current
     void reverseLabel(coords.lat, coords.lon)
       .then((label) => {
-        if (label) setDraftPlace(label)
+        if (requestId === placeLookupRef.current && label) setDraftPlace(label)
       })
-      .finally(() => setPlaceBusy(false))
+      .finally(() => {
+        if (requestId === placeLookupRef.current) setPlaceBusy(false)
+      })
   }
 
   const resetDraft = (start: string = SLOT_START.morning) => {
@@ -572,6 +591,11 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                                 {alarmDraft.on
                                   ? `Push um ${reminderClock(alarmDraft.start, alarmDraft.lead)} — Kanaren-Zeit`
                                   : 'Kein Push für diesen Programmpunkt'}
+                                {alarmDraft.on && pushReady === false && (
+                                  <span className="plan-alarm-warn">
+                                    {' '}Ohne Push-Abo klingelt es nur, solange die App offen ist.
+                                  </span>
+                                )}
                               </span>
                               <button type="button" className="plan-btn" onClick={() => closeAlarm(proposal.id)}>
                                 Abbrechen

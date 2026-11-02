@@ -7,6 +7,7 @@ import type { ItemCategory, ListType, Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
 import { getTheme, setTheme } from '../lib/theme'
 import { LEAD_OPTIONS, readDefaultLead, writeDefaultLead } from '../lib/wake'
+import { isIos, isStandalone } from '../lib/platform'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
 import {
@@ -747,8 +748,9 @@ export default function SettingsScreen({
             <p className="set-hint">Push ist auf diesem Gerät nicht konfiguriert.</p>
           ) : !pushSupported ? (
             <p className="set-hint">
-              Dieser Browser unterstützt kein Push
-              {pushPermission === 'denied' ? ' (Benachrichtigungen blockiert).' : '.'}
+              {isIos() && !isStandalone()
+                ? 'Auf dem iPhone gibt es Push nur in der installierten App: Teilen → „Zum Home-Bildschirm" → dort öffnen und erneut hier einschalten.'
+                : `Dieser Browser unterstützt kein Push${pushPermission === 'denied' ? ' (Benachrichtigungen blockiert).' : '.'}`}
             </p>
           ) : pushEnabled ? (
             <button className="set-btn set-btn-ghost set-btn-wide" onClick={handleUnsubscribePush} disabled={pushLoading}>

@@ -2,12 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { SLOTS, isoDay, planFor, proposalsFor } from '../lib/tripPlan'
 import { tripDays } from '../lib/trip'
+import { readCache, writeCache } from '../lib/readCache'
 import { useRealtimeSync } from './useRealtimeSync'
 import type { TripProposal, TripSlot, TripVote } from '../types'
 
 export type DayPlan = Partial<Record<TripSlot, TripProposal>>
 /** Schlüssel: ISO-Datum (YYYY-MM-DD) */
 export type TripPlanMap = Record<string, DayPlan>
+
+/** Was im Offline-Cache liegt: der fertige Plan plus die Anzahl der Vorschläge. */
+interface CachedPlan {
+  plan: TripPlanMap
+  count: number
+}
 
 export interface TripPlanState {
   /** Was pro Tag und Tageszeit gilt (bestätigt vor Abstimmungssieger) */
@@ -35,6 +42,17 @@ export function useTripPlan(
   const [proposalCount, setProposalCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
+  // Der Reiseplan ist die einzige Tabelle, die im Urlaub ohne Empfang zählt.
+  // Beim Start kommt der letzte Stand aus dem Cache, bevor das Netz antwortet.
+  useEffect(() => {
+    if (!listId) return
+    const cached = readCache<CachedPlan>(listId, 'trip_plan')
+    if (!cached) return
+    setPlan((current) => (Object.keys(current).length > 0 ? current : cached.plan))
+    setProposalCount((current) => (current > 0 ? current : cached.count))
+    setLoading(false)
+  }, [listId])
+
   const load = useCallback(async () => {
     if (!listId) {
       setPlan({})
@@ -47,6 +65,12 @@ export function useTripPlan(
       supabase.from('trip_votes').select('*').eq('list_id', listId),
     ])
     if (p.error || v.error) {
+      // Kein Netz: den letzten bekannten Plan zeigen statt „Noch nichts geplant".
+      const cached = readCache<CachedPlan>(listId, 'trip_plan')
+      if (cached) {
+        setPlan(cached.plan)
+        setProposalCount(cached.count)
+      }
       setLoading(false)
       return
     }
@@ -72,6 +96,7 @@ export function useTripPlan(
     setProposalCount(rows.length)
     setPlan(next)
     setLoading(false)
+    writeCache<CachedPlan>(listId, 'trip_plan', { plan: next, count: rows.length })
   }, [listId, days])
 
   useEffect(() => {
@@ -94,8 +119,14 @@ export function useTripPlan(
   // Realtime läuft jetzt über den Broadcast-Trigger (sql/140). Der Takt hier ist
   // nur die Ausfallsicherung, wenn die WebSocket-Verbindung hängt.
   useEffect(() => {
+    // Mindestabstand: jedes Tab-Fenster löste bisher einen vollen Refetch aus.
+    const lastRef = { at: 0 }
     const wake = () => {
-      if (!document.hidden) void load()
+      if (document.hidden) return
+      const now = Date.now()
+      if (now - lastRef.at < 30_000) return
+      lastRef.at = now
+      void load()
     }
     document.addEventListener('visibilitychange', wake)
     window.addEventListener('online', wake)

@@ -13,6 +13,7 @@ import { spanishSuccess } from './lib/espanaFlair'
 import { friendlyError } from './lib/friendlyError'
 import { useListData } from './hooks/useListData'
 import { clearFailedOps } from './hooks/useOfflineQueue'
+import { syncRotatedSubscription } from './lib/push'
 
 // Code splitting: lazy-load screens that aren't needed on first paint.
 // Die Import-Funktionen liegen separat, damit sie sich nach dem Login im
@@ -201,6 +202,14 @@ export default function App() {
   // zweiten subscribe) und die Vorschläge zweimal laden. `tab` mitgeben, damit
   // der Plan beim Betreten der Screens nachgeladen wird.
   const { plan: tripPlan, proposalCount: tripProposalCount } = useTripPlan(list?.id, tab)
+
+  // `pushsubscriptionchange` legt ein rotiertes Abo im Cache ab; nachziehen darf
+  // nicht erst beim Öffnen der Einstellungen passieren — sonst schickt der Server
+  // so lange auf einen toten Endpoint, bis jemand Settings besucht.
+  useEffect(() => {
+    if (!list?.id || !userName) return
+    void syncRotatedSubscription(list.id, userName)
+  }, [list?.id, userName])
   // Wecker klingelt lokal, solange die App offen ist; sonst übernimmt der Cron-Push.
   useWakeTimer(tripPlan)
   const tripWeather = useTripWeather()
