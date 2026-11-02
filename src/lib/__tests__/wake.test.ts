@@ -68,6 +68,15 @@ describe('Wecker-Auswahl', () => {
     expect(nextWake([proposal({ starts_at: '09:00:00' })], spater)).toBeNull()
   })
 
+  it('legt einen Vorlauf über Mitternacht auf den Vortag', () => {
+    // 00:10 los, 30 Min vorher → 23:40 des VORTAGS, nicht 23:40 desselben Tages.
+    const [slot] = wakeSlots(
+      [proposal({ day: '2026-12-03', starts_at: '00:10:00', remind_before: 30 })],
+      now,
+    )
+    expect(slot.at.toISOString()).toBe('2026-12-02T23:40:00.000Z')
+  })
+
   it('nutzt den Standard-Vorlauf, wenn keiner gesetzt ist', () => {
     const [slot] = wakeSlots([proposal({ remind_before: null })], now)
     expect(slot.lead).toBe(20)

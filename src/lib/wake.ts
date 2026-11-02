@@ -26,10 +26,14 @@ const LEAD_KEY = 'fiesta_wake_lead'
 export function readDefaultLead(): number {
   try {
     const stored = localStorage.getItem(LEAD_KEY)
-    // Number(null) ist 0 — ohne diese Zeile wäre der Standard immer „pünktlich".
-    if (stored === null) return DEFAULT_LEAD
+    // Number(null) und Number('') sind 0 — ohne diese Zeile wäre der Standard
+    // immer „pünktlich".
+    if (!stored) return DEFAULT_LEAD
     const value = Number(stored)
-    if (Number.isFinite(value) && value >= 0 && value <= 180) return value
+    // Nur Werte annehmen, die auch im Select stehen — sonst zeigt das Feld still
+    // die erste Option, während intern etwas anderes gilt.
+    if ((LEAD_OPTIONS as readonly number[]).includes(value)) return value
+    if (Number.isFinite(value) && value > 0 && value <= 90) return value
   } catch {
     // localStorage gesperrt: Standard reicht
   }
@@ -78,6 +82,13 @@ function canaryOffsetMinutes(ref: Date): number {
   return Math.round((asUtc - ref.getTime()) / 60000)
 }
 
+function shiftDay(day: string, delta: number): string {
+  const [y, mo, d] = day.split('-').map(Number)
+  const date = new Date(Date.UTC(y, (mo || 1) - 1, d || 1))
+  date.setUTCDate(date.getUTCDate() + delta)
+  return date.toISOString().slice(0, 10)
+}
+
 /** Kanarische Wanduhr-Zeit → absoluter Zeitpunkt. */
 export function canaryWallToDate(day: string, clock: string, ref: Date = new Date()): Date {
   const [y, mo, d] = day.split('-').map(Number)
@@ -103,9 +114,13 @@ export function wakeSlots(proposals: TripProposal[], ref: Date = new Date()): Wa
       const lead = p.remind_before ?? DEFAULT_LEAD
       const clock = reminderClock(p.starts_at, lead)
       if (!clock) return null
+      // Vorlauf über Mitternacht: 00:10 mit 30 Min klingelt am VORTAG um 23:40,
+      // nicht am selben Tag (das wäre 40 Minuten nach dem Start).
+      const dueMinutes = minutesOf(p.starts_at as string) - lead
+      const dueDay = dueMinutes < 0 ? shiftDay(p.day, -1) : p.day
       return {
         proposal: p,
-        at: canaryWallToDate(p.day, clock, ref),
+        at: canaryWallToDate(dueDay, clock, ref),
         startsAt: hhmm(p.starts_at),
         lead,
       }
@@ -135,11 +150,14 @@ export async function showWakeNotification(slot: WakeSlot): Promise<void> {
     const registration = await navigator.serviceWorker?.ready
     if (!registration) return
     const place = slot.proposal.place ? ` · ${slot.proposal.place.split('·')[0].trim()}` : ''
-    await registration.showNotification(`In ${slot.lead} Min: ${slot.proposal.title}`, {
-      body: `${slot.startsAt} Uhr los${place}.`,
+    const title = slot.lead === 0
+      ? `Jetzt los: ${slot.proposal.title}`
+      : `In ${slot.lead} Min: ${slot.proposal.title}`
+    await registration.showNotification(title, {
+      body: `${slot.startsAt} los${place}.`,
       icon: '/FiestaSiesta/icon-192.png',
       tag: `fiesta-wake-${slot.proposal.id}`,
-      data: { url: '/FiestaSiesta/', kind: 'wake', proposalId: slot.proposal.id },
+      data: { url: '/FiestaSiesta/?tab=plan', kind: 'wake', proposalId: slot.proposal.id },
     })
   } catch {
     // Kein SW (Dev) oder Erlaubnis entzogen — der Cron-Push deckt es ab.

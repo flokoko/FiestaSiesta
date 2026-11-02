@@ -37,9 +37,10 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   // Wecker: Los-Zeit und Vorlauf im Anlege-Formular, Standard aus den Einstellungen
   const [draftStart, setDraftStart] = useState(SLOT_START.morning)
   const [draftLead, setDraftLead] = useState(() => readDefaultLead())
-  const [draftBell, setDraftBell] = useState(true)
   // welcher Vorschlag gerade seinen Wecker-Editor offen hat (+ Entwurf)
   const [alarmFor, setAlarmFor] = useState<string | null>(null)
+  const [savingAlarmId, setSavingAlarmId] = useState<string | null>(null)
+  const alarmSavingRef = useRef(false)
   const [alarmDraft, setAlarmDraft] = useState<{ start: string; lead: number; on: boolean }>(
     { start: SLOT_START.morning, lead: DEFAULT_LEAD, on: true },
   )
@@ -127,14 +128,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       .finally(() => setPlaceBusy(false))
   }
 
-  const resetDraft = () => {
+  const resetDraft = (start: string = SLOT_START.morning) => {
+    setDraftStart(start)
     setDraft('')
     setDraftNote('')
     setDraftPlace('')
     setPlaceCoords(null)
     setPlaceUrl(null)
     setPlaceBusy(false)
-    setDraftBell(true)
     setDraftLead(readDefaultLead())
   }
 
@@ -165,7 +166,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
         place_url: placeUrl,
         starts_at: `${draftStart || SLOT_START[slot]}:00`,
         remind_before: draftLead,
-        remind_enabled: draftBell,
+        // Der Wecker hängt am bestätigten Plan: die Bestätigung schaltet ihn scharf
+        // (confirm_trip_proposal), nicht das Anlegen.
+        remind_enabled: false,
         created_by: userName,
       })
       if (error) {
@@ -180,6 +183,20 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       addingRef.current = false
       setBusyId(null)
     }
+  }
+
+  /** Fokus zurück auf die Glocke, nachdem der Editor geschlossen wurde. */
+  const focusBell = (proposalId: string) => {
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLButtonElement>(`[data-alarm-bell="${proposalId}"]`)
+        ?.focus()
+    })
+  }
+
+  const closeAlarm = (proposalId: string) => {
+    setAlarmFor(null)
+    focusBell(proposalId)
   }
 
   const openAlarm = (proposal: TripProposal) => {
@@ -197,10 +214,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   }
 
   const saveAlarm = async (proposal: TripProposal) => {
-    if (busyId === proposal.id) return
-    setBusyId(proposal.id)
+    // Ref-Guard: drei Tipps im selben Tick sehen im State alle `false`.
+    if (alarmSavingRef.current) return
+    alarmSavingRef.current = true
+    setSavingAlarmId(proposal.id)
     try {
-      const { error } = await supabase
+      // `.select('id')`: ohne Rückgabe meldet PostgREST auch dann Erfolg, wenn
+      // die Zeile inzwischen gelöscht wurde.
+      const { data: updated, error } = await supabase
         .from('trip_proposals')
         .update({
           starts_at: `${alarmDraft.start}:00`,
@@ -208,12 +229,19 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
           remind_enabled: alarmDraft.on,
         })
         .eq('id', proposal.id)
+        .select('id')
       if (error) {
         toast(friendlyError(error), 'error')
         return
       }
+      if (!updated || updated.length === 0) {
+        closeAlarm(proposal.id)
+        toast('Diesen Vorschlag gibt es nicht mehr — Liste wird neu geladen', 'error')
+        void load()
+        return
+      }
       navigator.vibrate?.(10)
-      setAlarmFor(null)
+      closeAlarm(proposal.id)
       toast(
         alarmDraft.on
           ? `Wecker ${reminderClock(alarmDraft.start, alarmDraft.lead)} · ${alarmDraft.start} los`
@@ -222,7 +250,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       )
       void load()
     } finally {
-      setBusyId(null)
+      alarmSavingRef.current = false
+      setSavingAlarmId(null)
     }
   }
 
@@ -428,22 +457,31 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                         <div className="plan-row-main">
                           <span className="plan-row-title">{proposal.title}</span>
                           <span className="plan-row-meta">
-                            von {proposal.created_by}
+                            <span className="plan-row-author">von {proposal.created_by}</span>
                             {proposal.starts_at && (
                               <span className="plan-row-time">{hhmm(proposal.starts_at)}</span>
                             )}
-                            <button
-                              type="button"
-                              className={`plan-row-bell${proposal.remind_enabled ? ' is-on' : ''}`}
-                              onClick={() => openAlarm(proposal)}
-                              aria-expanded={alarmFor === proposal.id}
-                              aria-label={proposal.remind_enabled ? 'Wecker ändern' : 'Wecker setzen'}
-                            >
-                              <Bell size={9} strokeWidth={2.4} />
-                              {proposal.remind_enabled && proposal.starts_at
-                                ? reminderClock(proposal.starts_at, proposal.remind_before ?? readDefaultLead())
-                                : 'Wecker'}
-                            </button>
+                            {proposal.confirmed_at ? (
+                              <button
+                                type="button"
+                                className={`plan-row-bell${proposal.remind_enabled ? ' is-on' : ''}`}
+                                onClick={() => openAlarm(proposal)}
+                                aria-expanded={alarmFor === proposal.id}
+                                aria-label={
+                                  proposal.remind_enabled
+                                    ? 'Wecker ändern'
+                                    : 'Wecker für diesen Programmpunkt einschalten'
+                                }
+                                data-alarm-bell={proposal.id}
+                              >
+                                <Bell size={9} strokeWidth={2.4} />
+                                {proposal.remind_enabled && proposal.starts_at
+                                  ? reminderClock(proposal.starts_at, proposal.remind_before ?? readDefaultLead())
+                                  : 'Wecker'}
+                              </button>
+                            ) : (
+                              <span className="plan-row-bell is-muted">Wecker nach Bestätigung</span>
+                            )}
                           </span>
                           {proposal.place && (
                             <a
@@ -483,7 +521,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                           {voteCount(proposal)}
                         </button>
                         {alarmFor === proposal.id && (
-                          <div className="plan-alarm-box">
+                          <div
+                            className="plan-alarm-box"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') {
+                                e.stopPropagation()
+                                closeAlarm(proposal.id)
+                              }
+                            }}
+                          >
                             <div className="plan-alarm-row">
                               <label className="plan-wake-time">
                                 <span>Los um</span>
@@ -492,16 +538,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                                   className="plan-input plan-time-input"
                                   value={alarmDraft.start}
                                   onChange={(e) => setAlarmDraft((d) => ({ ...d, start: e.target.value || d.start }))}
-                                  aria-label="Los-Zeit"
                                 />
                               </label>
                               <label className="plan-wake-lead">
-                                <span>Wecker</span>
+                                <span>Vorlauf</span>
                                 <select
                                   className="plan-input plan-lead-select"
                                   value={alarmDraft.lead}
                                   onChange={(e) => setAlarmDraft((d) => ({ ...d, lead: Number(e.target.value) }))}
-                                  aria-label="Vorlauf für den Wecker"
                                   disabled={!alarmDraft.on}
                                 >
                                   {LEAD_OPTIONS.map((m) => (
@@ -529,11 +573,16 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                                   ? `Push um ${reminderClock(alarmDraft.start, alarmDraft.lead)} — Kanaren-Zeit`
                                   : 'Kein Push für diesen Programmpunkt'}
                               </span>
-                              <button type="button" className="plan-btn" onClick={() => setAlarmFor(null)}>
+                              <button type="button" className="plan-btn" onClick={() => closeAlarm(proposal.id)}>
                                 Abbrechen
                               </button>
-                              <button type="button" className="plan-btn is-primary" onClick={() => saveAlarm(proposal)}>
-                                Speichern
+                              <button
+                                type="button"
+                                className="plan-btn is-primary"
+                                onClick={() => saveAlarm(proposal)}
+                                disabled={savingAlarmId === proposal.id}
+                              >
+                                {savingAlarmId === proposal.id ? 'Speichert …' : 'Speichern'}
                               </button>
                             </div>
                           </div>
@@ -581,17 +630,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                         className="plan-input plan-time-input"
                         value={draftStart}
                         onChange={(e) => setDraftStart(e.target.value || SLOT_START[slot.key])}
-                        aria-label="Los-Zeit"
                       />
                     </label>
                     <label className="plan-wake-lead">
-                      <span>Wecker</span>
+                      <span>Vorlauf</span>
                       <select
                         className="plan-input plan-lead-select"
                         value={draftLead}
                         onChange={(e) => setDraftLead(Number(e.target.value))}
-                        aria-label="Vorlauf für den Wecker"
-                        disabled={!draftBell}
                       >
                         {LEAD_OPTIONS.map((m) => (
                           <option key={m} value={m}>
@@ -600,16 +646,10 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                         ))}
                       </select>
                     </label>
-                    <button
-                      type="button"
-                      className={`plan-bell${draftBell ? ' is-on' : ''}`}
-                      onClick={() => { navigator.vibrate?.(8); setDraftBell((v) => !v) }}
-                      aria-pressed={draftBell}
-                      aria-label={draftBell ? 'Wecker ausschalten' : 'Wecker einschalten'}
-                    >
-                      {draftBell ? <Bell size={15} strokeWidth={2.2} /> : <BellOff size={15} strokeWidth={2.2} />}
-                    </button>
                   </div>
+                  <span className="plan-wake-hint">
+                    Der Wecker startet, sobald der Punkt als Plan bestätigt ist.
+                  </span>
                   <input
                     className="plan-input"
                     type="text"
@@ -639,7 +679,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                 <button
                   type="button"
                   className="plan-add"
-                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); resetDraft() }}
+                  onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); resetDraft(SLOT_START[slot.key]) }}
                 >
                   <Plus size={15} strokeWidth={2.2} />
                   Vorschlag

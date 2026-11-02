@@ -3,7 +3,7 @@
 // drei Dinge, an denen selbstgebaute Exporte sonst scheitern:
 //   1. Zeilenumbruch ist CRLF, gefaltet wird nach 75 OKTETTEN (nicht Zeichen).
 //   2. Text wird escaped: Backslash, Semikolon, Komma, Zeilenumbruch.
-//   3. Europe/Madrid braucht eine VTIMEZONE-Definition, sonst legt Outlook die
+//   3. Atlantic/Canary braucht eine VTIMEZONE-Definition, sonst legt Outlook die
 //      Termine eine Stunde falsch, weil es den TZID nicht kennt.
 
 import type { TripPlanMap } from '../hooks/useTripPlan'
@@ -16,7 +16,7 @@ export interface IcsEvent {
   uid: string
   /** 'YYYY-MM-DD' (lokal) */
   day: string
-  /** 'HH:MM' (Europe/Madrid) */
+  /** 'HH:MM' in Kanaren-Zeit */
   time: string
   durationMin: number
   title: string
@@ -82,25 +82,27 @@ export function foldIcsLine(line: string): string {
   return out.join('\r\n ')
 }
 
-/** Europe/Madrid: MEZ (letzter Sonntag im Oktober) und MESZ (letzter Sonntag im März).
+/** Atlantic/Canary: WET (+0000) und WEST (+0100) — die Kanaren liegen eine Stunde
+ *  hinter Madrid, und `starts_at` ist Kanaren-Wandzeit. Mit `Europe/Madrid` landete
+ *  jeder Termin eine Stunde zu früh im Kalender (Review r6, Befund 1).
  *  Als Zeilenliste, NICHT als ein Block: `foldIcsLine` arbeitet zeilenweise, ein
  *  zusammengeklebter Block wurde mitten in `BEGIN:DAYLIGHT` gefaltet. */
 const VTIMEZONE_LINES = [
   'BEGIN:VTIMEZONE',
-  'TZID:Europe/Madrid',
-  'X-LIC-LOCATION:Europe/Madrid',
+  'TZID:Atlantic/Canary',
+  'X-LIC-LOCATION:Atlantic/Canary',
   'BEGIN:DAYLIGHT',
-  'TZOFFSETFROM:+0100',
-  'TZOFFSETTO:+0200',
-  'TZNAME:CEST',
-  'DTSTART:19700329T020000',
+  'TZOFFSETFROM:+0000',
+  'TZOFFSETTO:+0100',
+  'TZNAME:WEST',
+  'DTSTART:19700329T010000',
   'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
   'END:DAYLIGHT',
   'BEGIN:STANDARD',
-  'TZOFFSETFROM:+0200',
-  'TZOFFSETTO:+0100',
-  'TZNAME:CET',
-  'DTSTART:19701025T030000',
+  'TZOFFSETFROM:+0100',
+  'TZOFFSETTO:+0000',
+  'TZNAME:WET',
+  'DTSTART:19701025T020000',
   'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
   'END:STANDARD',
   'END:VTIMEZONE',
@@ -134,7 +136,7 @@ export function buildIcs({ calendarName, events, now = new Date() }: BuildIcsOpt
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcsText(calendarName)}`,
-    'X-WR-TIMEZONE:Europe/Madrid',
+    'X-WR-TIMEZONE:Atlantic/Canary',
     ...VTIMEZONE_LINES,
   ]
 
@@ -143,8 +145,8 @@ export function buildIcs({ calendarName, events, now = new Date() }: BuildIcsOpt
       'BEGIN:VEVENT',
       `UID:${event.uid}`,
       `DTSTAMP:${stamp}`,
-      `DTSTART;TZID=Europe/Madrid:${icsStamp(event.day, event.time)}`,
-      `DTEND;TZID=Europe/Madrid:${icsStamp(event.day, addMinutes(event.time, event.durationMin))}`,
+      `DTSTART;TZID=Atlantic/Canary:${icsStamp(event.day, event.time)}`,
+      `DTEND;TZID=Atlantic/Canary:${icsStamp(event.day, addMinutes(event.time, event.durationMin))}`,
       `SUMMARY:${escapeIcsText(event.title)}`,
     )
     if (event.location) lines.push(`LOCATION:${escapeIcsText(event.location)}`)

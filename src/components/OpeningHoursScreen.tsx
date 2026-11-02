@@ -83,7 +83,6 @@ function Row({ entry, now }: { entry: OpeningEntry; now: Date }) {
       href={mapsUrl(entry.name)}
       target="_blank"
       rel="noreferrer"
-      aria-label={`${entry.name} in Maps öffnen`}
     >
       <span className="oh-row-main">
         <span className="oh-name">

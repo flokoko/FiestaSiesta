@@ -73,12 +73,12 @@ describe('buildIcs', () => {
     expect(ics.startsWith('BEGIN:VCALENDAR\r\n')).toBe(true)
     expect(ics.trimEnd().endsWith('END:VCALENDAR')).toBe(true)
     expect(ics).toContain('BEGIN:VTIMEZONE')
-    expect(ics).toContain('TZID:Europe/Madrid')
+    expect(ics).toContain('TZID:Atlantic/Canary')
   })
 
   it('schreibt Start, Ende, Titel und Ort des Termins', () => {
-    expect(ics).toContain('DTSTART;TZID=Europe/Madrid:20261129T190000')
-    expect(ics).toContain('DTEND;TZID=Europe/Madrid:20261129T213000')
+    expect(ics).toContain('DTSTART;TZID=Atlantic/Canary:20261129T190000')
+    expect(ics).toContain('DTEND;TZID=Atlantic/Canary:20261129T213000')
     expect(ics).toContain('SUMMARY:Sonnenuntergang am Observatorio')
     expect(ics).toContain('LOCATION:Observatorio')
     expect(ics).toContain('DTSTAMP:20261029T041500Z')

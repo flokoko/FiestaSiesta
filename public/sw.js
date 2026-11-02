@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.51.0';
+const CACHE_NAME = 'fiesta-siesta-v0.52.0';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -124,17 +124,30 @@ self.addEventListener('pushsubscriptionchange', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
 
+  // Der Absender bestimmt das Ziel (Wecker → Reiseplan). Ohne Angabe die Startseite.
+  const data = e.notification.data || {};
+  const target = typeof data.url === 'string' && data.url.startsWith('/FiestaSiesta')
+    ? data.url
+    : '/FiestaSiesta/';
+
   e.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Try to focus an existing Fiesta Siesta tab
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
-        if (client.url.includes('/FiestaSiesta') && 'focus' in client) {
-          return client.focus();
+        if (client.url.includes('/FiestaSiesta')) {
+          // Nur nach vorn holen reicht nicht: der Nutzer landet sonst im Tab,
+          // in dem er vorher war. Erst navigieren, dann fokussieren.
+          try {
+            if (client.url !== new URL(target, client.url).href && 'navigate' in client) {
+              await client.navigate(target);
+            }
+          } catch {
+            // Navigation kann cross-origin scheitern — Fokus trotzdem.
+          }
+          if ('focus' in client) return client.focus();
         }
       }
-      // No existing tab found — open a new one
       if (self.clients.openWindow) {
-        return self.clients.openWindow('/FiestaSiesta/');
+        return self.clients.openWindow(target);
       }
     })
   );
