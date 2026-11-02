@@ -513,7 +513,19 @@
 /* Bei 16 px (iOS zoomt sonst beim Fokus) braucht „08:30" plus Uhr-Icon mehr Platz. */
 @media (hover: none), (pointer: coarse) {
   #root .plan-time-input {
-    width: 122px;
+    width: 116px;
+  }
+}
+
+/* Im Zeilen-Editor sitzt neben Zeit und Vorlauf noch die Glocke — dort ist
+   weniger Platz als im Anlege-Formular. */
+#root .plan-alarm-row .plan-time-input {
+  width: 108px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .plan-alarm-row .plan-time-input {
+    width: 112px;
   }
 }
 
@@ -620,4 +632,32 @@
   display: block;
   margin-top: 3px;
   color: var(--accent);
+}
+
+
+/* Fahrzeit vom Ferienhaus — Näherung, im Wecker-Editor und im Anlege-Formular. */
+#root .plan-drive {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  flex: 1 1 100%;
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+#root .plan-drive-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+#root .plan-drive.is-tight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+#root .plan-btn.is-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

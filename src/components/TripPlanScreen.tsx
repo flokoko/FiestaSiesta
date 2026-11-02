@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff } from 'lucide-react'
+import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -9,6 +9,7 @@ import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotM
 import { tripDays, formatDayShort, tripDay } from '../lib/trip'
 import { coordsFromMapsUrl, isMapsUrl, reverseLabel, resolvePlaceCoords, type Coords } from '../lib/poiCoords'
 import { hasActiveSubscription } from '../lib/push'
+import { fetchDriveTime, leadIsTight, quickDriveTime, recommendedLead, type DriveTime } from '../lib/driveTime'
 import { DEFAULT_LEAD, LEAD_OPTIONS, SLOT_START, hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import type { TripProposal, TripSlot, TripVote } from '../types'
@@ -46,6 +47,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   // Ohne Push-Abo klingelt der Wecker nur bei geöffneter App — das muss im
   // Editor stehen, sonst verspricht die Zeile etwas, das nicht kommt.
   const [pushReady, setPushReady] = useState<boolean | null>(null)
+  // Fahrzeit vom Ferienhaus: erst die Schätzung, dann die echte Route (OSRM).
+  const [editorDrive, setEditorDrive] = useState<DriveTime | null>(null)
+  const [formDrive, setFormDrive] = useState<DriveTime | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -137,6 +141,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     // Zwei schnell hintereinander eingefügte Links: nur die Antwort zum ZULETZT
     // eingefügten Link darf Name und Spinner setzen, sonst speichert die Zeile
     // den Namen von Link A mit den Koordinaten von Link B.
+    loadDrive(coords.lat, coords.lon, setFormDrive)
     const requestId = ++placeLookupRef.current
     void reverseLabel(coords.lat, coords.lon)
       .then((label) => {
@@ -155,6 +160,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
     setPlaceCoords(null)
     setPlaceUrl(null)
     setPlaceBusy(false)
+    setFormDrive(null)
     setDraftLead(readDefaultLead())
   }
 
@@ -229,7 +235,24 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
       lead: proposal.remind_before ?? readDefaultLead(),
       on: proposal.remind_enabled,
     })
+    loadDrive(proposal.place_lat, proposal.place_lon, setEditorDrive)
     setAlarmFor(proposal.id)
+  }
+
+  /** Schätzung sofort, echte Route nach — still, wenn beides fehlschlägt. */
+  const loadDrive = (
+    lat: number | null,
+    lon: number | null,
+    apply: (value: DriveTime | null) => void,
+  ) => {
+    if (typeof lat !== 'number' || typeof lon !== 'number') {
+      apply(null)
+      return
+    }
+    apply(quickDriveTime(lat, lon))
+    void fetchDriveTime(lat, lon).then((route) => {
+      if (route) apply(route)
+    })
   }
 
   const saveAlarm = async (proposal: TripProposal) => {
@@ -569,7 +592,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                                 >
                                   {LEAD_OPTIONS.map((m) => (
                                     <option key={m} value={m}>
-                                      {m === 0 ? '0 Min' : `${m} Min`}
+                                      {m === 0 ? 'pünktlich' : `${m}m`}
                                     </option>
                                   ))}
                                 </select>
@@ -587,6 +610,20 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                               </button>
                             </div>
                             <div className="plan-alarm-foot">
+                              {editorDrive && (
+                                <span
+                                  className={`plan-drive${leadIsTight(alarmDraft.lead, editorDrive.minutes) ? ' is-tight' : ''}`}
+                                >
+                                  <Car size={11} strokeWidth={2.2} className="plan-drive-icon" />
+                                  <span>
+                                    Fahrt ≈ {editorDrive.minutes} Min von Temisas
+                                    {editorDrive.source === 'estimate' ? ' · Schätzung' : ''}
+                                    {leadIsTight(alarmDraft.lead, editorDrive.minutes)
+                                      ? ` — Wecker mindestens ${recommendedLead(editorDrive.minutes)} Min vorher`
+                                      : ''}
+                                  </span>
+                                </span>
+                              )}
                               <span className="plan-alarm-hint">
                                 {alarmDraft.on
                                   ? `Push um ${reminderClock(alarmDraft.start, alarmDraft.lead)} — Kanaren-Zeit`
@@ -665,7 +702,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                       >
                         {LEAD_OPTIONS.map((m) => (
                           <option key={m} value={m}>
-                            {m === 0 ? '0 Min' : `${m} Min`}
+                            {m === 0 ? 'pünktlich' : `${m}m`}
                           </option>
                         ))}
                       </select>
@@ -674,6 +711,20 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
                   <span className="plan-wake-hint">
                     Der Wecker startet, sobald der Punkt als Plan bestätigt ist.
                   </span>
+                  {formDrive && (
+                    <span
+                      className={`plan-drive${leadIsTight(draftLead, formDrive.minutes) ? ' is-tight' : ''}`}
+                    >
+                      <Car size={11} strokeWidth={2.2} className="plan-drive-icon" />
+                      <span>
+                        Fahrt ≈ {formDrive.minutes} Min von Temisas
+                        {formDrive.source === 'estimate' ? ' · Schätzung' : ''}
+                        {leadIsTight(draftLead, formDrive.minutes)
+                          ? ` — Vorlauf mindestens ${recommendedLead(formDrive.minutes)} Min`
+                          : ''}
+                      </span>
+                    </span>
+                  )}
                   <input
                     className="plan-input"
                     type="text"
