@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChefHat, Clock, Loader2, Plus, Trash2, Users, ShoppingBasket, Check, X,
 } from 'lucide-react'
+import { readCache, writeCache } from '../lib/readCache'
 import { supabase } from '../lib/supabase'
 import {
   formatIngredient, parseIngredients, parseSteps, recipeMeta, unitLabel,
@@ -17,18 +18,35 @@ interface Props {
 export default function RecipesScreen({ listId, userName }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  // Ohne Empfang in den Bergen: Rezepte sollen trotzdem lesbar sein.
+  const [offline, setOffline] = useState(false)
   const [open, setOpen] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const load = useCallback(async () => {
+    // Erst der letzte Stand aus dem Gerät — so steht die Küche sofort, auch offline.
+    const cached = readCache<Recipe[]>(listId, 'recipes')
+    if (cached && cached.length > 0) {
+      setRecipes((current) => (current.length > 0 ? current : cached))
+      setLoading(false)
+    }
+
     const { data, error } = await supabase
       .from('recipes')
       .select('*')
       .eq('list_id', listId)
       .order('created_at', { ascending: true })
-    if (!error && data) setRecipes(data as Recipe[])
+
+    if (error || !data) {
+      setOffline(true)
+      setLoading(false)
+      return
+    }
+    setOffline(false)
+    setRecipes(data as Recipe[])
+    writeCache<Recipe[]>(listId, 'recipes', data as Recipe[])
     setLoading(false)
   }, [listId])
 
@@ -98,7 +116,11 @@ export default function RecipesScreen({ listId, userName }: Props) {
       setToast('Löschen fehlgeschlagen')
       return
     }
-    setRecipes((current) => current.filter((entry) => entry.id !== recipe.id))
+    setRecipes((current) => {
+      const next = current.filter((entry) => entry.id !== recipe.id)
+      writeCache<Recipe[]>(listId, 'recipes', next)
+      return next
+    })
     setOpen(null)
     setToast('Rezept gelöscht')
   }
@@ -123,9 +145,7 @@ export default function RecipesScreen({ listId, userName }: Props) {
           <p>
             {loading
               ? 'lädt'
-              : recipes.length === 0
-                ? 'noch kein Rezept'
-                : recipes.length === 1 ? '1 Rezept' : `${recipes.length} Rezepte`}
+              : `${recipes.length === 1 ? '1 Rezept' : `${recipes.length} Rezepte`}${offline ? ' · offline' : ''}`}
           </p>
         </div>
         <button
@@ -199,10 +219,10 @@ export default function RecipesScreen({ listId, userName }: Props) {
             type="button"
             className="rc-shop"
             onClick={() => void addToShopping(current)}
-            disabled={busy}
+            disabled={busy || offline}
           >
             {busy ? <Loader2 size={15} className="rc-spin" /> : <ShoppingBasket size={15} strokeWidth={2} />}
-            Zutaten auf die Einkaufsliste
+            {offline ? 'Offline — Zutaten brauchen Netz' : 'Zutaten auf die Einkaufsliste'}
           </button>
 
           {current.steps && (
@@ -222,9 +242,14 @@ export default function RecipesScreen({ listId, userName }: Props) {
         <RecipeForm
           listId={listId}
           userName={userName}
+          offline={offline}
           onCancel={() => setAdding(false)}
           onSaved={(recipe) => {
-            setRecipes((current) => [...current, recipe])
+            setRecipes((current) => {
+              const next = [...current, recipe]
+              writeCache<Recipe[]>(listId, 'recipes', next)
+              return next
+            })
             setAdding(false)
             setOpen(recipe.id)
             setToast('Rezept gespeichert')
@@ -243,12 +268,13 @@ export default function RecipesScreen({ listId, userName }: Props) {
 interface FormProps {
   listId: string
   userName: string
+  offline: boolean
   onCancel: () => void
   onSaved: (recipe: Recipe) => void
   onError: (message: string) => void
 }
 
-function RecipeForm({ listId, userName, onCancel, onSaved, onError }: FormProps) {
+function RecipeForm({ listId, userName, offline, onCancel, onSaved, onError }: FormProps) {
   const [title, setTitle] = useState('')
   const [servings, setServings] = useState(3)
   const [minutes, setMinutes] = useState('')
@@ -257,7 +283,7 @@ function RecipeForm({ listId, userName, onCancel, onSaved, onError }: FormProps)
   const [saving, setSaving] = useState(false)
 
   const parsed = useMemo(() => parseIngredients(ingredientText), [ingredientText])
-  const canSave = title.trim().length > 1 && parsed.length > 0 && !saving
+  const canSave = title.trim().length > 1 && parsed.length > 0 && !saving && !offline
 
   const save = async () => {
     if (!canSave) return
@@ -359,7 +385,7 @@ function RecipeForm({ listId, userName, onCancel, onSaved, onError }: FormProps)
 
       <button type="button" className="rc-shop rc-save" onClick={() => void save()} disabled={!canSave}>
         {saving ? <Loader2 size={15} className="rc-spin" /> : <Check size={15} strokeWidth={2.2} />}
-        Rezept speichern
+        {offline ? 'Speichern braucht Netz' : 'Rezept speichern'}
       </button>
     </section>
   )

@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.55.0';
+const CACHE_NAME = 'fiesta-siesta-v0.56.0';
 
 const INDEX_URL = '/FiestaSiesta/';
 
