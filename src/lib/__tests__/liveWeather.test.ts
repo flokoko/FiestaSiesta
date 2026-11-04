@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { skyTone } from '../liveWeather'
+import { skyTone, conditionLabel } from '../liveWeather'
 
 describe('skyTone', () => {
   it('ordnet die WMO-Codes den Szenen zu', () => {
@@ -21,5 +21,17 @@ describe('skyTone', () => {
 
   it('fällt bei unbekannten Codes auf Regen zurück (nie auf eine leere Szene)', () => {
     expect(skyTone(1234)).toBe('rain')
+  })
+})
+
+describe('conditionLabel', () => {
+  it('nennt einen klaren Himmel tagsüber sonnig und nachts klar', () => {
+    expect(conditionLabel(0, true)).toBe('Sonnig')
+    expect(conditionLabel(0, false)).toBe('Klar')
+  })
+
+  it('lässt Regen und Gewitter auch nachts, wie sie sind', () => {
+    expect(conditionLabel(61, false)).toBe('Regen')
+    expect(conditionLabel(95, false)).toBe('Gewitter')
   })
 })

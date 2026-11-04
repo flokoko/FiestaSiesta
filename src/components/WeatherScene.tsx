@@ -98,7 +98,7 @@ export default function WeatherScene({ tone, isDay }: { tone: SkyTone; isDay: bo
           </linearGradient>
           <mask id="wx-moon-mask">
             <rect x="0" y="0" width="200" height="150" fill="#fff" />
-            <circle cx="150" cy="38" r="17" fill="#000" />
+            <circle cx="144" cy="39" r="16.5" fill="#000" />
           </mask>
         </defs>
 

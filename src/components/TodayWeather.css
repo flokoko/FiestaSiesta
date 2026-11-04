@@ -267,7 +267,8 @@
   inset: 0;
 }
 
-/* Sonne */
+/* Sonne — Leuchten kommt aus dem radialen Halo; CSS-drop-shadow ist hier
+   tabu (Chromium rastert den Filterbereich als sichtbares Rechteck). */
 #root .wx-sun-rays {
   transform-box: view-box;
   transform-origin: 134px 46px;
@@ -284,10 +285,6 @@
   transform-box: view-box;
   transform-origin: 134px 46px;
   animation: wx-halo 6s ease-in-out infinite;
-}
-
-#root .wx-sun-core {
-  filter: drop-shadow(0 0 10px rgba(255, 206, 110, 0.55));
 }
 
 @keyframes wx-rays-spin {
@@ -308,11 +305,7 @@
   }
 }
 
-/* Mond & Sterne */
-#root .wx-moon-core {
-  filter: drop-shadow(0 0 12px rgba(255, 240, 190, 0.45));
-}
-
+/* Mond & Sterne — ebenfalls ohne drop-shadow (siehe Sonne) */
 #root .wx-stars circle {
   fill: #fff8e1;
   opacity: 0.7;

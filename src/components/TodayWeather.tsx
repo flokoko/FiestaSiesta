@@ -1,10 +1,19 @@
 import { useMemo } from 'react'
+import { Moon, CloudMoon } from 'lucide-react'
 import WeatherScene from './WeatherScene'
 import WeatherGlyph from './WeatherGlyph'
 import { useLiveWeather } from '../hooks/useLiveWeather'
-import { skyTone } from '../lib/liveWeather'
-import { getWeatherInfo } from '../lib/weatherCodes'
+import { conditionLabel, skyTone } from '../lib/liveWeather'
 import './TodayWeather.css'
+
+/** Nachts sind Sonnen-Icons falsch — klarer Himmel = Mond, wolkig = Wolke/Mond. */
+function CondGlyph({ code, isDay }: { code: number; isDay: boolean }) {
+  if (!isDay && code <= 3) {
+    const Icon = code === 0 ? Moon : CloudMoon
+    return <Icon size={13} strokeWidth={2.2} className="wx-live-glyph" aria-hidden="true" />
+  }
+  return <WeatherGlyph code={code} size={13} className="wx-live-glyph" />
+}
 
 /**
  * Wetterkarte für den Heute-Screen: aktuelle Lage am Zielort, animiert.
@@ -15,7 +24,7 @@ export default function TodayWeather({ onOpen }: { onOpen: () => void }) {
   const data = useLiveWeather()
   const tone = data ? skyTone(data.code) : 'partly'
   const night = data ? !data.isDay : false
-  const label = data ? getWeatherInfo(data.code).desc : 'Wetter wird geladen'
+  const label = data ? conditionLabel(data.code, data.isDay) : 'Wetter wird geladen'
   const temp = data ? Math.round(data.temp) : null
 
   const aria = useMemo(() => {
@@ -41,7 +50,7 @@ export default function TodayWeather({ onOpen }: { onOpen: () => void }) {
     >
       <span className="wx-live-body">
         <span className="wx-live-kicker">
-          Temisas <span className="wx-live-kicker-dot">·</span> {data?.isDay === false ? 'Nacht' : 'jetzt'}
+          Temisas <span className="wx-live-kicker-dot">·</span> {night ? 'Nacht' : 'jetzt'}
         </span>
         {temp === null ? (
           <span className="wx-live-skeleton" aria-hidden="true" />
@@ -52,7 +61,7 @@ export default function TodayWeather({ onOpen }: { onOpen: () => void }) {
           </span>
         )}
         <span className="wx-live-cond">
-          {data && data.code >= 0 ? <WeatherGlyph code={data.code} size={13} className="wx-live-glyph" /> : null}
+          {data ? <CondGlyph code={data.code} isDay={data.isDay} /> : null}
           {label}
         </span>
         {data && (

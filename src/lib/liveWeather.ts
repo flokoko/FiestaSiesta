@@ -7,6 +7,7 @@
 
 import { TRIP_LAT, TRIP_LON } from './trip'
 import { sunClock } from './tripWeather'
+import { getWeatherInfo } from './weatherCodes'
 
 export interface LiveWeather {
   /** °C, aktuell */
@@ -113,6 +114,16 @@ export async function fetchLiveWeather(force = false): Promise<LiveWeather | nul
   } catch {
     return cached
   }
+}
+
+/** WMO-Code → Text. Bei Nacht heißt Code 0 „Klar", nicht „Sonnig". */
+export function conditionLabel(code: number, isDay: boolean): string {
+  if (!isDay) {
+    if (code === 0) return 'Klar'
+    if (code === 1) return 'Heiter'
+    if (code === 2) return 'Wolkig'
+  }
+  return getWeatherInfo(code).desc
 }
 
 /** WMO-Code → welche Szene die Karte zeigt. */
