@@ -17,10 +17,14 @@
   z-index: 30;
   margin: 0 -2px 10px;
   padding: 4px 2px 6px;
-  background: color-mix(in srgb, var(--header-bg) 88%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  /* --bg ist deckend (--header-bg ist es nicht: 50 % Alpha, damit kam der
+     Inhalt durch die Leiste, sobald backdrop-filter fehlt — headless Chromium
+     und ältere WebViews rechnen es als `none`). */
+  background: color-mix(in srgb, var(--bg) 93%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   border-radius: 18px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 60%, transparent);
 }
 
 #root .day-strip {
