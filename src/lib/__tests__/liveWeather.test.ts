@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { skyTone, conditionLabel } from '../liveWeather'
+import { skyTone, conditionLabel, canaryClock } from '../liveWeather'
 
 describe('skyTone', () => {
   it('ordnet die WMO-Codes den Szenen zu', () => {
@@ -33,5 +33,17 @@ describe('conditionLabel', () => {
   it('lässt Regen und Gewitter auch nachts, wie sie sind', () => {
     expect(conditionLabel(61, false)).toBe('Regen')
     expect(conditionLabel(95, false)).toBe('Gewitter')
+  })
+})
+
+describe('canaryClock', () => {
+  it('zeigt das Datum der Kanaren, nicht das deutsche', () => {
+    // 00:30 deutscher Zeit am 5.11. ist auf den Kanaren noch der 4.11.
+    expect(canaryClock(new Date('2026-11-04T23:30:00Z'))).toEqual({ date: 'Mi 4.11.', time: '23:30' })
+  })
+
+  it('rechnet auch die Sommerzeit mit (UTC+1 auf den Kanaren)', () => {
+    // 12:00 UTC im Juli = 13:00 auf den Kanaren
+    expect(canaryClock(new Date('2026-07-15T12:00:00Z')).time).toBe('13:00')
   })
 })

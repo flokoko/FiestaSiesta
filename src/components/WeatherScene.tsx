@@ -61,7 +61,7 @@ function Cloud({ spec }: { spec: CloudSpec }) {
   )
 }
 
-export default function WeatherScene({ tone, isDay }: { tone: SkyTone; isDay: boolean }) {
+export default function WeatherScene({ tone, isDay, fit = 'slice' }: { tone: SkyTone; isDay: boolean; fit?: 'slice' | 'meet' }) {
   const night = !isDay
   const sun = !night && (tone === 'clear' || tone === 'partly')
   const moon = night && tone !== 'storm' && tone !== 'rain'
@@ -72,7 +72,7 @@ export default function WeatherScene({ tone, isDay }: { tone: SkyTone; isDay: bo
 
   return (
     <div className={`wx-scene is-${tone}${night ? ' is-night' : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <svg viewBox="0 0 200 150" preserveAspectRatio={`xMidYMid ${fit}`} focusable="false">
         <defs>
           <radialGradient id="wx-sun-grad" cx="42%" cy="38%" r="62%">
             <stop offset="0%" stopColor="#FFF6CE" />

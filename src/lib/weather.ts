@@ -2,6 +2,8 @@
 // Extracted from WeatherWidget.tsx and WeatherScreen.tsx to eliminate
 // duplication of handleGeocode + localStorage location read/write.
 
+import { TRIP_LAT, TRIP_LON } from './trip'
+
 export interface GeoResult {
   lat: number
   lon: number
@@ -9,15 +11,17 @@ export interface GeoResult {
   country?: string
 }
 
-/** Default-Speicherpunkt: Maspalomas, Gran Canaria (Fallback, wenn nichts gespeichert ist). */
+/** Default-Speicherpunkt: die Unterkunft. Vorher Maspalomas (Bella-Erbe) —
+ *  dann zeigte der Wetter-Screen eine andere Temperatur als die Heute-Karte,
+ *  die vom Ferienhaus ausgeht. */
 export const DEFAULT_LOCATION: { lat: number; lon: number; name: string } = {
-  lat: 27.7610,
-  lon: -15.5860,
-  name: 'Maspalomas, Gran Canaria',
+  lat: TRIP_LAT,
+  lon: TRIP_LON,
+  name: 'Temisas, Gran Canaria',
 }
 
 /** Read the stored location from localStorage. Falls back to the default
- *  storage point (Maspalomas, Gran Canaria) when nothing is stored. */
+ *  storage point (Temisas) when nothing is stored. */
 export function getStoredLocation(): { lat: number; lon: number; name: string } {
   const lat = localStorage.getItem('weather_lat')
   const lon = localStorage.getItem('weather_lon')

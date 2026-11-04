@@ -126,6 +126,31 @@ export function conditionLabel(code: number, isDay: boolean): string {
   return getWeatherInfo(code).desc
 }
 
+// Formatter einmal bauen — die Karte fragt sie alle 30 s ab.
+const CANARY_DATE = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Atlantic/Canary', weekday: 'short', day: 'numeric', month: 'numeric',
+})
+const CANARY_TIME = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Atlantic/Canary', hour: '2-digit', minute: '2-digit',
+})
+
+/**
+ * Datum und Uhrzeit an der Unterkunft. Die Kanaren liegen eine Stunde hinter
+ * Deutschland (UTC+0 statt UTC+1 im Winter) — zwischen 00:00 und 01:00 deutscher
+ * Zeit ist dort noch der Vortag.
+ */
+export function canaryClock(now: Date = new Date()): { date: string; time: string } {
+  const parts = CANARY_DATE.formatToParts(now)
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  // „Mi." von Hand entschärfen — Intl setzt im Deutschen einen Punkt hinter
+  // die Kurzform, zusammen mit dem Datum wird daraus „Mi., 4.11.".
+  const weekday = part('weekday').replace(/\.$/, '')
+  return {
+    date: `${weekday} ${part('day')}.${part('month')}.`,
+    time: CANARY_TIME.format(now),
+  }
+}
+
 /** WMO-Code → welche Szene die Karte zeigt. */
 export function skyTone(code: number): SkyTone {
   if (code === 0) return 'clear'

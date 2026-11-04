@@ -5,6 +5,8 @@ import type { TripPlanMap } from '../hooks/useTripPlan'
 import { SLOTS, isoDay } from '../lib/tripPlan'
 import SlotIcon from './SlotIcon'
 import TodayWeather from './TodayWeather'
+import { useLiveWeather } from '../hooks/useLiveWeather'
+import { useCanaryClock } from '../hooks/useCanaryClock'
 import {
   TRIP, TRIP_START, TRIP_LENGTH, formatDayLong, formatDayShort, formatRange,
   tripDay, tripDays, tripPhase, daysUntilTrip,
@@ -37,8 +39,11 @@ export default function TodayScreen({
   const today = new Date()
   const phase = tripPhase(today)
   const day = tripDay(today)
+  const [dayName, dayRest] = formatDayLong(today).split(', ')
+  const localClock = useCanaryClock()
   const open = Math.max(0, shoppingCount - shoppingChecked)
   const days = useMemo(() => tripDays(), [])
+  const liveWeather = useLiveWeather()
 
   const kicker = phase === 'during'
     ? `Tag ${day} von ${TRIP_LENGTH}`
@@ -100,11 +105,15 @@ export default function TodayScreen({
       <section className="today-hero">
         <div className="today-hero-glow" aria-hidden="true" />
         <div className="today-kicker">{kicker}</div>
-        <h1 className="today-date">{formatDayLong(today)}</h1>
+        <h1 className="today-date">{dayName},<br />{dayRest}</h1>
         <div className="today-sub">{TRIP.name} · {TRIP.place}</div>
         <div className="today-sub today-sub-soft">
           {formatRange()} · {participantCount === 1 ? 'du allein' : `${participantCount} dabei`}
           {metaRight ? ` · ${metaRight}` : ''}
+        </div>
+        <div className="today-local">
+          <span className="today-local-dot" aria-hidden="true" />
+          Vor Ort {localClock.date} · {localClock.time}
         </div>
         <div className="today-progress" aria-hidden="true">
           {days.map((date, index) => {
@@ -118,9 +127,9 @@ export default function TodayScreen({
             )
           })}
         </div>
-      </section>
 
-      <TodayWeather onOpen={() => onNavigate('weather')} />
+        <TodayWeather data={liveWeather} onOpen={() => onNavigate('weather')} />
+      </section>
 
       <div className="today-chips">
         <button type="button" className="today-chip" onClick={() => onNavigate('list')}>

@@ -1,186 +1,221 @@
 /* ═══════════════════════════════════════════════════════════════════
-   Wetterkarte „Heute" — animierter Himmel über Temisas
-   Alle Regeln mit #root-Präfix: Screen-CSS wird lazy geladen und landet
-   zeitlich nach design.css.
+   Wetter-Zeile in der Heute-Karte — „Blick aus dem Fenster"
+   Die Karte selbst ist der rote Hero; hier sitzt ein Fenster mit dem
+   animierten Himmel über Temisas plus Werte und Ortszeit.
+   Alle Regeln mit #root-Präfix (Screen-CSS lädt nach design.css).
    ═══════════════════════════════════════════════════════════════════ */
 
-#root .wx-live {
-  position: relative;
+#root .today-wx {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
+  align-items: center;
+  gap: 11px;
   width: 100%;
-  min-height: 138px;
-  margin: 0;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: var(--r-4);
-  overflow: hidden;
-  isolation: isolate;
+  margin-top: 13px;
+  padding: 9px 10px 9px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--r-3);
+  background: rgba(255, 255, 255, 0.17);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #fff;
   text-align: left;
   cursor: pointer;
-  color: var(--sky-ink);
-  background: linear-gradient(152deg, var(--sky-a) 0%, var(--sky-b) 54%, var(--sky-c) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 18px 38px -24px rgba(23, 34, 52, 0.5);
-  transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease);
+  transition: background 0.25s var(--ease), transform 0.25s var(--ease);
 }
 
-#root .wx-live:active {
-  transform: scale(0.985);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 10px 24px -18px rgba(23, 34, 52, 0.5);
+#root .today-wx:active {
+  transform: scale(0.99);
+  background: rgba(255, 255, 255, 0.24);
 }
 
-#root .wx-live:focus-visible {
-  outline: 2px solid rgba(23, 36, 58, 0.45);
+#root .today-wx:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.75);
   outline-offset: 2px;
 }
 
-/* Im Dunkelmodus bleibt die Karte ein helles „Fenster", wird aber leicht
-   abgedunkelt — sonst leuchtet sie nachts wie eine Lampe. */
-:root[data-theme='dark'] #root .wx-live::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: rgba(10, 16, 30, 0.14);
+/* ── Fenster mit dem Himmel ───────────────────────────────────────── */
+#root .today-wx-port {
+  position: relative;
+  flex: 0 0 auto;
+  width: 92px;
+  height: 94px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(152deg, var(--sky-a) 0%, var(--sky-b) 55%, var(--sky-c) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+    0 6px 14px -8px rgba(23, 20, 26, 0.55);
 }
 
-/* ── Himmelsfarben je Wetterlage ──────────────────────────────────── */
-#root .wx-live[data-sky='clear'] {
+#root .today-wx-port[data-sky='clear'] {
   --sky-a: #A6DBF5;
   --sky-b: #CBE8F8;
   --sky-c: #FFDFC0;
-  --sky-ink: #14243A;
-  --sky-ink-2: #33506B;
   --sky-cloud: rgba(255, 255, 255, 0.94);
 }
 
-#root .wx-live[data-sky='partly'] {
+#root .today-wx-port[data-sky='partly'] {
   --sky-a: #9CCBEA;
   --sky-b: #C6DFF0;
   --sky-c: #FFE3C6;
-  --sky-ink: #14243A;
-  --sky-ink-2: #33506B;
   --sky-cloud: rgba(255, 255, 255, 0.94);
 }
 
-#root .wx-live[data-sky='cloudy'] {
+#root .today-wx-port[data-sky='cloudy'] {
   --sky-a: #B4C3D0;
   --sky-b: #CFDAE3;
   --sky-c: #E9EDF0;
-  --sky-ink: #182534;
-  --sky-ink-2: #3C4C5C;
   --sky-cloud: rgba(255, 255, 255, 0.92);
 }
 
-#root .wx-live[data-sky='fog'] {
+#root .today-wx-port[data-sky='fog'] {
   --sky-a: #BDC6CE;
   --sky-b: #D8DFE5;
   --sky-c: #EEF1F3;
-  --sky-ink: #1B2734;
-  --sky-ink-2: #43505D;
   --sky-cloud: rgba(255, 255, 255, 0.8);
 }
 
-#root .wx-live[data-sky='rain'] {
+#root .today-wx-port[data-sky='rain'] {
   --sky-a: #9AAEBD;
   --sky-b: #BCCBD6;
   --sky-c: #DDE5EA;
-  --sky-ink: #13202E;
-  --sky-ink-2: #364756;
   --sky-cloud: rgba(247, 251, 255, 0.9);
 }
 
-#root .wx-live[data-sky='snow'] {
+#root .today-wx-port[data-sky='snow'] {
   --sky-a: #B2CADD;
   --sky-b: #D5E4EF;
   --sky-c: #F2F7FA;
-  --sky-ink: #162334;
-  --sky-ink-2: #3A4D60;
   --sky-cloud: rgba(255, 255, 255, 0.95);
 }
 
-#root .wx-live[data-sky='storm'] {
+#root .today-wx-port[data-sky='storm'] {
   --sky-a: #6E7E8D;
   --sky-b: #8E9DA9;
   --sky-c: #B4BFC7;
-  --sky-ink: #FFFFFF;
-  --sky-ink-2: rgba(255, 255, 255, 0.86);
   --sky-cloud: rgba(226, 234, 242, 0.92);
 }
 
-#root .wx-live[data-night='true'] {
+#root .today-wx-port[data-night='true'] {
   --sky-a: #1B2749;
   --sky-b: #2C3B5E;
   --sky-c: #4E4568;
-  --sky-ink: #F2F5FF;
-  --sky-ink-2: rgba(242, 245, 255, 0.82);
   --sky-cloud: rgba(219, 229, 248, 0.55);
 }
 
-/* ── Textblock ────────────────────────────────────────────────────── */
-#root .wx-live-body {
-  position: relative;
-  z-index: 2;
+#root .today-wx-port .wx-scene {
+  position: absolute;
+  inset: 0;
+}
+
+#root .wx-scene,
+#root .wx-scene svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Werte ────────────────────────────────────────────────────────── */
+/* Das Datum trägt jetzt eine zweite Zeile Wetter — eine Nummer kleiner,
+   damit der Hero nicht auf zwei Titelzeilen wächst. */
+#root .today-hero .today-date {
+  font-size: 26px;
+}
+
+#root .today-wx-body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 2px;
   flex: 1 1 auto;
   min-width: 0;
-  padding: 15px 6px 15px 18px;
 }
 
-#root .wx-live-kicker {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--sky-ink-2);
-}
-
-#root .wx-live-kicker-dot {
-  opacity: 0.55;
-  padding: 0 2px;
-}
-
-#root .wx-live-temp {
+#root .today-wx-head {
   display: flex;
-  align-items: flex-start;
-  margin-top: 4px;
-  font-size: 44px;
-  font-weight: 700;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  color: var(--sky-ink);
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
 }
 
-#root .wx-live-deg {
-  font-size: 26px;
+#root .today-wx-temp {
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+#root .today-wx-deg {
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: 0;
-  margin-top: 2px;
   margin-left: 1px;
-  opacity: 0.75;
+  opacity: 0.78;
 }
 
-/* Platzhalter, solange kein Wert da ist (erster Start ohne Netz) */
-#root .wx-live-skeleton {
+#root .today-wx-cond {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+#root .today-wx-glyph {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+#root .today-wx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 9px;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  opacity: 0.9;
+}
+
+/* Datum an der Unterkunft — eigene Zeile unter den Reisedaten; die Kanaren
+   liegen eine Stunde hinter Deutschland, deshalb Uhrzeit statt nur Datum. */
+#root .today-local {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+#root .today-local-dot {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #F4C542;
+  box-shadow: 0 0 0 3px rgba(244, 197, 66, 0.18);
+}
+
+#root .today-wx-chevron {
+  flex: 0 0 auto;
+  margin-left: -2px;
+  opacity: 0.65;
+}
+
+#root .today-wx-skeleton {
   display: block;
-  width: 88px;
-  height: 36px;
-  margin: 8px 0 4px;
-  border-radius: 10px;
+  width: 46px;
+  height: 22px;
+  margin: 3px 0;
+  border-radius: 8px;
   background: linear-gradient(
     100deg,
-    rgba(255, 255, 255, 0.32) 0%,
-    rgba(255, 255, 255, 0.7) 45%,
-    rgba(255, 255, 255, 0.32) 100%
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.6) 45%,
+    rgba(255, 255, 255, 0.25) 100%
   );
   background-size: 220% 100%;
   animation: wx-shimmer 1.8s ease-in-out infinite;
@@ -195,80 +230,9 @@
   }
 }
 
-#root .wx-live-cond {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 3px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--sky-ink);
-}
-
-#root .wx-live-glyph {
-  flex: 0 0 auto;
-  opacity: 0.8;
-}
-
-#root .wx-live-meta {
-  display: grid;
-  grid-template-columns: repeat(2, max-content);
-  gap: 4px 5px;
-  margin-top: 8px;
-}
-
-#root .wx-live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  color: var(--sky-ink);
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-#root .wx-live[data-night='true'] .wx-live-pill {
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-#root .wx-live-up {
-  opacity: 0.72;
-}
-
-#root .wx-live-down {
-  margin-left: 3px;
-  opacity: 0.72;
-}
-
-/* ── Szene ────────────────────────────────────────────────────────── */
-#root .wx-live-scene {
-  position: relative;
-  flex: 0 0 46%;
-  max-width: 194px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-#root .wx-scene,
-#root .wx-scene svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-#root .wx-scene {
-  position: absolute;
-  inset: 0;
-}
-
-/* Sonne — Leuchten kommt aus dem radialen Halo; CSS-drop-shadow ist hier
-   tabu (Chromium rastert den Filterbereich als sichtbares Rechteck). */
+/* ── Szene: Sonne ─────────────────────────────────────────────────── */
+/* Leuchten kommt aus dem radialen Halo; CSS-drop-shadow ist hier tabu
+   (Chromium rastert den Filterbereich als sichtbares Rechteck). */
 #root .wx-sun-rays {
   transform-box: view-box;
   transform-origin: 134px 46px;
@@ -330,10 +294,6 @@
 #root .wx-cloud-bottom {
   stop-color: color-mix(in srgb, var(--sky-cloud) 78%, #4E6076);
 }
-
-/* Kein CSS-drop-shadow auf den Wolken: der Filter erzeugt im
-   „slice"-Viewport eine sichtbare senkrechte Kante an der Scene-Grenze.
-   Die Tiefe kommt aus dem Verlauf in der Wolke. */
 
 #root .wx-cloud-drift {
   animation: wx-drift 9.5s ease-in-out infinite;
@@ -417,53 +377,47 @@
 /* Gewitter */
 #root .wx-bolt polygon {
   fill: #ffe27a;
-  filter: drop-shadow(0 0 8px rgba(255, 226, 122, 0.85));
-  opacity: 0.28;
+  opacity: 0.55;
   animation: wx-flash 5.6s steps(1, end) infinite;
 }
 
 @keyframes wx-flash {
   0%,
   84% {
-    opacity: 0.28;
+    opacity: 0.55;
   }
   86% {
     opacity: 1;
   }
   88% {
-    opacity: 0.15;
+    opacity: 0.2;
   }
   90% {
-    opacity: 0.9;
+    opacity: 0.95;
   }
   94%,
   100% {
-    opacity: 0.28;
+    opacity: 0.55;
   }
 }
 
 /* ── Kleine Geräte ────────────────────────────────────────────────── */
 @media (max-width: 360px) {
-  #root .wx-live {
-    min-height: 128px;
+  #root .today-wx {
+    gap: 9px;
   }
 
-  #root .wx-live-body {
-    padding-left: 15px;
+  #root .today-wx-port {
+    width: 76px;
+    height: 78px;
   }
 
-  #root .wx-live-temp {
-    font-size: 38px;
+  #root .today-wx-temp {
+    font-size: 26px;
   }
 
-  #root .wx-live-scene {
-    flex-basis: 36%;
-    max-width: 140px;
-  }
-
-  #root .wx-live-pill {
-    padding: 2px 6px;
-    font-size: 9.5px;
+  #root .today-wx-meta {
+    font-size: 10px;
   }
 }
 
@@ -477,7 +431,7 @@
   #root .wx-fog rect,
   #root .wx-stars circle,
   #root .wx-bolt polygon,
-  #root .wx-live-skeleton {
+  #root .today-wx-skeleton {
     animation: none !important;
   }
 
@@ -485,7 +439,7 @@
     opacity: 0.9;
   }
 
-  #root .wx-live {
+  #root .today-wx {
     transition: none;
   }
 }
