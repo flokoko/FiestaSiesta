@@ -8,10 +8,10 @@
 #root .today-wx {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   width: 100%;
-  margin-top: 13px;
-  padding: 9px 10px 9px 9px;
+  margin-top: 9px;
+  padding: 7px 10px 7px 7px;
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: var(--r-3);
   background: rgba(255, 255, 255, 0.17);
@@ -36,8 +36,8 @@
 #root .today-wx-port {
   position: relative;
   flex: 0 0 auto;
-  width: 92px;
-  height: 94px;
+  width: 74px;
+  height: 78px;
   border-radius: 14px;
   overflow: hidden;
   background: linear-gradient(152deg, var(--sky-a) 0%, var(--sky-b) 55%, var(--sky-c) 100%);
@@ -115,10 +115,27 @@
 }
 
 /* ── Werte ────────────────────────────────────────────────────────── */
-/* Das Datum trägt jetzt eine zweite Zeile Wetter — eine Nummer kleiner,
-   damit der Hero nicht auf zwei Titelzeilen wächst. */
+/* Flacher Hero: Datum eine Zeile kleiner, Innenabstände enger, damit unter
+   der Karte noch etwas vom Cockpit sichtbar bleibt. */
+#root .today-hero {
+  padding: 16px 20px 14px;
+}
+
 #root .today-hero .today-date {
-  font-size: 26px;
+  font-size: 23px;
+  margin-top: 5px;
+}
+
+#root .today-hero .today-sub {
+  margin-top: 6px;
+}
+
+#root .today-hero .today-sub-soft {
+  margin-top: 2px;
+}
+
+#root .today-hero .today-progress {
+  margin-top: 9px;
 }
 
 #root .today-wx-body {
@@ -137,7 +154,7 @@
 }
 
 #root .today-wx-temp {
-  font-size: 29px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -169,34 +186,51 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px 9px;
-  margin-top: 3px;
-  font-size: 10px;
+  gap: 2px 8px;
+  margin-top: 2px;
+  font-size: 9.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
   opacity: 0.9;
 }
 
-/* Datum an der Unterkunft — eigene Zeile unter den Reisedaten; die Kanaren
-   liegen eine Stunde hinter Deutschland, deshalb Uhrzeit statt nur Datum. */
-#root .today-local {
+#root .today-wx-meta > span {
+  white-space: nowrap;
+}
+
+/* Kopfzeile: Kicker links, Datum/Uhrzeit an der Unterkunft rechts — eine
+   Zeile statt einer eigenen, damit die Karte flach bleibt. */
+#root .today-topline {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 8px;
-  font-size: 11.5px;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#root .today-topline .today-kicker {
+  flex: 0 0 auto;
+}
+
+#root .today-local {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.94);
+  color: rgba(255, 255, 255, 0.86);
+  white-space: nowrap;
 }
 
 #root .today-local-dot {
   flex: 0 0 auto;
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: #F4C542;
-  box-shadow: 0 0 0 3px rgba(244, 197, 66, 0.18);
+  box-shadow: 0 0 0 2.5px rgba(244, 197, 66, 0.18);
 }
 
 #root .today-wx-chevron {
@@ -402,22 +436,37 @@
 }
 
 /* ── Kleine Geräte ────────────────────────────────────────────────── */
-@media (max-width: 360px) {
+@media (max-width: 380px) {
+  #root .today-hero .today-date {
+    font-size: 21px;
+  }
+
   #root .today-wx {
     gap: 9px;
   }
 
   #root .today-wx-port {
-    width: 76px;
+    width: 70px;
     height: 78px;
   }
 
   #root .today-wx-temp {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   #root .today-wx-meta {
+    font-size: 9px;
+    gap: 2px 6px;
+  }
+
+  #root .today-local {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 340px) {
+  #root .today-hero .today-date {
+    font-size: 19px;
   }
 }
 
