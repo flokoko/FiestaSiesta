@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import {
-  ChevronRight, ArrowRight, MapPin, StickyNote, ChefHat, Clock, ShieldAlert,
+  ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
   CalendarPlus, Sunrise, Sunset, CloudRain, ShoppingCart, Backpack, Wallet, Activity,
 } from 'lucide-react'
 import type { TabView } from '../types'
@@ -171,6 +171,7 @@ export default function DayScreen({
 
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
+    { label: 'Karte', icon: Map, onClick: () => onNavigate('karte') },
     { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
     { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
     { label: 'Offen jetzt', icon: Clock, onClick: () => onNavigate('offen') },

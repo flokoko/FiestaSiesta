@@ -27,6 +27,7 @@ const importBristolScreen = () => import('./components/BristolScreen')
 const importWeatherScreen = () => import('./components/WeatherScreen')
 const importTripPlanScreen = () => import('./components/TripPlanScreen')
 const importOpeningHoursScreen = () => import('./components/OpeningHoursScreen')
+const importDayMapScreen = () => import('./components/DayMapScreen')
 const importRecipesScreen = () => import('./components/RecipesScreen')
 
 const ListScreen = lazy(importListScreen)
@@ -37,6 +38,7 @@ const BristolScreen = lazy(importBristolScreen)
 const WeatherScreen = lazy(importWeatherScreen)
 const TripPlanScreen = lazy(importTripPlanScreen)
 const OpeningHoursScreen = lazy(importOpeningHoursScreen)
+const DayMapScreen = lazy(importDayMapScreen)
 const RecipesScreen = lazy(importRecipesScreen)
 
 // Besuchte Panes bleiben gemountet (idle = display:none). Ohne memo rendert
@@ -63,7 +65,13 @@ const SCREEN_CHUNKS_EAGER = [
   importExpenseScreen,
   importNotesScreen,
 ]
-const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen, importOpeningHoursScreen, importRecipesScreen]
+const SCREEN_CHUNKS_IDLE = [
+  importWeatherScreen,
+  importBristolScreen,
+  importOpeningHoursScreen,
+  importRecipesScreen,
+  importDayMapScreen,
+]
 import DayScreen from './components/DayScreen'
 import EmergencySheet from './components/EmergencySheet'
 import { useTripPlan } from './hooks/useTripPlan'
@@ -554,7 +562,7 @@ export default function App() {
       ? 'lists'
       : tab === 'notes' || tab === 'weather' || tab === 'settings'
         ? 'home'
-        : tab === 'offen' || tab === 'recipes' || tab === 'plan'
+        : tab === 'offen' || tab === 'recipes' || tab === 'plan' || tab === 'karte'
           ? 'home'
           : null
 
@@ -661,6 +669,15 @@ export default function App() {
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
             <OpeningHoursScreen />
+          </Suspense>
+          </ErrorBoundary>
+            </ScreenPane>
+          )}
+          {visited.has('karte') && (
+            <ScreenPane id="karte" active={tab === 'karte'} direction={screenDir}>
+          <ErrorBoundary compact>
+          <Suspense fallback={<TabLoader />}>
+            <DayMapScreen dayIso={dayIso} plan={tripPlan} />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>

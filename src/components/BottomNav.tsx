@@ -24,6 +24,7 @@ const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
   bristol: 'home',
   plan: 'home',
   offen: 'home',
+  karte: 'home',
   recipes: 'home',
 }
 

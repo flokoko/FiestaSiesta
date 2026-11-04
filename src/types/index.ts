@@ -39,6 +39,7 @@ export type TabView =
   | 'home'   // Tag-Screen: Heute-Karte + Reisetage (Tagesleiste)
   | 'plan'   // Reiseplan: Vorschläge + Abstimmung
   | 'offen'  // Öffnungszeiten-Ampel (Läden, Apotheken, Tankstellen)
+  | 'karte'  // Tageskarte: Ziele, Route, Etappen
   | 'recipes' // Küche: Rezepte für vor Ort, Zutaten auf die Einkaufsliste
   | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
   | 'list'

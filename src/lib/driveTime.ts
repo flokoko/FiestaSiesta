@@ -112,6 +112,19 @@ export function quickDriveTime(lat: number, lon: number): DriveTime {
 }
 
 /**
+ * Schätzung zwischen zwei beliebigen Punkten (Etappen einer Tagesroute).
+ * Dieselbe Heuristik wie `estimateDriveMinutes`, nur ohne festen Startpunkt.
+ */
+export function estimateMinutesBetween(fromLat: number, fromLon: number, lat: number, lon: number): number {
+  const air = airKm(lat, lon, fromLat, fromLon)
+  if (air < 0.4) return 0
+  const km = air * 1.6 + 2
+  const base = (km / 32) * 60 + 3
+  const mountain = air > 8 ? base * 1.1 : base
+  return Math.max(5, Math.round(mountain))
+}
+
+/**
  * Echte Route über OSRM. Gibt `null` zurück, wenn der Dienst nicht antwortet —
  * der Aufrufer behält dann die Schätzung.
  */
