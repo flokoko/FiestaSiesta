@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { subscribeList } from '../lib/realtimeBus'
 
-type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes' | 'packlist_items'
+type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes' | 'trip_comments' | 'packlist_items'
 
 interface UseRealtimeSyncOptions {
   listId: string | null

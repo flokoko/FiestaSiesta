@@ -25,6 +25,11 @@ export function getJoinCode() {
   return currentJoinCode
 }
 
+/** Projekt-URL aus dem Build (für Edge-Function-Links, z. B. das Kalender-Abo). */
+export function getSupabaseUrl() {
+  return supabaseUrl
+}
+
 // Custom fetch that injects the x-join-code header on every request.
 // Zusätzlich ein hartes Zeitlimit: bei halb-offenem Mobilnetz (Insel, NAT-Hänger)
 // settled der Request sonst NIE — optimistische Updates hängen, fetchAll bleibt

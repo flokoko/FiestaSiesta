@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car } from 'lucide-react'
+import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send } from 'lucide-react'
 import SlotIcon from './SlotIcon'
-import { supabase } from '../lib/supabase'
+import { supabase, getSupabaseUrl } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
-import { tripDays, formatDayShort, tripDay } from '../lib/trip'
+import { tripDays, formatDayShort, tripDay, TRIP } from '../lib/trip'
 import { coordsFromMapsUrl, isMapsUrl, reverseLabel, resolvePlaceCoords, type Coords } from '../lib/poiCoords'
 import { hasActiveSubscription } from '../lib/push'
 import { fetchDriveTime, leadIsTight, quickDriveTime, recommendedLead, type DriveTime } from '../lib/driveTime'
 import { DEFAULT_LEAD, LEAD_OPTIONS, SLOT_START, hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
-import type { TripProposal, TripSlot, TripVote } from '../types'
+import type { TripComment, TripProposal, TripSlot, TripVote } from '../types'
+import type { TripPlanMap } from '../hooks/useTripPlan'
 import './TripPlanScreen.css'
 
 interface TripPlanScreenProps {
@@ -24,11 +25,25 @@ interface TripPlanScreenProps {
   onPickDay?: (iso: string) => void
 }
 
+function commentClock(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
 export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
   const [votes, setVotes] = useState<TripVote[]>([])
+  // Kommentare hängen am Vorschlag — Begründungen stehen dort, wo entschieden wird.
+  const [comments, setComments] = useState<TripComment[]>([])
+  const [commentFor, setCommentFor] = useState<string | null>(null)
+  const [commentDraft, setCommentDraft] = useState('')
+  const [commentSending, setCommentSending] = useState(false)
+  // Kalender: Abo-Token der Liste (Edge Function `ics-feed`)
+  const [feedToken, setFeedToken] = useState<string | null>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [addSlot, setAddSlot] = useState<TripSlot | null>(null)
@@ -80,9 +95,11 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   const addingRef = useRef(false)
 
   const load = useCallback(async () => {
-    const [p, v] = await Promise.all([
+    const [p, v, c, t] = await Promise.all([
       supabase.from('trip_proposals').select('*').eq('list_id', listId).order('created_at'),
       supabase.from('trip_votes').select('*').eq('list_id', listId),
+      supabase.from('trip_comments').select('*').eq('list_id', listId).order('created_at'),
+      supabase.from('lists').select('ics_token').eq('id', listId).maybeSingle(),
     ])
     if (p.error || v.error) {
       setLoading(false)
@@ -95,6 +112,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
       grouped[row.proposal_id] = [...(grouped[row.proposal_id] ?? []), row.voter]
     }
     setVotes(voteRows)
+    const token = (t.data as { ics_token?: string } | null)?.ics_token
+    if (token) setFeedToken(token)
+    if (c.error) {
+      // Kommentare sind Beiwerk: ein Fehler hier darf den Plan nicht kippen.
+      setComments([])
+    } else {
+      setComments((c.data ?? []) as TripComment[])
+    }
     setProposals(
       ((p.data ?? []) as TripProposal[]).map((row) => ({ ...row, votes: grouped[row.id] ?? [] }))
     )
@@ -104,6 +129,36 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   useEffect(() => {
     void load()
   }, [load])
+
+  // ── Kommentare ─────────────────────────────────────────────────────
+  const commentsFor = (proposalId: string) => comments.filter((c) => c.proposal_id === proposalId)
+
+  const toggleComments = (proposalId: string) => {
+    navigator.vibrate?.(6)
+    setCommentFor((current) => (current === proposalId ? null : proposalId))
+    setCommentDraft('')
+  }
+
+  const sendComment = async (proposal: TripProposal) => {
+    const body = commentDraft.trim()
+    if (!body || commentSending) return
+    setCommentSending(true)
+    const { data, error } = await supabase
+      .from('trip_comments')
+      .insert({ list_id: listId, proposal_id: proposal.id, author: userName, body })
+      .select('*')
+      .maybeSingle()
+    setCommentSending(false)
+    if (error || !data) {
+      toast(friendlyError(error ?? { message: 'Kommentar nicht gesendet' }), 'error')
+      return
+    }
+    // Realtime liefert die Zeile gleich noch einmal — der lokale Eintrag macht
+    // das Absenden sofort sichtbar und wird beim nächsten load() dedupliziert.
+    setComments((prev) => (prev.some((c) => c.id === (data as TripComment).id) ? prev : [...prev, data as TripComment]))
+    setCommentDraft('')
+    navigator.vibrate?.(8)
+  }
 
   // Refetch beim Zurückkehren in die App, wenn der letzte Ladevorgang her ist —
   // der Screen bleibt als Pane gemountet, ein „Betreten" gibt es nicht.
@@ -122,7 +177,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   useRealtimeSync({
     listId,
     channelSuffix: ':plan',
-    tables: ['trip_proposals', 'trip_votes'],
+    tables: ['trip_proposals', 'trip_votes', 'trip_comments'],
     onTableChange: () => void load(),
   })
 
@@ -415,6 +470,39 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     toast('Kalenderdatei erstellt', 'success')
   }
 
+  // Ganze Reise als Datei: dieselben Termine wie im Abo, nur ohne Server.
+  const exportWholeTrip = () => {
+    const map: TripPlanMap = {}
+    for (const p of proposals) {
+      if (!p.confirmed_at) continue
+      map[p.day] = { ...(map[p.day] ?? {}), [p.slot]: p }
+    }
+    const events = eventsFromPlan(map)
+    if (events.length === 0) {
+      toast('Noch nichts festgelegt — der Kalender wäre leer.', 'info')
+      return
+    }
+    downloadIcs(
+      `fiesta-siesta-${TRIP.start}.ics`,
+      buildIcs({ calendarName: `Fiesta Siesta · ${TRIP.name}`, events }),
+    )
+    navigator.vibrate?.(8)
+    toast('Kalenderdatei erstellt', 'success')
+  }
+
+  // Abo-Link: dieselbe Datei, aber vom Server — Kalender holen sie selbst neu.
+  const copyFeedLink = async () => {
+    if (!feedToken) return
+    const url = `${getSupabaseUrl()}/functions/v1/ics-feed/${feedToken}.ics`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast('Abo-Link kopiert', 'success')
+    } catch {
+      // Ohne Clipboard-Recht (http, alter Browser) wenigstens zeigen.
+      toast(url, 'info')
+    }
+  }
+
   return (
     <div className="plan-screen">
       <header className="list-head">
@@ -427,14 +515,43 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
         </div>
         <button
           type="button"
-          className="plan-ics-icon"
-          aria-label={`Tagesplan ${formatDayShort(selectedDate)} als Kalenderdatei`}
-          title="Diesen Tag in den Kalender"
-          onClick={exportSelectedDay}
+          className={`plan-ics-icon${calendarOpen ? ' is-open' : ''}`}
+          aria-label="Kalender: Datei oder Abo"
+          title="Kalender"
+          aria-expanded={calendarOpen}
+          onClick={() => { navigator.vibrate?.(6); setCalendarOpen((open) => !open) }}
         >
           <CalendarPlus size={17} strokeWidth={2} />
         </button>
       </header>
+
+      {calendarOpen && (
+        <div className="plan-calendar">
+          <p className="plan-calendar-hint">
+            Abo: einmal einrichten, danach zieht der Kalender Änderungen selbst nach.
+            Es landen nur <strong>bestätigte</strong> Programmpunkte darin.
+          </p>
+          <div className="plan-calendar-actions">
+            <button type="button" className="plan-btn" onClick={exportSelectedDay}>
+              Dieser Tag
+            </button>
+            <button type="button" className="plan-btn" onClick={exportWholeTrip}>
+              Ganze Reise
+            </button>
+            <button
+              type="button"
+              className="plan-btn is-primary"
+              onClick={() => void copyFeedLink()}
+              disabled={!feedToken}
+            >
+              Abo-Link kopieren
+            </button>
+          </div>
+          <p className="plan-calendar-foot">
+            Im Kalender: „Kalender hinzufügen" → „Von URL hinzufügen" → Link einfügen.
+          </p>
+        </div>
+      )}
 
       <div className="cat-strip plan-days">
         {days.map((day) => {
@@ -500,7 +617,10 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     const voted = (proposal.votes ?? []).includes(userName)
                     const isLeader = leader?.id === proposal.id
                     return (
-                      <div className={`plan-row${isLeader ? ' is-plan' : ''}`} key={proposal.id}>
+                      <div
+                        className={`plan-row${isLeader ? ' is-plan' : ''}${commentFor === proposal.id ? ' has-comments' : ''}`}
+                        key={proposal.id}
+                      >
                         <div className="plan-row-main">
                           <span className="plan-row-title">{proposal.title}</span>
                           <span className="plan-row-meta">
@@ -527,7 +647,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                                   : 'Wecker'}
                               </button>
                             ) : (
-                              <span className="plan-row-bell is-muted">Wecker nach Bestätigung</span>
+                              <span className="plan-row-bell is-muted">Wecker</span>
                             )}
                           </span>
                           {proposal.place && (
@@ -554,6 +674,18 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                             <Trash2 size={14} strokeWidth={2} />
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className={`plan-mini plan-comment-btn${commentFor === proposal.id ? ' is-open' : ''}`}
+                          onClick={() => toggleComments(proposal.id)}
+                          aria-expanded={commentFor === proposal.id}
+                          aria-label={`Kommentare zu ${proposal.title}${commentsFor(proposal.id).length > 0 ? ` (${commentsFor(proposal.id).length})` : ''}`}
+                        >
+                          <MessageSquare size={13} strokeWidth={2} />
+                          {commentsFor(proposal.id).length > 0 && (
+                            <span className="plan-comment-count">{commentsFor(proposal.id).length}</span>
+                          )}
+                        </button>
                         <button
                           type="button"
                           className={`plan-vote${voted ? ' is-voted' : ''}`}
@@ -651,6 +783,50 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                                 {savingAlarmId === proposal.id ? 'Speichert …' : 'Speichern'}
                               </button>
                             </div>
+                          </div>
+                        )}
+                        {commentFor === proposal.id && (
+                          <div className="plan-comments">
+                            {commentsFor(proposal.id).length === 0 ? (
+                              <p className="plan-comments-empty">Noch kein Kommentar — schreib, warum.</p>
+                            ) : (
+                              commentsFor(proposal.id).map((comment) => (
+                                <div className="plan-comment" key={comment.id}>
+                                  <span className="plan-comment-head">
+                                    <strong>{comment.author}</strong>
+                                    <span>{commentClock(comment.created_at)}</span>
+                                  </span>
+                                  <span className="plan-comment-body">{comment.body}</span>
+                                </div>
+                              ))
+                            )}
+                            <form
+                              className="plan-comment-form"
+                              onSubmit={(e) => {
+                                e.preventDefault()
+                                void sendComment(proposal)
+                              }}
+                            >
+                              <input
+                                className="plan-input plan-comment-input"
+                                type="text"
+                                placeholder="Kommentar …"
+                                value={commentDraft}
+                                maxLength={500}
+                                onChange={(e) => setCommentDraft(e.target.value)}
+                                aria-label={`Kommentar zu ${proposal.title}`}
+                              />
+                              <button
+                                type="submit"
+                                className="plan-mini plan-comment-send"
+                                disabled={commentDraft.trim().length === 0 || commentSending}
+                                aria-label="Kommentar senden"
+                              >
+                                {commentSending
+                                  ? <Loader2 size={13} className="spin" />
+                                  : <Send size={13} strokeWidth={2} />}
+                              </button>
+                            </form>
                           </div>
                         )}
                       </div>

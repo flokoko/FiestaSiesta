@@ -446,6 +446,7 @@
 }
 
 #root .plan-row-bell {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -645,4 +646,161 @@
 #root .plan-btn.is-primary:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* ── Kommentare an Vorschlägen (v0.61.0) ─────────────────────────────── */
+#root .plan-row.has-comments {
+  flex-wrap: wrap;
+}
+
+/* Mit drei Aktionsknöpfen wird die Meta-Zeile schmal: umbrechen statt
+   überlaufen (vorher schob „Wecker nach Bestätigung" die Ortszeile zu). */
+#root .plan-row-meta {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+#root .plan-comment-btn {
+  position: relative;
+}
+
+#root .plan-comment-btn.is-open {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+#root .plan-comment-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  pointer-events: none;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+}
+
+#root .plan-comments {
+  flex: 1 1 100%;
+  margin: 6px 0 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+#root .plan-comments-empty {
+  margin: 2px 0 8px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+#root .plan-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line);
+}
+
+#root .plan-comment:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+#root .plan-comment-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+#root .plan-comment-head strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+#root .plan-comment-body {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+#root .plan-comment-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#root .plan-comment-input {
+  flex: 1;
+  min-width: 0;
+}
+
+#root .plan-comment-send {
+  flex: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+#root .plan-comment-send:disabled {
+  opacity: 0.45;
+}
+
+/* ── Kalender-Panel (v0.61.0): Datei oder Abo ────────────────────────── */
+#root .plan-ics-icon.is-open {
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+}
+
+#root .plan-calendar {
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--surface);
+}
+
+#root .plan-calendar-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+/* Zwei Export-Knöpfe nebeneinander, der Abo-Link in eigener voller Zeile —
+   in einer Flex-Reihe brach „Abo-Link kopieren" zweizeilig um. */
+#root .plan-calendar-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#root .plan-calendar-actions .is-primary {
+  grid-column: 1 / -1;
+}
+
+#root .plan-calendar-foot {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* 38 px waren zu flach für Daumen — die Regeln der App verlangen 44. */
+  #root .plan-calendar-actions .plan-btn {
+    min-height: 44px;
+  }
 }

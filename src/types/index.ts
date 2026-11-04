@@ -146,6 +146,15 @@ export interface Recipe {
 // ── Reiseplan ─────────────────────────────────────────────────────────
 export type TripSlot = 'morning' | 'noon' | 'evening'
 
+export interface TripComment {
+  id: string
+  list_id: string
+  proposal_id: string
+  author: string
+  body: string
+  created_at: string
+}
+
 export interface TripProposal {
   id: string
   list_id: string
