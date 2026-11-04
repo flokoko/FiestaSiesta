@@ -51,6 +51,7 @@ const MemoExpense = memo(ExpenseScreen)
 const MemoSettings = memo(SettingsScreen)
 const MemoBristol = memo(BristolScreen)
 const MemoWeather = memo(WeatherScreen)
+const MemoDay = memo(DayScreen)
 
 // Leichte Screens direkt nach dem Login, schwere (Bristol ~416 kB, Wetter
 // ~167 kB) erst im Idle — sie liegen sonst unnötig im Mobilfunk-Datenvolumen.
@@ -63,8 +64,7 @@ const SCREEN_CHUNKS_EAGER = [
   importNotesScreen,
 ]
 const SCREEN_CHUNKS_IDLE = [importWeatherScreen, importBristolScreen, importOpeningHoursScreen, importRecipesScreen]
-import TodayScreen from './components/TodayScreen'
-import TripScreen from './components/TripScreen'
+import DayScreen from './components/DayScreen'
 import EmergencySheet from './components/EmergencySheet'
 import { useTripPlan } from './hooks/useTripPlan'
 import { useWakeTimer } from './hooks/useWakeTimer'
@@ -73,6 +73,9 @@ import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
 import { useBackNav } from './hooks/useBackNav'
+import { usePersistedState } from './hooks/usePersistedState'
+import { tripDays, tripDay } from './lib/trip'
+import { isoDay } from './lib/tripPlan'
 import BristolGate from './components/BristolGate'
 
 function TabLoader() {
@@ -327,6 +330,26 @@ export default function App() {
     }
   }, [undoState, undoDelete, toast])
 
+  // ── Gewählter Reisetag: Tag-Screen und Reiseplan teilen ihn ────────
+  // Persistiert wird ein ISO-Datum mit Tages-Stempel — ein von gestern
+  // gemerkter Tag wäre heute der falsche Einstieg.
+  const tripDayList = useMemo(() => tripDays(), [])
+  const [storedDay, setStoredDay] = usePersistedState<{ iso: string; stamp: string }>('fiesta_trip_day', {
+    iso: '',
+    stamp: '',
+  })
+  const dayStamp = isoDay(new Date())
+  const dayIso = useMemo(() => {
+    const remembered = tripDayList.find((d) => isoDay(d) === storedDay.iso)
+    if (storedDay.stamp === dayStamp && remembered) return storedDay.iso
+    const index = tripDay()
+    return isoDay(tripDayList[index ? index - 1 : 0] ?? tripDayList[0])
+  }, [storedDay, dayStamp, tripDayList])
+  const handlePickDay = useCallback(
+    (iso: string) => setStoredDay({ iso, stamp: dayStamp }),
+    [setStoredDay, dayStamp],
+  )
+
   // ── Bristol Modus (read-only via Event-Listener; SettingsScreen is the
   //    single writer for 'bristol_modus_enabled') ──────────────────────
   const [bristolEnabled, setBristolEnabled] = useState(
@@ -532,7 +555,7 @@ export default function App() {
       : tab === 'notes' || tab === 'weather' || tab === 'settings'
         ? 'home'
         : tab === 'offen' || tab === 'recipes' || tab === 'plan'
-          ? 'trip'
+          ? 'home'
           : null
 
   const bringBrought = bringItems.filter(i => i.is_brought).length
@@ -598,9 +621,8 @@ export default function App() {
         <div className="screen-stack">
           {visited.has('home') && (
             <ScreenPane id="home" active={tab === 'home'} direction={screenDir}>
-          <TodayScreen
+          <MemoDay
             userName={userName}
-            listName={list.name}
             participantCount={participants.length}
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
@@ -608,20 +630,14 @@ export default function App() {
             expenseTotal={expenseTotal}
             userBalance={userBalance}
             bristolEnabled={bristolEnabled}
+            notesCount={notes.length}
+            proposalCount={tripProposalCount}
             plan={tripPlan}
-            onNavigate={setTab}
-          />
-            </ScreenPane>
-          )}
-          {visited.has('trip') && (
-            <ScreenPane id="trip" active={tab === 'trip'} direction={screenDir}>
-          <TripScreen
+            weather={tripWeather}
+            dayIso={dayIso}
+            onPickDay={handlePickDay}
             onNavigate={setTab}
             onEmergency={handleOpenEmergency}
-            notesCount={notes.length}
-            plan={tripPlan}
-            proposalCount={tripProposalCount}
-            weather={tripWeather}
           />
             </ScreenPane>
           )}
@@ -633,6 +649,8 @@ export default function App() {
               listId={list.id}
               userName={userName}
               isAdmin={isAdmin}
+              dayIso={dayIso}
+              onPickDay={handlePickDay}
             />
           </Suspense>
           </ErrorBoundary>

@@ -1,0 +1,217 @@
+/* Tag-Screen (Phase 2): Tagesleiste, Hub-Pillen, Tages-Meta.
+   Die Karte selbst (.today-*) und die Wetterzeile (.today-wx) behalten ihre
+   Styles aus design.css/nav.css bzw. TodayWeather.css — hier steht nur, was
+   der Zusammenschluss neu braucht. Alle Regeln mit #root, sonst gewinnt die
+   lazy geladene Screen-CSS. */
+
+#root .day-screen {
+  padding-top: 6px;
+}
+
+/* Tagesleiste bleibt beim Scrollen unter der Kopfzeile stehen. Der Offset
+   kommt aus --day-strip-top (DayScreen misst die Kopfzeilenhöhe), damit die
+   Leiste nicht halb unter dem Header verschwindet. */
+#root .day-strip-wrap {
+  position: sticky;
+  top: var(--day-strip-top, 52px);
+  z-index: 30;
+  margin: 0 -2px 10px;
+  padding: 4px 2px 6px;
+  background: color-mix(in srgb, var(--header-bg) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-radius: 18px;
+}
+
+#root .day-strip {
+  margin: 0;
+}
+
+/* Der echte heutige Tag ist auch dann markiert, wenn ein anderer gewählt ist. */
+#root .day-strip .cat-chip.is-today:not(.active) {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+}
+
+#root .today-progress-dot.is-today:not(.is-now) {
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+}
+
+/* ── Hub: Reiseplan, Notizen, Küche, Offen, Notfall ─────────────────── */
+#root .day-hub {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding: 2px 2px 6px;
+  margin: 4px -2px 2px;
+}
+
+#root .day-hub::-webkit-scrollbar {
+  display: none;
+}
+
+#root .day-hub-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+#root .day-hub-chip:active {
+  transform: scale(0.97);
+  background: var(--surface-2);
+}
+
+/* ── Plan-Kopf ──────────────────────────────────────────────────────── */
+#root .day-plan-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#root .day-ics {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+#root .day-plan-hint {
+  margin: 2px 0 8px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+#root .day-plan-time {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .day-plan-alarm {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: color-mix(in srgb, var(--accent) 80%, var(--ink-2));
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+/* ── Tages-Meta: Ziele mit Wetter, Sonnenzeiten ─────────────────────── */
+#root .day-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+#root .day-poi-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+#root .day-poi-icon {
+  color: var(--ink-3);
+}
+
+#root .day-poi-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#root .day-poi-value {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .day-sun {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .day-sun-sep {
+  opacity: 0.6;
+}
+
+/* Ein Text-Kind, nicht vier Flex-Kinder — sonst verteilt Flex den Satz. */
+#root .day-rain {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+#root .day-rain svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+/* Touch: 44-px-Ziele für die Hub-Pillen (Regel wie im Rest der App). */
+@media (hover: none), (pointer: coarse) {
+  #root .day-hub-chip {
+    min-height: 44px;
+  }
+
+  #root .day-ics {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .day-hub-chip {
+    transition: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Home, Map, ListChecks, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
+import { CalendarDays, ListChecks, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
 import type { TabView } from '../types'
 
 interface NavItem {
@@ -9,8 +9,7 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { key: 'home', label: 'Heute', icon: Home },
-  { key: 'trip', label: 'Reise', icon: Map },
+  { key: 'home', label: 'Tag', icon: CalendarDays },
   { key: 'lists', label: 'Listen', icon: ListChecks },
   { key: 'expenses', label: 'Geld', icon: Wallet },
 ]
@@ -23,6 +22,9 @@ const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
   weather: 'home',
   settings: 'home',
   bristol: 'home',
+  plan: 'home',
+  offen: 'home',
+  recipes: 'home',
 }
 
 interface BottomNavProps {

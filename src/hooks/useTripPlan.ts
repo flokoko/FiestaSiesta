@@ -112,7 +112,7 @@ export function useTripPlan(
     if (!activeTab) return
     if (tabRef.current === activeTab) return
     tabRef.current = activeTab
-    if (activeTab !== 'home' && activeTab !== 'trip' && activeTab !== 'plan') return
+    if (activeTab !== 'home' && activeTab !== 'plan') return
     void load()
   }, [activeTab, load])
 

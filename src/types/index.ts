@@ -36,8 +36,7 @@ export interface ShoppingList {
 }
 
 export type TabView =
-  | 'home'   // Heute-Cockpit
-  | 'trip'   // Reise-Domäne (Plan, Fotos, Karte …)
+  | 'home'   // Tag-Screen: Heute-Karte + Reisetage (Tagesleiste)
   | 'plan'   // Reiseplan: Vorschläge + Abstimmung
   | 'offen'  // Öffnungszeiten-Ampel (Läden, Apotheken, Tankstellen)
   | 'recipes' // Küche: Rezepte für vor Ort, Zutaten auf die Einkaufsliste

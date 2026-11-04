@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car } from 'lucide-react'
 import SlotIcon from './SlotIcon'
-import { usePersistedState } from '../hooks/usePersistedState'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
@@ -20,9 +19,12 @@ interface TripPlanScreenProps {
   listId: string
   userName: string
   isAdmin: boolean
+  /** Gewählter Tag, geteilt mit dem Tag-Screen (ISO) */
+  dayIso?: string | null
+  onPickDay?: (iso: string) => void
 }
 
-export default function TripPlanScreen({ listId, userName, isAdmin }: TripPlanScreenProps) {
+export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
@@ -61,22 +63,17 @@ export default function TripPlanScreen({ listId, userName, isAdmin }: TripPlanSc
   const [alarmDraft, setAlarmDraft] = useState<{ start: string; lead: number; on: boolean }>(
     { start: SLOT_START.morning, lead: DEFAULT_LEAD, on: true },
   )
-  // Gewählter Tag überlebt einen Neustart der PWA — aber nur innerhalb desselben
-  // Kalendertages: ein von vorgestern gemerkter Tag wäre beim Öffnen der falsche
-  // Einstieg in den Plan.
-  const [planDay, setPlanDay] = usePersistedState<{ day: string; stamp: string }>('fiesta_plan_day', {
-    day: '',
-    stamp: '',
-  })
-  const todayStamp = isoDay(new Date())
+  // Der gewählte Tag kommt von außen (App.tsx ↔ Tag-Screen): Plan und
+  // Tagesleiste zeigen dadurch immer denselben Tag. Fällt der Prop weg oder
+  // liegt er außerhalb der Reise, gilt der Standardtag.
   const defaultDay = (() => {
     const today = tripDay()
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
     return isoDay(days[0])
   })()
   const selectedDay =
-    planDay.stamp === todayStamp && days.some((d) => isoDay(d) === planDay.day) ? planDay.day : defaultDay
-  const setSelectedDay = (day: string) => setPlanDay({ day, stamp: todayStamp })
+    dayIso && days.some((d) => isoDay(d) === dayIso) ? dayIso : defaultDay
+  const setSelectedDay = (day: string) => onPickDay?.(day)
   // ── Doppelklick-Sperre je proposal_id: keine parallelen Vote-Inserts/Deletes
   const votingRef = useRef<Set<string>>(new Set())
   // ── Doppelklick-Sperre für „Vorschlagen": Insert darf nicht doppelt feuern

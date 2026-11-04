@@ -12,7 +12,6 @@ type NavState = { tab: TabView; sheet: 'more' | 'emergency' | null }
  */
 export const NAV_DEPTH: Record<TabView, 0 | 1> = {
   home: 0,
-  trip: 0,
   lists: 0,
   expenses: 0,
   list: 1,
