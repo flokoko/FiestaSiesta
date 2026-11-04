@@ -40,6 +40,7 @@ export type TabView =
   | 'trip'   // Reise-Domäne (Plan, Fotos, Karte …)
   | 'plan'   // Reiseplan: Vorschläge + Abstimmung
   | 'offen'  // Öffnungszeiten-Ampel (Läden, Apotheken, Tankstellen)
+  | 'recipes' // Küche: Rezepte für vor Ort, Zutaten auf die Einkaufsliste
   | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
   | 'list'
   | 'bring'
@@ -120,6 +121,28 @@ export interface BristolEntry {
   entry_time: string  // ISO timestamptz
   created_at: string
 }
+// ── Rezepte (Ferienküche) ─────────────────────────────────────────────
+export interface RecipeIngredient {
+  name: string
+  qty: string
+  unit: string
+  category: string
+}
+
+export interface Recipe {
+  id: string
+  list_id: string
+  title: string
+  note: string | null
+  servings: number
+  minutes: number | null
+  ingredients: RecipeIngredient[]
+  steps: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 // ── Reiseplan ─────────────────────────────────────────────────────────
 export type TripSlot = 'morning' | 'noon' | 'evening'
 

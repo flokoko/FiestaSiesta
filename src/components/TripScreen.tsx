@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote, Clock, Bell } from 'lucide-react'
+import { MapPin, Image, Map as MapIcon, ChevronRight, ShieldAlert, StickyNote, Clock, Bell, ChefHat } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import WeatherGlyph from './WeatherGlyph'
 import { isoDay, SLOTS } from '../lib/tripPlan'
@@ -130,6 +130,14 @@ export default function TripScreen({
             <span className="trip-hub-text">
               <strong>Notizen</strong>
               <small>{notesCount === 1 ? '1 Eintrag' : `${notesCount} Einträge`}</small>
+            </span>
+            <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
+          </button>
+          <button type="button" className="trip-hub-row" onClick={() => onNavigate('recipes')}>
+            <span className="trip-hub-icon"><ChefHat size={16} strokeWidth={2} /></span>
+            <span className="trip-hub-text">
+              <strong>Küche</strong>
+              <small>Rezepte fürs Ferienhaus — Zutaten auf die Einkaufsliste</small>
             </span>
             <ChevronRight size={15} strokeWidth={2} className="trip-hub-chevron" />
           </button>
