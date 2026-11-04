@@ -4,6 +4,7 @@ import type { TabView } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
 import { SLOTS, isoDay } from '../lib/tripPlan'
 import SlotIcon from './SlotIcon'
+import TodayWeather from './TodayWeather'
 import {
   TRIP, TRIP_START, TRIP_LENGTH, formatDayLong, formatDayShort, formatRange,
   tripDay, tripDays, tripPhase, daysUntilTrip,
@@ -118,6 +119,8 @@ export default function TodayScreen({
           })}
         </div>
       </section>
+
+      <TodayWeather onOpen={() => onNavigate('weather')} />
 
       <div className="today-chips">
         <button type="button" className="today-chip" onClick={() => onNavigate('list')}>
