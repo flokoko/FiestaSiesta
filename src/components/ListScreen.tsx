@@ -4,6 +4,7 @@ import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { aggregateItems, type AggregatedItem } from '../lib/aggregate'
 import ItemRow from './ItemRow'
 import AddItemForm from './AddItemForm'
@@ -240,22 +241,20 @@ function DraggableCategorySection({
 
 export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange }: ListScreenProps) {
   const { toast, confirm } = useToast()
-  const [hideChecked, setHideChecked] = useState(() => localStorage.getItem('fiesta_hide_checked') === 'true')
+  const [hideChecked, setHideChecked] = usePersistedState<boolean>('fiesta_hide_checked', false)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingItem, setEditingItem] = useState<ListItem | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [catsOpen, setCatsOpen] = useState(false)
-  const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [activeCat, setActiveCat] = usePersistedState<string | null>('fiesta_active_cat', null)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
 
   const toggleHideChecked = () => {
     navigator.vibrate?.(8)
-    const next = !hideChecked
-    setHideChecked(next)
-    localStorage.setItem('fiesta_hide_checked', String(next))
+    setHideChecked((prev: boolean) => !prev)
   }
 
   const checkedItems = items.filter((i) => i.is_checked)

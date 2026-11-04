@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car } from 'lucide-react'
+import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car } from 'lucide-react'
 import SlotIcon from './SlotIcon'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
@@ -19,10 +20,9 @@ interface TripPlanScreenProps {
   listId: string
   userName: string
   isAdmin: boolean
-  onBack: () => void
 }
 
-export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: TripPlanScreenProps) {
+export default function TripPlanScreen({ listId, userName, isAdmin }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
@@ -61,11 +61,22 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   const [alarmDraft, setAlarmDraft] = useState<{ start: string; lead: number; on: boolean }>(
     { start: SLOT_START.morning, lead: DEFAULT_LEAD, on: true },
   )
-  const [selectedDay, setSelectedDay] = useState<string>(() => {
+  // Gewählter Tag überlebt einen Neustart der PWA — aber nur innerhalb desselben
+  // Kalendertages: ein von vorgestern gemerkter Tag wäre beim Öffnen der falsche
+  // Einstieg in den Plan.
+  const [planDay, setPlanDay] = usePersistedState<{ day: string; stamp: string }>('fiesta_plan_day', {
+    day: '',
+    stamp: '',
+  })
+  const todayStamp = isoDay(new Date())
+  const defaultDay = (() => {
     const today = tripDay()
     if (today !== null) return isoDay(days[today - 1] ?? days[0])
     return isoDay(days[0])
-  })
+  })()
+  const selectedDay =
+    planDay.stamp === todayStamp && days.some((d) => isoDay(d) === planDay.day) ? planDay.day : defaultDay
+  const setSelectedDay = (day: string) => setPlanDay({ day, stamp: todayStamp })
   // ── Doppelklick-Sperre je proposal_id: keine parallelen Vote-Inserts/Deletes
   const votingRef = useRef<Set<string>>(new Set())
   // ── Doppelklick-Sperre für „Vorschlagen": Insert darf nicht doppelt feuern
@@ -410,9 +421,6 @@ export default function TripPlanScreen({ listId, userName, isAdmin, onBack }: Tr
   return (
     <div className="plan-screen">
       <header className="list-head">
-        <button type="button" className="plan-back" onClick={onBack} aria-label="Zurück zur Reise">
-          <ArrowLeft size={18} strokeWidth={2.2} />
-        </button>
         <div className="list-head-text">
           <h1>Reiseplan</h1>
           <p>

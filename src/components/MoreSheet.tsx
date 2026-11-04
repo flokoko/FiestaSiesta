@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, StickyNote, Settings, LogOut, X, Activity, ShieldAlert, Clock } from 'lucide-react'
+import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity } from 'lucide-react'
 import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -11,12 +11,11 @@ interface MoreSheetProps {
   isDark: boolean
   onToggleTheme: () => void
   onLeave: () => void
-  onEmergency: () => void
   userName: string
 }
 
 export default function MoreSheet({
-  open, onClose, onNavigate, isDark, onToggleTheme, onLeave, onEmergency, userName,
+  open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
 }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null)
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -33,28 +32,10 @@ export default function MoreSheet({
       action: () => { onNavigate('weather'); onClose() },
     },
     {
-      label: 'Notizen',
-      hint: 'Kurznotizen & Favoriten',
-      icon: StickyNote,
-      action: () => { onNavigate('notes'); onClose() },
-    },
-    {
       label: 'Bristol',
       hint: 'Skala, Statistik, Gag',
       icon: Activity,
       action: () => { onNavigate('bristol'); onClose() },
-    },
-    {
-      label: 'Offen jetzt',
-      hint: 'Öffnungszeiten-Ampel',
-      icon: Clock,
-      action: () => { onNavigate('offen'); onClose() },
-    },
-    {
-      label: 'Notfall',
-      hint: 'Notruf, Arzt, Adresse',
-      icon: ShieldAlert,
-      action: () => { onEmergency(); onClose() },
     },
     {
       label: 'Einstellungen',

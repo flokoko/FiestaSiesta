@@ -3,6 +3,7 @@ import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight
 import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory, Settlement } from '../types'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
+import { usePersistedState } from '../hooks/usePersistedState'
 import {
   isEqualQuotaDistribution, computeBalances, computeOpenBalances,
   computeSettlementProposals, totalExpenses, fmtEUR, type SettlementTxn,
@@ -52,7 +53,10 @@ export default function ExpenseScreen({
   onSettlementsChange,
 }: ExpenseScreenProps) {
   const { toast, confirm } = useToast()
-  const [section, setSection] = useState<'expenses' | 'settlement' | 'matrix' | 'quotas'>('expenses')
+  const [section, setSection] = usePersistedState<'expenses' | 'settlement' | 'matrix' | 'quotas'>(
+    'fiesta_expense_section',
+    'expenses',
+  )
   const [formExpanded, setFormExpanded] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [description, setDescription] = useState('')

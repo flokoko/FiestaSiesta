@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import AddItemForm from './AddItemForm'
 import CategoryManager from './CategoryManager'
@@ -132,10 +133,10 @@ export default function BringScreen({ items, categories, listId, userName, onIte
   const { isOnline, enqueue } = useOfflineQueue()
 
   // ── Sub-tab toggle: shared bring list vs personal packing list ──
-  const [subTab, setSubTab] = useState<SubTab>('bring')
+  const [subTab, setSubTab] = usePersistedState<SubTab>('fiesta_bring_subtab', 'bring')
 
   // ── Shared bring-list state (existing) ──
-  const [filter, setFilter] = useState<BringFilter>('all')
+  const [filter, setFilter] = usePersistedState<BringFilter>('fiesta_bring_filter', 'all')
   const [searchQuery, setSearchQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)

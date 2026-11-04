@@ -1954,18 +1954,6 @@ body::before {
   color: var(--accent);
 }
 
-#root .plan-back {
-  border: none;
-  background: var(--surface);
-  border-radius: 999px;
-  color: var(--ink-2);
-  box-shadow: var(--shadow-1);
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  margin-right: 10px;
-}
-
 #root .plan-footnote {
   font-size: 11.5px;
   color: var(--ink-3);
@@ -3714,7 +3702,6 @@ body::before {
   #root .bristol-stats-modal-close,
   #root .bristol-history-edit-btn,
   #root .more-leave,
-  #root .plan-back,
   #root .toast-btn,
   #root .toast-close {
     min-height: 44px;
@@ -3728,7 +3715,6 @@ body::before {
   #root .bristol-stats-modal-close,
   #root .bristol-history-edit-btn,
   #root .more-leave,
-  #root .plan-back,
   #root .plan-vote,
   #root .plan-mini,
   #root .plan-ics-icon,

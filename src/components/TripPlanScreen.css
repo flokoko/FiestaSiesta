@@ -249,21 +249,6 @@
   color: var(--text-muted);
 }
 
-.plan-back {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  margin-top: 2px;
-  border: 1px solid var(--border-color);
-  border-radius: 9px;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
 .plan-screen .list-head {
   justify-content: flex-start;
   gap: 10px;

@@ -72,6 +72,7 @@ import { useTripWeather } from './hooks/useTripWeather'
 import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
+import { useBackNav } from './hooks/useBackNav'
 import BristolGate from './components/BristolGate'
 
 function TabLoader() {
@@ -487,11 +488,28 @@ export default function App() {
   // Identitäten pro Render würden die memoisierten Screens (und Sheet/Nav)
   // bei jedem App-Update neu rendern. setState-Setter sind stabil, setTab
   // ist über useCallback([]) stabil.
-  const handlePlanBack = useCallback(() => setTab('trip'), [setTab])
   const handleOpenMore = useCallback(() => setMoreOpen(true), [])
   const handleCloseMore = useCallback(() => setMoreOpen(false), [])
   const handleOpenEmergency = useCallback(() => setEmergencyOpen(true), [])
   const handleCloseEmergency = useCallback(() => setEmergencyOpen(false), [])
+  // ── Zurück-Taste (Android/Browser) ─────────────────────────────────
+  // Statt die PWA zu schließen: einen Screen zurück, offene Blätter zuerst zu.
+  const restoreNav = useCallback(
+    (state: { tab: TabView; sheet: 'more' | 'emergency' | null }) => {
+      setMoreOpen(state.sheet === 'more')
+      setEmergencyOpen(state.sheet === 'emergency')
+      setTab(state.tab)
+    },
+    [setTab],
+  )
+  const navSheet = moreOpen ? 'more' : emergencyOpen ? 'emergency' : null
+  useBackNav({
+    enabled: !!userName && !!list,
+    tab,
+    sheet: navSheet,
+    onRestore: restoreNav,
+  })
+
   const handleEnableBristol = useCallback(() => {
     localStorage.setItem('bristol_modus_enabled', 'true')
     window.dispatchEvent(new CustomEvent('bristol-modus-change'))
@@ -513,7 +531,7 @@ export default function App() {
       ? 'lists'
       : tab === 'notes' || tab === 'weather' || tab === 'settings'
         ? 'home'
-        : tab === 'offen' || tab === 'recipes'
+        : tab === 'offen' || tab === 'recipes' || tab === 'plan'
           ? 'trip'
           : null
 
@@ -615,7 +633,6 @@ export default function App() {
               listId={list.id}
               userName={userName}
               isAdmin={isAdmin}
-              onBack={handlePlanBack}
             />
           </Suspense>
           </ErrorBoundary>
@@ -801,7 +818,6 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         onLeave={handleLeave}
-        onEmergency={handleOpenEmergency}
         userName={userName}
       />
 
