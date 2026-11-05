@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.62.0';
+const CACHE_NAME = 'fiesta-siesta-v0.62.1';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -80,16 +80,40 @@ self.addEventListener('push', (e) => {
   }
 
   const title = payload.title || 'Fiesta Siesta';
-  const options = {
-    body: payload.body || '',
-    icon: payload.icon || '/FiestaSiesta/icon-192.png',
-    badge: '/FiestaSiesta/icon-192.png',
-    tag: payload.tag || 'fiesta-siesta',
-    data: payload.data || {},
-    vibrate: [80, 40, 80],
-  };
+  const tag = payload.tag || 'fiesta-siesta';
 
-  e.waitUntil(self.registration.showNotification(title, options));
+  // Doppel-Buzz vermeiden: hat der lokale Timer (lib/wake.ts) dieselbe Meldung
+  // schon gezeigt — gleicher Tag `fiesta-wake-<proposal_id>` —, ersetzt der Push
+  // sie nur noch still. Ohne diese Prüfung klingelt es zweimal, wenn der Cron
+  // kurz nach dem Timer feuert und die Meldung inzwischen weggewischt wurde.
+  // Wichtig: `waitUntil` synchron aufrufen, nicht nach einem await — sonst ist
+  // das Event unter Umständen schon beendet und die Meldung fällt weg.
+  const show = async () => {
+    let alreadyShown = false;
+    try {
+      alreadyShown = (await self.registration.getNotifications({ tag })).length > 0
+    } catch {
+      // getNotifications fehlt in alten WebViews — dann lieber normal klingeln.
+    }
+
+    const options = {
+      body: payload.body || '',
+      icon: payload.icon || '/FiestaSiesta/icon-192.png',
+      badge: '/FiestaSiesta/icon-192.png',
+      tag,
+      data: payload.data || {},
+      vibrate: [80, 40, 80],
+      // Ersetzt eine sichtbare Meldung: still, kein Ton, keine Vibration.
+      silent: alreadyShown,
+      // Serverseitig angefordertes Nachklingeln (z. B. Eskalation) — nur wenn die
+      // Meldung nicht ohnehin schon sichtbar ist, das wäre genau der Doppel-Buzz.
+      renotify: payload.renotify === true && !alreadyShown,
+    }
+
+    await self.registration.showNotification(title, options)
+  }
+
+  e.waitUntil(show())
 });
 
 // Handle notification click: focus existing window or open new one.
