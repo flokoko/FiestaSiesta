@@ -659,6 +659,7 @@ export default function App() {
               isAdmin={isAdmin}
               dayIso={dayIso}
               onPickDay={handlePickDay}
+              onNavigate={setTab}
             />
           </Suspense>
           </ErrorBoundary>

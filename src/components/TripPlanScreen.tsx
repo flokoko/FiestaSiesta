@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send } from 'lucide-react'
+import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase, getSupabaseUrl } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
@@ -12,7 +12,7 @@ import { hasActiveSubscription } from '../lib/push'
 import { fetchDriveTime, leadIsTight, quickDriveTime, recommendedLead, type DriveTime } from '../lib/driveTime'
 import { DEFAULT_LEAD, LEAD_OPTIONS, SLOT_START, hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
-import type { TripComment, TripProposal, TripSlot, TripVote } from '../types'
+import type { TabView, TripComment, TripProposal, TripSlot, TripVote } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
 import './TripPlanScreen.css'
 
@@ -23,6 +23,7 @@ interface TripPlanScreenProps {
   /** Gewählter Tag, geteilt mit dem Tag-Screen (ISO) */
   dayIso?: string | null
   onPickDay?: (iso: string) => void
+  onNavigate: (tab: TabView) => void
 }
 
 function commentClock(iso: string): string {
@@ -31,7 +32,7 @@ function commentClock(iso: string): string {
   return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay }: TripPlanScreenProps) {
+export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay, onNavigate }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
@@ -44,6 +45,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   // Kalender: Abo-Token der Liste (Edge Function `ics-feed`)
   const [feedToken, setFeedToken] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  // Zwei-Tap-Bestätigung: der erste Tipp schärft, der zweite rotiert.
+  const [rotateArmed, setRotateArmed] = useState(false)
+  const [rotating, setRotating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [addSlot, setAddSlot] = useState<TripSlot | null>(null)
@@ -490,6 +494,33 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     toast('Kalenderdatei erstellt', 'success')
   }
 
+  useEffect(() => {
+    if (!rotateArmed) return
+    const timer = window.setTimeout(() => setRotateArmed(false), 6000)
+    return () => window.clearTimeout(timer)
+  }, [rotateArmed])
+
+  // Neuer Token: der alte Link antwortet danach mit 404. Nur nach Rückfrage,
+  // denn jedes abonnierte Gerät muss neu eingerichtet werden.
+  const rotateFeedToken = async () => {
+    if (!rotateArmed) {
+      setRotateArmed(true)
+      navigator.vibrate?.(6)
+      return
+    }
+    setRotating(true)
+    const { data, error } = await supabase.rpc('rotate_ics_token', { p_list_id: listId })
+    setRotating(false)
+    setRotateArmed(false)
+    if (error || !data) {
+      toast(friendlyError(error ?? { message: 'Link nicht neu erzeugt' }), 'error')
+      return
+    }
+    setFeedToken(data as string)
+    navigator.vibrate?.(10)
+    toast('Neuer Abo-Link — der alte ist ab jetzt ungültig', 'success')
+  }
+
   // Abo-Link: dieselbe Datei, aber vom Server — Kalender holen sie selbst neu.
   const copyFeedLink = async () => {
     if (!feedToken) return
@@ -513,6 +544,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
             {proposalTotal === 1 ? 'Vorschlag' : 'Vorschläge'}
           </p>
         </div>
+        <button
+          type="button"
+          className="plan-ics-icon"
+          aria-label={`Tageskarte für ${formatDayShort(selectedDate)}`}
+          title="Tageskarte: Route und Etappen"
+          onClick={() => onNavigate('karte')}
+        >
+          <MapIcon size={17} strokeWidth={2} />
+        </button>
         <button
           type="button"
           className={`plan-ics-icon${calendarOpen ? ' is-open' : ''}`}
@@ -550,6 +590,19 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           <p className="plan-calendar-foot">
             Im Kalender: „Kalender hinzufügen" → „Von URL hinzufügen" → Link einfügen.
           </p>
+          <button
+            type="button"
+            className={`plan-calendar-rotate${rotateArmed ? ' is-armed' : ''}`}
+            onClick={() => void rotateFeedToken()}
+            disabled={!feedToken || rotating}
+          >
+            <RefreshCw size={12} strokeWidth={2.2} />
+            {rotating
+              ? 'Wird erzeugt …'
+              : rotateArmed
+                ? 'Wirklich? Alter Link wird ungültig'
+                : 'Abo-Link neu erzeugen'}
+          </button>
         </div>
       )}
 
