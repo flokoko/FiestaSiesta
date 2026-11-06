@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   BookOpen, Palmtree, Trophy, Scissors, Users, Phone, ChevronRight,
-  RotateCcw, Coins, Timer, Check, X as XIcon,
+  RotateCcw, Coins, Check, X as XIcon,
 } from 'lucide-react'
 import { useToast } from '../context/ToastContext'
 import {
@@ -39,13 +39,24 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
   const [eliminated, setEliminated] = useState<number[]>([])
   const [audience, setAudience] = useState<Record<string, number> | null>(null)
   const [busy, setBusy] = useState(false)
+  // Antwort, die nicht durchging — wird nur auf Wunsch erneut gesendet.
+  const [pending, setPending] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const deadlineRef = useRef(0)
+  // Server- und Geräteuhr können auseinanderlaufen; die Deadline kommt vom Server.
+  const clockOffsetRef = useRef(0)
   const answeredRef = useRef(false)
+  // Der Ablauf darf nur EINMAL gemeldet werden — sonst feuert die Uhr im
+  // 200-ms-Takt weitere Requests, während der erste noch unterwegs ist.
+  const timeoutFiredRef = useRef(false)
   const runRef = useRef<string | null>(null)
-  // Solange der „aufhören?"-Dialog offen ist, darf die Uhr den Lauf nicht
-  // abwürgen — sonst verliert man die Runde, während man noch überlegt.
+  const startBusyRef = useRef(false)
+  const jokerPendingRef = useRef(false)
+  // Solange der „aufhören?"-Dialog offen ist, pausiert die Uhr und das
+  // Spielfeld ist gesperrt — sonst antwortet man unter dem Dialog weiter.
   const dialogRef = useRef(false)
+  const nextRef = useRef<HTMLButtonElement | null>(null)
 
   const loadLobby = useCallback(async () => {
     try {
@@ -55,6 +66,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
       ])
       setModes(ov.modes ?? [])
       setBoard(lb.rows ?? [])
+      setBoardMode('general')
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Quiz nicht erreichbar', 'error')
     }
@@ -72,10 +84,14 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
         setPhase('done')
         return
       }
+      const serverNow = data.now ? Date.parse(String(data.now)) : Date.now()
+      clockOffsetRef.current = serverNow - Date.now()
       setQuestion(data)
       deadlineRef.current = Date.parse(String(data.deadline))
-      setRemaining(Math.max(0, (deadlineRef.current - Date.now()) / 1000))
+      setRemaining(Math.max(0, (deadlineRef.current - clockOffsetRef.current - Date.now()) / 1000))
       answeredRef.current = false
+      timeoutFiredRef.current = false
+      setPending(null)
       setReveal(null)
       setEliminated([])
       setAudience(null)
@@ -90,6 +106,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
     if (!runRef.current || answeredRef.current) return
     answeredRef.current = true
     setBusy(true)
+    setPending(null)
     try {
       const data = await quizAnswer(runRef.current, userName, choice)
       // choice < 0 = die Uhr lief ab; der Server stempelt es ebenfalls als Zeitablauf.
@@ -103,31 +120,58 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
       }
       setPhase('reveal')
     } catch (err) {
-      answeredRef.current = false
+      // Bewusst KEIN automatischer Retry: die Uhr würde sonst im Zwei-Sekunden-
+      // Takt weiterfeuern und den Nutzer mit Fehlertoasts zuschütten.
+      setPending(choice)
       toast(err instanceof Error ? err.message : 'Antwort nicht angekommen', 'error')
     } finally {
       setBusy(false)
     }
   }, [toast, userName])
 
-  // Countdown: rechnet gegen die Server-Deadline, nicht gegen einen lokalen Start.
+  const retry = useCallback(() => {
+    if (pending === null) return
+    answeredRef.current = false
+    void submit(pending)
+  }, [pending, submit])
+
+  // Countdown gegen die Server-Deadline, nicht gegen einen lokalen Start.
   useEffect(() => {
     if (phase !== 'playing') return
     const tick = () => {
-      const left = (deadlineRef.current - Date.now()) / 1000
+      const left = (deadlineRef.current - clockOffsetRef.current - Date.now()) / 1000
       setRemaining(Math.max(0, left))
-      if (left <= 0 && !answeredRef.current && !dialogRef.current) void submit(-1)
+      if (left <= 0 && !answeredRef.current && !dialogRef.current && !timeoutFiredRef.current) {
+        timeoutFiredRef.current = true
+        void submit(-1)
+      }
     }
     tick()
     const id = window.setInterval(tick, 200)
     return () => window.clearInterval(id)
   }, [phase, submit])
 
-  const startMode = useCallback(async (next: QuizMode) => {
+  // Nach der Auflösung wandert der Fokus auf „Weiter" — die Antwortknöpfe sind
+  // dann disabled, der Fokus fiele sonst auf <body>.
+  useEffect(() => {
+    if (phase === 'reveal') nextRef.current?.focus()
+  }, [phase])
+
+  const startMode = useCallback(async (target: QuizMode, openRun?: string | null) => {
+    if (startBusyRef.current) return
+    startBusyRef.current = true
     setBusy(true)
     try {
-      const run = await quizStart(next, userName)
-      setMode(next)
+      if (openRun) {
+        // Offener Lauf (z. B. nach einem Reload): fortsetzen statt neu starten.
+        setMode(target)
+        runRef.current = openRun
+        setResult(null)
+        await loadQuestion(openRun)
+        return
+      }
+      const run = await quizStart(target, userName)
+      setMode(target)
       runRef.current = run.run_id
       setResult(null)
       await loadQuestion(run.run_id)
@@ -135,27 +179,30 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
       toast(err instanceof Error ? err.message : 'Runde konnte nicht starten', 'error')
       setPhase('lobby')
     } finally {
+      startBusyRef.current = false
       setBusy(false)
     }
   }, [loadQuestion, toast, userName])
 
   const next = useCallback(async () => {
-    if (!runRef.current) return
+    if (!runRef.current || busy) return
     if (result) {
       setPhase('done')
       return
     }
     await loadQuestion(runRef.current)
-  }, [loadQuestion, result])
+  }, [busy, loadQuestion, result])
 
   const takeMoney = useCallback(() => {
     if (!runRef.current || !question) return
     const win = QUIZ_LADDER[Math.max(0, question.step - 2)]
     dialogRef.current = true
+    setDialogOpen(true)
     confirm(
       `Für ${euro(win)} aufhören?`,
       async () => {
         dialogRef.current = false
+        setDialogOpen(false)
         try {
           const data = await quizBank(runRef.current as string, userName)
           // Der Server kann den Lauf inzwischen als verloren führen (Zeit
@@ -166,22 +213,29 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
           toast(err instanceof Error ? err.message : 'Konnte nicht sichern', 'error')
         }
       },
-      () => { dialogRef.current = false },
+      () => { dialogRef.current = false; setDialogOpen(false) },
       'Mitnehmen',
     )
   }, [confirm, question, toast, userName])
 
   const applyJoker = useCallback(async (kind: 'fifty' | 'audience' | 'call') => {
-    if (!runRef.current) return
+    if (!runRef.current || jokerPendingRef.current || !question) return
+    jokerPendingRef.current = true
+    const askedStep = question.step
     try {
       const data = await quizJoker(runRef.current, userName, kind)
+      // Während des Requests kann „Weiter" gedrückt worden sein — dann darf das
+      // Joker-Ergebnis nicht auf der nächsten Frage landen.
+      if (question.step !== askedStep) return
       if (data.eliminated) setEliminated(data.eliminated)
       if (data.distribution) setAudience(data.distribution)
       setQuestion((prev) => (prev ? { ...prev, jokers: data.jokers } : prev))
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Joker nicht verfügbar', 'error')
+    } finally {
+      jokerPendingRef.current = false
     }
-  }, [toast, userName])
+  }, [question, toast, userName])
 
   const showBoard = useCallback(async (target: QuizMode) => {
     try {
@@ -217,13 +271,17 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
           {QUIZ_MODES.map((entry) => {
             const info = modes.find((m) => m.mode === entry.mode)
             const count = info?.questions ?? 0
-            const ready = count >= 15
+            const steps = info?.steps ?? 0
+            // Spielbar nur, wenn jede Stufe 1-15 besetzt ist — die reine
+            // Fragenzahl sagt darüber nichts.
+            const ready = steps >= 15 && count >= 15
+            const openRun = info?.open_run ?? null
             return (
               <button
                 key={entry.mode}
                 type="button"
                 className={`quiz-mode${ready ? '' : ' is-locked'}`}
-                onClick={() => { if (ready && !busy) void startMode(entry.mode) }}
+                onClick={() => { if (ready && !busy) void startMode(entry.mode, openRun) }}
                 disabled={!ready || busy}
               >
                 <span className="quiz-mode-icon">
@@ -234,7 +292,11 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
                 <span className="quiz-mode-body">
                   <span className="quiz-mode-name">{entry.label}</span>
                   <span className="quiz-mode-hint">
-                    {ready ? `${count} Fragen · Beste Runde ${info?.best ?? 0}/15` : 'Fragen folgen'}
+                    {!ready
+                      ? 'Fragen folgen'
+                      : openRun
+                        ? 'Offener Lauf · fortsetzen'
+                        : `${count} Fragen · Beste Runde ${info?.best ?? 0}/15`}
                   </span>
                 </span>
                 <ChevronRight size={18} strokeWidth={2} className="quiz-mode-go" />
@@ -247,13 +309,15 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
           <h2 className="quiz-card-head">So läuft es</h2>
           <ul className="quiz-rule-list">
             <li>15 Stufen, 30 Sekunden pro Frage.</li>
-            <li>Sicher ist dein Geld nach Stufe 5 (500 €) und 10 (32.000 €).</li>
+            <li>Sicher ist dein Geld nach Stufe 5 (500 €) und 10 (16.000 €).</li>
             <li>Falsch oder zu spät heißt: zurück auf die letzte Sicherheitsstufe.</li>
           </ul>
         </section>
 
         <section className="quiz-card">
-          <h2 className="quiz-card-head">Rangliste</h2>
+          <h2 className="quiz-card-head">
+            Rangliste · {QUIZ_MODES.find((m) => m.mode === boardMode)?.label}
+          </h2>
           <Board rows={board} />
         </section>
       </div>
@@ -287,7 +351,10 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
         <section className="quiz-card">
           <Board rows={board} />
         </section>
-        <button type="button" className="quiz-ghost" onClick={() => setPhase('lobby')}>
+        <button
+          type="button" className="quiz-ghost"
+          onClick={() => { void loadLobby(); setPhase('lobby') }}
+        >
           Zurück zur Auswahl
         </button>
       </div>
@@ -322,14 +389,21 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
         </section>
 
         <div className="quiz-actions">
-          <button type="button" className="quiz-primary" onClick={() => { void startMode(mode) }}>
+          <button
+            type="button" className="quiz-primary"
+            disabled={busy}
+            onClick={() => { if (!busy) void startMode(mode) }}
+          >
             <RotateCcw size={16} strokeWidth={2} /> Nochmal
           </button>
           <button type="button" className="quiz-ghost" onClick={() => { void showBoard(mode) }}>
             <Trophy size={16} strokeWidth={2} /> Rangliste
           </button>
         </div>
-        <button type="button" className="quiz-ghost" onClick={() => { void loadLobby(); setPhase('lobby') }}>
+        <button
+          type="button" className="quiz-ghost"
+          onClick={() => { void loadLobby(); setPhase('lobby') }}
+        >
           Zur Auswahl
         </button>
       </div>
@@ -347,9 +421,11 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
   // ── Spielen / Auflösung ──────────────────────────────────────────
   const answered = phase === 'reveal'
   const reached = question.step - 1
-  const safeHere = QUIZ_SAFE_STEPS.includes(question.step - 1)
+  // Während der Auflösung ist question.step die GERADE beantwortete Stufe.
+  const safeHere = QUIZ_SAFE_STEPS.includes(answered ? question.step : reached)
   const ratio = Math.max(0, Math.min(1, remaining / TIMER_SECONDS))
   const circumference = 2 * Math.PI * 15
+  const locked = answered || busy || dialogOpen
 
   return (
     <div className="quiz-screen list-screen">
@@ -363,8 +439,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
         <div
           className={`quiz-ring${remaining <= 5 ? ' is-low' : ''}${answered ? ' is-paused' : ''}`}
           role="timer"
-          aria-live="off"
-          aria-label={`${Math.ceil(remaining)} Sekunden`}
+          aria-label={answered ? 'Zeit gestoppt' : `${Math.ceil(remaining)} Sekunden`}
         >
           <svg viewBox="0 0 36 36" aria-hidden="true">
             <circle className="quiz-ring-track" cx="18" cy="18" r="15" />
@@ -407,10 +482,10 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
           const share = audience?.[String(index)]
           return (
             <button
-              key={option}
+              key={index}
               type="button"
               className={`quiz-option${state}`}
-              disabled={answered || gone || busy}
+              disabled={locked || gone}
               onClick={() => { void submit(index) }}
             >
               <span className="quiz-letter">{'ABCD'[index]}</span>
@@ -426,11 +501,20 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
       </div>
 
       {answered && reveal && (
-        <div className="quiz-explain">
+        <div className="quiz-explain" role="status" aria-live="polite">
           <strong className={reveal.correct ? 'is-right' : 'is-wrong'}>
             {reveal.correct ? 'Richtig.' : reveal.timeout ? 'Zeit abgelaufen.' : 'Leider falsch.'}
           </strong>
           {reveal.explanation && <span>{reveal.explanation}</span>}
+        </div>
+      )}
+
+      {pending !== null && !answered && (
+        <div className="quiz-offline" role="alert">
+          <span>Antwort nicht angekommen — keine Verbindung?</span>
+          <button type="button" className="quiz-ghost" onClick={retry}>
+            Erneut senden
+          </button>
         </div>
       )}
 
@@ -440,7 +524,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
             <div className="quiz-jokers">
               <button
                 type="button" className="quiz-joker"
-                disabled={!question.jokers.fifty || busy}
+                disabled={!question.jokers.fifty || locked}
                 onClick={() => { void applyJoker('fifty') }}
                 aria-label="50:50-Joker"
               >
@@ -448,7 +532,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
               </button>
               <button
                 type="button" className="quiz-joker"
-                disabled={!question.jokers.audience || busy}
+                disabled={!question.jokers.audience || locked}
                 onClick={() => { void applyJoker('audience') }}
                 aria-label="Publikumsjoker"
               >
@@ -456,7 +540,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
               </button>
               <button
                 type="button" className="quiz-joker"
-                disabled={!question.jokers.call || busy}
+                disabled={!question.jokers.call || locked}
                 onClick={() => toast('Telefonjoker kommt später — frag die anderen so lange im Chat.', 'info')}
                 aria-label="Telefonjoker"
               >
@@ -465,7 +549,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
             </div>
             <button
               type="button" className="quiz-bank"
-              disabled={reached === 0 || busy}
+              disabled={reached === 0 || locked}
               onClick={takeMoney}
             >
               <Coins size={16} strokeWidth={2} />
@@ -474,7 +558,12 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
           </>
         )}
         {answered && (
-          <button type="button" className="quiz-primary" onClick={() => { void next() }}>
+          <button
+            ref={nextRef}
+            type="button" className="quiz-primary"
+            disabled={busy}
+            onClick={() => { void next() }}
+          >
             {result ? 'Ergebnis' : 'Weiter'} <ChevronRight size={16} strokeWidth={2} />
           </button>
         )}
@@ -483,17 +572,13 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
             {safeHere
               ? 'Sicherheitsstufe erreicht — ab jetzt ist dein Geld sicher.'
               : question.step > 10
-                ? 'Sicher: 32.000 €'
+                ? 'Sicher: 16.000 €'
                 : question.step > 5
                   ? 'Sicher: 500 €'
                   : 'Nichts gesichert bis Stufe 5 (500 €)'}
           </p>
         )}
       </footer>
-
-      <span className="quiz-timer-hint" aria-hidden="true">
-        <Timer size={12} strokeWidth={2} /> {clock(remaining)}
-      </span>
     </div>
   )
 }

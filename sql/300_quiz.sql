@@ -99,7 +99,7 @@ grant execute on function public.quiz_ladder() to anon, authenticated;
 create or replace function public.quiz_safe_bank(s integer) returns integer
 language sql immutable as $$
   select case
-           when s > 10 then 32000
+           when s > 10 then 16000   -- Stufe 10 ist 16.000 €, 32.000 € erst auf Stufe 11
            when s > 5 then 500
            else 0
          end::integer
@@ -137,34 +137,33 @@ begin
    where list_id = v_list and participant = p_participant
      and mode = p_mode and outcome = 'playing';
 
-  -- 15 Fragen, eine pro Stufe, ohne Wiederholung für diesen Teilnehmer.
-  select array_agg(q.id order by q.step) into v_ids
+  -- 15 Fragen, genau eine pro Stufe. Der Ausschluss (schon gespielte Fragen)
+  -- gilt PRO STUFE: ist eine Stufe leer gespielt, wird nur dort wiederholt,
+  -- nicht der ganze Stapel neu gezogen.
+  select array_agg(x.id order by x.step) into v_ids
   from (
-    select distinct on (qq.step) qq.id, qq.step
-    from public.quiz_questions qq
-    where qq.mode = p_mode and qq.active
-      and qq.id not in (
-        select a.question_id
-        from public.quiz_answers a
-        where a.list_id = v_list
-          and a.run_id in (
-            select r.id from public.quiz_runs r
-            where r.list_id = v_list and r.participant = p_participant
-          )
-      )
-    order by qq.step, random()
-  ) q;
-
-  -- Pool für diesen Teilnehmer erschöpft → ohne Ausschluss neu ziehen.
-  if v_ids is null or array_length(v_ids, 1) < 15 then
-    select array_agg(q.id order by q.step) into v_ids
-    from (
-      select distinct on (qq.step) qq.id, qq.step
-      from public.quiz_questions qq
-      where qq.mode = p_mode and qq.active
-      order by qq.step, random()
-    ) q;
-  end if;
+    select s.step,
+           coalesce(
+             (select qq.id
+                from public.quiz_questions qq
+               where qq.mode = p_mode and qq.active and qq.step = s.step
+                 and qq.id not in (
+                   select a.question_id from public.quiz_answers a
+                    where a.list_id = v_list
+                      and a.run_id in (
+                        select r.id from public.quiz_runs r
+                        where r.list_id = v_list and r.participant = p_participant
+                      )
+                 )
+               order by random() limit 1),
+             (select qq.id
+                from public.quiz_questions qq
+               where qq.mode = p_mode and qq.active and qq.step = s.step
+               order by random() limit 1)
+           ) as id
+    from generate_series(1, 15) as s(step)
+  ) x
+  where x.id is not null;
 
   if v_ids is null or array_length(v_ids, 1) < 15 then
     return jsonb_build_object('error', 'Fragenpool unvollständig');
@@ -230,6 +229,7 @@ begin
     'value', (public.quiz_ladder())[v_run.step],
     'jokers', v_run.jokers,
     'deadline', v_deadline,
+    'now', now(),
     'seconds', 30
   );
 end;
@@ -264,6 +264,13 @@ begin
     return jsonb_build_object(
       'outcome', v_run.outcome, 'reached', v_run.reached, 'bank', v_run.bank
     );
+  end if;
+
+  if p_choice < -1 or p_choice > 3 then
+    return jsonb_build_object('error', 'Ungültige Antwort');
+  end if;
+  if v_run.shown_at is null then
+    return jsonb_build_object('error', 'Frage noch nicht angezeigt');
   end if;
 
   select * into v_q from public.quiz_questions q
@@ -357,6 +364,21 @@ begin
     );
   end if;
 
+  -- Läuft die Uhr bereits, ist das Mitnehmen kein Ausweg: dann gilt die
+  -- Sicherheitsstufe wie bei einer falschen Antwort. Sonst könnte man die
+  -- 30-Sekunden-Regel umgehen, indem man wartet und danach kassiert.
+  if v_run.shown_at is not null
+     and now() > v_run.shown_at + interval '34 seconds' then
+    update public.quiz_runs
+       set outcome = 'lost', reached = v_run.step - 1,
+           bank = public.quiz_safe_bank(v_run.step), finished_at = now()
+     where id = p_run_id;
+    return jsonb_build_object(
+      'outcome', 'lost', 'reached', v_run.step - 1,
+      'bank', public.quiz_safe_bank(v_run.step), 'timeout', true
+    );
+  end if;
+
   -- Man nimmt den Wert mit, den man bereits erreicht hat.
   v_bank := case when v_run.step > 1
                  then (public.quiz_ladder())[v_run.step - 1]
@@ -404,6 +426,9 @@ begin
   if v_run.shown_at is null then
     return jsonb_build_object('error', 'Frage noch nicht angezeigt');
   end if;
+  if now() > v_run.shown_at + interval '34 seconds' then
+    return jsonb_build_object('error', 'Zeit abgelaufen');
+  end if;
   if not coalesce((v_run.jokers ->> p_kind)::boolean, false) then
     return jsonb_build_object('error', 'Joker bereits benutzt');
   end if;
@@ -426,13 +451,25 @@ begin
 
   if p_kind = 'audience' then
     v_correct_share := 45 + floor(random() * 40)::integer;   -- 45–84 %
-    v_dist := (
-      select jsonb_object_agg(i::text, case
-               when i = v_q.correct then v_correct_share
-               else greatest(0, (100 - v_correct_share) / 3 + (floor(random() * 7)::integer - 3))
-             end)
+    -- Rest auf die drei falschen Optionen verteilen; der letzte bekommt den
+    -- Rest, damit die Prozente sichtbar genau 100 ergeben.
+    with shares as (
+      select i,
+             case when i = v_q.correct then v_correct_share
+                  else (100 - v_correct_share) / 3
+             end as base
       from generate_series(0, 3) i
-    );
+    ),
+    summed as (
+      select i, base, sum(base) over () as total from shares
+    )
+    select jsonb_object_agg(
+             i::text,
+             case when i = (select max(i) from summed)
+                  then base + (100 - total) else base end
+           )
+      into v_dist
+    from summed;
     v_jokers := jsonb_set(v_run.jokers, '{audience}', 'false'::jsonb);
     update public.quiz_runs set jokers = v_jokers where id = p_run_id;
     return jsonb_build_object('distribution', v_dist, 'jokers', v_jokers);
@@ -466,19 +503,33 @@ begin
                                         (row ->> 'seconds')::int asc), '[]'::jsonb)
     into v_rows
   from (
-    select jsonb_build_object(
+    -- Der beste Lauf als GANZER: reached und seconds müssen aus derselben Zeile
+    -- kommen, sonst paart der Tiebreak die Bestleistung mit der Zeit eines
+    -- anderen, schnelleren Laufs.
+    select distinct on (r.participant)
+           r.participant,
+           jsonb_build_object(
              'participant', r.participant,
-             'reached', max(r.reached),
-             'best_bank', max(r.bank),
-             'seconds', min(r.seconds),
-             'runs', count(*),
-             'won', count(*) filter (where r.outcome = 'won')
+             'reached', r.reached,
+             'best_bank', r.bank,
+             'seconds', r.seconds,
+             'runs', (
+               select count(*) from public.quiz_runs x
+               where x.list_id = v_list and x.mode = p_mode
+                 and x.participant = r.participant
+                 and x.outcome in ('won', 'lost', 'banked')
+             ),
+             'won', (
+               select count(*) from public.quiz_runs x
+               where x.list_id = v_list and x.mode = p_mode
+                 and x.participant = r.participant and x.outcome = 'won'
+             )
            ) as row
     from public.quiz_runs r
     where r.list_id = v_list
       and r.mode = p_mode
       and r.outcome in ('won', 'lost', 'banked')
-    group by r.participant
+    order by r.participant, r.reached desc, r.seconds asc
   ) s;
 
   return jsonb_build_object('mode', p_mode, 'rows', v_rows);

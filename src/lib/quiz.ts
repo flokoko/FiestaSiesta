@@ -10,6 +10,8 @@ export type QuizMode = 'general' | 'island'
 export interface QuizModeInfo {
   mode: QuizMode
   questions: number
+  /** Wie viele der 15 Stufen besetzt sind — nur dann ist der Modus spielbar. */
+  steps: number
   best: number
   runs: number
   open_run: string | null
@@ -33,6 +35,8 @@ export interface QuizQuestion {
   value: number
   jokers: { fifty: boolean; audience: boolean; call: boolean }
   deadline: string
+  /** Serverzeit beim Abruf — der Client korrigiert damit seinen Uhrenversatz. */
+  now?: string
   seconds: number
 }
 

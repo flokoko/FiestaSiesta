@@ -19,6 +19,12 @@ begin
              select count(*) from public.quiz_questions q
              where q.mode = m.mode and q.active
            ),
+           -- Spielbar ist ein Modus nur, wenn JEDE Stufe 1-15 besetzt ist;
+           -- die reine Fragenzahl sagt darüber nichts.
+           'steps', (
+             select count(distinct q.step) from public.quiz_questions q
+             where q.mode = m.mode and q.active
+           ),
            'best', coalesce((
              select max(r.reached) from public.quiz_runs r
              where r.mode = m.mode and r.list_id = v_list

@@ -207,6 +207,10 @@
 
 #root .quiz-board-tab {
   flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 9px 10px;
   border: 0;
   border-radius: 999px;
@@ -299,6 +303,7 @@
 }
 
 #root .quiz-ring.is-low .quiz-ring-num { color: var(--accent) }
+#root .quiz-ring.is-paused .quiz-ring-num { color: var(--ink) }
 
 /* Stufenbalken */
 #root .quiz-ladder {
@@ -423,8 +428,25 @@
 }
 
 #root .quiz-explain strong { font-size: 13.5px; font-weight: 700 }
-#root .quiz-explain strong.is-right { color: var(--green) }
+#root .quiz-explain strong.is-right { color: #1B7A5C }
 #root .quiz-explain strong.is-wrong { color: var(--accent) }
+
+#root .quiz-offline {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-1);
+  background: var(--accent-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+#root .quiz-offline .quiz-ghost {
+  background: var(--surface);
+  min-height: 40px;
+}
 
 /* ── Fuß: Joker + Mitnehmen ───────────────────────────────────── */
 #root .quiz-foot {
@@ -522,10 +544,6 @@
   color: var(--ink-3);
 }
 
-#root .quiz-timer-hint {
-  display: none;
-}
-
 /* ── Ergebnis ─────────────────────────────────────────────────── */
 #root .quiz-result {
   display: flex;
@@ -541,7 +559,8 @@
 }
 
 #root .quiz-result.is-won {
-  background: linear-gradient(150deg, #C79A2E 0%, #A87B12 100%);
+  /* Weiße Schrift braucht hier ≥ 4,5:1 — das helle Gold lag bei 2,6:1. */
+  background: linear-gradient(150deg, #8A6410 0%, #6E4E08 100%);
 }
 
 #root .quiz-result-kicker {
@@ -596,12 +615,39 @@
   color: #F5C46A;
 }
 
+:root[data-theme='dark'] #root .quiz-rank.is-2 {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink-2);
+}
+
+:root[data-theme='dark'] #root .quiz-rank.is-3 {
+  background: rgba(214, 140, 90, 0.22);
+  color: #E8B48C;
+}
+
+:root[data-theme='dark'] #root .quiz-bar.is-safe {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme='dark'] #root .quiz-option.is-right .quiz-letter {
+  background: var(--green);
+  color: #06231A;
+}
+
+:root[data-theme='dark'] #root .quiz-explain strong.is-right {
+  color: #6FD3B0;
+}
+
 @media (hover: none), (pointer: coarse) {
   #root .quiz-option,
   #root .quiz-joker,
   #root .quiz-bank {
     font-size: 15px;
   }
+}
+
+@media (max-width: 360px) {
+  #root .quiz-joker { font-size: 12px; gap: 4px; padding: 8px 4px }
 }
 
 @media (prefers-reduced-motion: reduce) {
