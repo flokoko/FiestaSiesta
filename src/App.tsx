@@ -29,6 +29,7 @@ const importTripPlanScreen = () => import('./components/TripPlanScreen')
 const importOpeningHoursScreen = () => import('./components/OpeningHoursScreen')
 const importDayMapScreen = () => import('./components/DayMapScreen')
 const importRecipesScreen = () => import('./components/RecipesScreen')
+const importQuizScreen = () => import('./components/QuizScreen')
 
 const ListScreen = lazy(importListScreen)
 const BringScreen = lazy(importBringScreen)
@@ -40,6 +41,7 @@ const TripPlanScreen = lazy(importTripPlanScreen)
 const OpeningHoursScreen = lazy(importOpeningHoursScreen)
 const DayMapScreen = lazy(importDayMapScreen)
 const RecipesScreen = lazy(importRecipesScreen)
+const QuizScreen = lazy(importQuizScreen)
 
 // Besuchte Panes bleiben gemountet (idle = display:none). Ohne memo rendert
 // jedes App-Update (Realtime-Refetch, Toast, Theme- oder Tab-Wechsel) ALLE
@@ -71,6 +73,7 @@ const SCREEN_CHUNKS_IDLE = [
   importOpeningHoursScreen,
   importRecipesScreen,
   importDayMapScreen,
+  importQuizScreen,
 ]
 import DayScreen from './components/DayScreen'
 import EmergencySheet from './components/EmergencySheet'
@@ -562,7 +565,7 @@ export default function App() {
       ? 'lists'
       : tab === 'notes' || tab === 'weather' || tab === 'settings'
         ? 'home'
-        : tab === 'offen' || tab === 'recipes' || tab === 'plan' || tab === 'karte'
+        : tab === 'offen' || tab === 'recipes' || tab === 'quiz' || tab === 'plan' || tab === 'karte'
           ? 'home'
           : null
 
@@ -688,6 +691,15 @@ export default function App() {
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
             <RecipesScreen listId={list.id} userName={userName} />
+          </Suspense>
+          </ErrorBoundary>
+            </ScreenPane>
+          )}
+          {visited.has('quiz') && (
+            <ScreenPane id="quiz" active={tab === 'quiz'} direction={screenDir}>
+          <ErrorBoundary compact>
+          <Suspense fallback={<TabLoader />}>
+            <QuizScreen userName={userName} />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>

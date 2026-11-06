@@ -20,6 +20,7 @@ export const NAV_DEPTH: Record<TabView, 0 | 1> = {
   offen: 1,
   karte: 1,
   recipes: 1,
+  quiz: 1,
   weather: 1,
   settings: 1,
   notes: 1,

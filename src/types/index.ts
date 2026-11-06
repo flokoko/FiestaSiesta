@@ -41,6 +41,7 @@ export type TabView =
   | 'offen'  // Öffnungszeiten-Ampel (Läden, Apotheken, Tankstellen)
   | 'karte'  // Tageskarte: Ziele, Route, Etappen
   | 'recipes' // Küche: Rezepte für vor Ort, Zutaten auf die Einkaufsliste
+  | 'quiz'   // Spiele: Quiz „Wer wird Siesta-Millionär" (Rangliste pro Modus)
   | 'lists'  // Listen-Domäne (Einkauf + Mitbringen)
   | 'list'
   | 'bring'

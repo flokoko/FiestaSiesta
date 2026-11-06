@@ -1,0 +1,2342 @@
+[
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie heißt die Hauptstadt von Spanien?",
+  "o": [
+   "Barcelona",
+   "Madrid",
+   "Sevilla",
+   "Valencia"
+  ],
+  "c": 1,
+  "e": "Madrid liegt fast in der Mitte des Landes und ist mit rund 3,3 Mio. Einwohnern die größte Stadt Spaniens."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie viele Kontinente gibt es auf der Erde?",
+  "o": [
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "c": 2,
+  "e": "Üblich ist die Zählung mit sieben: Afrika, Antarktis, Asien, Europa, Nordamerika, Ozeanien und Südamerika."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Welches chemische Symbol steht für Gold?",
+  "o": [
+   "Go",
+   "Au",
+   "Ag",
+   "Gd"
+  ],
+  "c": 1,
+  "e": "Au kommt vom lateinischen aurum. Ag ist Silber."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Welcher Planet ist der Sonne am nächsten?",
+  "o": [
+   "Venus",
+   "Erde",
+   "Merkur",
+   "Mars"
+  ],
+  "c": 2,
+  "e": "Merkur umläuft die Sonne in nur 88 Tagen – ein Merkur-Jahr ist kürzer als ein Merkur-Tag."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Welche Farbe entsteht, wenn man Blau und Gelb mischt?",
+  "o": [
+   "Orange",
+   "Violett",
+   "Grün",
+   "Braun"
+  ],
+  "c": 2,
+  "e": "Blau und Gelb ergeben in der Malerei Grün – die Farbe des Chlorophylls in Pflanzen."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Welches ist das größte lebende Tier?",
+  "o": [
+   "Afrikanischer Elefant",
+   "Blauwal",
+   "Giraffe",
+   "Pottwal"
+  ],
+  "c": 1,
+  "e": "Der Blauwal wird bis zu 30 Meter lang; allein seine Zunge wiegt so viel wie ein Elefant."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie heißt der längste Fluss Deutschlands?",
+  "o": [
+   "Donau",
+   "Elbe",
+   "Rhein",
+   "Main"
+  ],
+  "c": 2,
+  "e": "Der Rhein ist mit 865 Kilometern der längste Fluss, der ausschließlich oder überwiegend durch Deutschland fließt."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie viele Spieler einer Mannschaft stehen beim Fußball auf dem Platz?",
+  "o": [
+   "9",
+   "10",
+   "11",
+   "12"
+  ],
+  "c": 2,
+  "e": "Elf Spieler pro Team, dazu kommt der Torwart – der zählt mit."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Welcher Ozean liegt zwischen Europa und Amerika?",
+  "o": [
+   "Pazifik",
+   "Indischer Ozean",
+   "Atlantik",
+   "Arktischer Ozean"
+  ],
+  "c": 2,
+  "e": "Der Atlantik trennt Europa und Afrika von Amerika; an seinen Rändern liegt auch Gran Canaria."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie viele Tage hat ein Schaltjahr?",
+  "o": [
+   "364",
+   "365",
+   "366",
+   "367"
+  ],
+  "c": 2,
+  "e": "Alle vier Jahre kommt der 29. Februar dazu, weil ein Sonnenjahr rund 365,25 Tage dauert."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Aus welchem Land stammt die Pizza?",
+  "o": [
+   "Griechenland",
+   "Frankreich",
+   "Italien",
+   "Spanien"
+  ],
+  "c": 2,
+  "e": "Die neapolitanische Pizza gilt als Ursprung; sie ist seit 2017 UNESCO-Kulturerbe."
+ },
+ {
+  "mode": "general",
+  "step": 1,
+  "q": "Wie viele Minuten hat eine Stunde?",
+  "o": [
+   "30",
+   "45",
+   "60",
+   "100"
+  ],
+  "c": 2,
+  "e": "60 Minuten, 3.600 Sekunden – die Einteilung geht auf die Babylonier zurück."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie heißt die Hauptstadt von Frankreich?",
+  "o": [
+   "Lyon",
+   "Marseille",
+   "Paris",
+   "Nizza"
+  ],
+  "c": 2,
+  "e": "Paris ist mit rund 2,1 Mio. Einwohnern die größte Stadt Frankreichs."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Welches chemische Symbol steht für Sauerstoff?",
+  "o": [
+   "O",
+   "S",
+   "Ox",
+   "Os"
+  ],
+  "c": 0,
+  "e": "O von Oxygenium. Os ist Osmium, S ist Schwefel."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie viele Seiten hat ein Würfel?",
+  "o": [
+   "4",
+   "6",
+   "8",
+   "12"
+  ],
+  "c": 1,
+  "e": "Sechs quadratische Flächen; die Augensumme gegenüberliegender Seiten ist immer sieben."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Welcher Kontinent ist flächenmäßig der größte?",
+  "o": [
+   "Afrika",
+   "Nordamerika",
+   "Asien",
+   "Antarktis"
+  ],
+  "c": 2,
+  "e": "Asien umfasst rund 44 Mio. km² – etwa ein Drittel der Landfläche der Erde."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie heißt der höchste Berg der Erde?",
+  "o": [
+   "K2",
+   "Kilimandscharo",
+   "Mount Everest",
+   "Denali"
+  ],
+  "c": 2,
+  "e": "Der Everest ist 8.849 Meter hoch – der Wert wurde 2020 von China und Nepal gemeinsam bestätigt."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie viele Bundesländer hat Deutschland?",
+  "o": [
+   "12",
+   "14",
+   "16",
+   "18"
+  ],
+  "c": 2,
+  "e": "Seit der Wiedervereinigung 1990 sind es 16, darunter die drei Stadtstaaten Berlin, Hamburg und Bremen."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wer schrieb das Drama „Romeo und Julia“?",
+  "o": [
+   "Goethe",
+   "Shakespeare",
+   "Molière",
+   "Schiller"
+  ],
+  "c": 1,
+  "e": "Shakespeare schrieb es um 1595; die Handlung spielt in Verona."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie viele Grad hat ein rechter Winkel?",
+  "o": [
+   "45",
+   "60",
+   "90",
+   "180"
+  ],
+  "c": 2,
+  "e": "90 Grad – ein Viertel des Vollkreises von 360 Grad."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Welcher Staat ist flächenmäßig der größte der Erde?",
+  "o": [
+   "Kanada",
+   "China",
+   "USA",
+   "Russland"
+  ],
+  "c": 3,
+  "e": "Russland umfasst 17,1 Mio. km² und damit elf Zeitzonen."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Aus welchem Getreide wird Bier hauptsächlich gebraut?",
+  "o": [
+   "Weizen",
+   "Gerste",
+   "Hafer",
+   "Roggen"
+  ],
+  "c": 1,
+  "e": "Gerstenmalz liefert die Enzyme und den Zucker für die Gärung; Weizenbiere sind die Ausnahme."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Welches Tier ist das Wappentier Berlins?",
+  "o": [
+   "Adler",
+   "Bär",
+   "Löwe",
+   "Wolf"
+  ],
+  "c": 1,
+  "e": "Der Berliner Bär steht seit dem 13. Jahrhundert im Siegel der Stadt."
+ },
+ {
+  "mode": "general",
+  "step": 2,
+  "q": "Wie viele Sekunden hat eine Stunde?",
+  "o": [
+   "600",
+   "1.800",
+   "3.600",
+   "6.000"
+  ],
+  "c": 2,
+  "e": "60 Minuten mal 60 Sekunden ergibt 3.600."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Wie heißt die Hauptstadt von Portugal?",
+  "o": [
+   "Porto",
+   "Lissabon",
+   "Faro",
+   "Coimbra"
+  ],
+  "c": 1,
+  "e": "Lissabon liegt an der Mündung des Tejo und ist eine der ältesten Städte Westeuropas."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welches Element hat das chemische Symbol Fe?",
+  "o": [
+   "Fluor",
+   "Eisen",
+   "Blei",
+   "Zink"
+  ],
+  "c": 1,
+  "e": "Fe von ferrum – Eisen. Blei ist Pb, Zink ist Zn."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Wie viele Knochen hat ein erwachsener Mensch?",
+  "o": [
+   "180",
+   "206",
+   "230",
+   "260"
+  ],
+  "c": 1,
+  "e": "206 Knochen; Babys haben rund 270, die im Wachstum zusammenwachsen."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welcher Planet ist für seine auffälligen Ringe bekannt?",
+  "o": [
+   "Jupiter",
+   "Neptun",
+   "Saturn",
+   "Uranus"
+  ],
+  "c": 2,
+  "e": "Saturns Ringe bestehen aus Eis- und Gesteinsbrocken – manche nur millimetergroß."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "In welchem Jahr fiel die Berliner Mauer?",
+  "o": [
+   "1987",
+   "1989",
+   "1990",
+   "1991"
+  ],
+  "c": 1,
+  "e": "Am 9. November 1989 wurden die Grenzübergänge geöffnet; die Wiedervereinigung folgte 1990."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welche Meerenge trennt Europa von Afrika?",
+  "o": [
+   "Bosporus",
+   "Straße von Gibraltar",
+   "Straße von Messina",
+   "Suezkanal"
+  ],
+  "c": 1,
+  "e": "An der engsten Stelle sind es nur 14 Kilometer; von Tarifa aus sieht man Marokko."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welche Währung gilt in Spanien?",
+  "o": [
+   "Peseta",
+   "Euro",
+   "Escudo",
+   "Real"
+  ],
+  "c": 1,
+  "e": "Spanien gehört seit 1999 zum Euro-Raum, Bargeld seit 2002."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Wer malte die „Mona Lisa“?",
+  "o": [
+   "Michelangelo",
+   "Raffael",
+   "Leonardo da Vinci",
+   "Botticelli"
+  ],
+  "c": 2,
+  "e": "Leonardo da Vinci malte sie um 1503; sie hängt im Louvre in Paris."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welches ist das kleinste Land der Welt?",
+  "o": [
+   "Monaco",
+   "San Marino",
+   "Vatikanstadt",
+   "Liechtenstein"
+  ],
+  "c": 2,
+  "e": "Der Vatikan ist 0,44 km² groß und hat rund 800 Einwohner."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Wie viele Zähne hat ein Erwachsener mit Weisheitszähnen?",
+  "o": [
+   "28",
+   "30",
+   "32",
+   "34"
+  ],
+  "c": 2,
+  "e": "32 Zähne; die vier Weisheitszähne werden oft entfernt, dann bleiben 28."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Welcher Vogel kann nicht fliegen und lebt in der Antarktis?",
+  "o": [
+   "Albatros",
+   "Pinguin",
+   "Möwe",
+   "Sturmvogel"
+  ],
+  "c": 1,
+  "e": "Pinguine „fliegen“ unter Wasser – ihre Flügel sind zu Flossen umgebaut."
+ },
+ {
+  "mode": "general",
+  "step": 3,
+  "q": "Wie viele Planeten hat unser Sonnensystem?",
+  "o": [
+   "7",
+   "8",
+   "9",
+   "10"
+  ],
+  "c": 1,
+  "e": "Acht seit 2006; Pluto gilt seither als Zwergplanet."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wie heißt die Hauptstadt von Italien?",
+  "o": [
+   "Mailand",
+   "Neapel",
+   "Rom",
+   "Turin"
+  ],
+  "c": 2,
+  "e": "Rom hat rund 2,8 Mio. Einwohner und umschließt den unabhängigen Vatikan."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Welches Gas nehmen Pflanzen bei der Fotosynthese auf?",
+  "o": [
+   "Sauerstoff",
+   "Stickstoff",
+   "Kohlendioxid",
+   "Wasserstoff"
+  ],
+  "c": 2,
+  "e": "Sie spalten CO₂ und geben Sauerstoff ab – die Umkehrung der Atmung."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wie hoch ist der Mount Everest?",
+  "o": [
+   "8.611 m",
+   "8.849 m",
+   "9.001 m",
+   "7.980 m"
+  ],
+  "c": 1,
+  "e": "8.849 Meter; der Wert wurde 2020 von China und Nepal gemeinsam bestätigt."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Welches Land ist für Tulpen und Windmühlen bekannt?",
+  "o": [
+   "Belgien",
+   "Dänemark",
+   "Niederlande",
+   "Deutschland"
+  ],
+  "c": 2,
+  "e": "Die Niederlande exportieren rund zwei Drittel aller Tulpenzwiebeln der Welt."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wer komponierte die „Ode an die Freude“ in der 9. Sinfonie?",
+  "o": [
+   "Mozart",
+   "Beethoven",
+   "Bach",
+   "Haydn"
+  ],
+  "c": 1,
+  "e": "Beethoven vertonte Schillers Gedicht – heute die Hymne der Europäischen Union."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wie viele Liter fasst ein Kubikmeter?",
+  "o": [
+   "100",
+   "500",
+   "1.000",
+   "10.000"
+  ],
+  "c": 2,
+  "e": "1 m³ = 1.000 Liter, weil ein Liter ein Kubikdezimeter ist."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Welcher ist der größte aktive Vulkan Europas?",
+  "o": [
+   "Vesuv",
+   "Ätna",
+   "Stromboli",
+   "Teide"
+  ],
+  "c": 1,
+  "e": "Der Ätna auf Sizilien ist rund 3.350 Meter hoch und bricht fast jedes Jahr aus."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "In welchem Land liegt Machu Picchu?",
+  "o": [
+   "Mexiko",
+   "Peru",
+   "Bolivien",
+   "Chile"
+  ],
+  "c": 1,
+  "e": "Die Inkastadt liegt auf 2.430 Metern in den Anden bei Cusco."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Welches Element hat die Ordnungszahl 1?",
+  "o": [
+   "Helium",
+   "Wasserstoff",
+   "Lithium",
+   "Sauerstoff"
+  ],
+  "c": 1,
+  "e": "Wasserstoff hat ein Proton; er ist das häufigste Element im Universum."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wie heißt die Hauptstadt von Australien?",
+  "o": [
+   "Sydney",
+   "Melbourne",
+   "Canberra",
+   "Perth"
+  ],
+  "c": 2,
+  "e": "Canberra wurde 1913 eigens als Kompromiss zwischen Sydney und Melbourne gegründet."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Wie viele Herzen hat ein Oktopus?",
+  "o": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "c": 2,
+  "e": "Zwei pumpen durch die Kiemen, eines durch den Körper."
+ },
+ {
+  "mode": "general",
+  "step": 4,
+  "q": "Zu welcher Sportart gehört die „Tour de France“?",
+  "o": [
+   "Laufsport",
+   "Radsport",
+   "Motorsport",
+   "Rudern"
+  ],
+  "c": 1,
+  "e": "Seit 1903; die Rundfahrt führt über rund 3.500 Kilometer in drei Wochen."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Wie heißt die Hauptstadt von Großbritannien?",
+  "o": [
+   "Manchester",
+   "London",
+   "Edinburgh",
+   "Birmingham"
+  ],
+  "c": 1,
+  "e": "London liegt an der Themse und ist mit rund 9 Mio. Einwohnern die größte Stadt des Landes."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welches ist das größte Organ des Menschen?",
+  "o": [
+   "Leber",
+   "Lunge",
+   "Haut",
+   "Darm"
+  ],
+  "c": 2,
+  "e": "Die Haut wiegt beim Erwachsenen rund 10 Kilo und umfasst etwa zwei Quadratmeter."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welcher Fluss fließt durch Kairo?",
+  "o": [
+   "Euphrat",
+   "Nil",
+   "Tigris",
+   "Jordan"
+  ],
+  "c": 1,
+  "e": "Der Nil durchquert Ägypten auf rund 1.500 Kilometern von Süden nach Norden."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welches Metall ist bei Zimmertemperatur flüssig?",
+  "o": [
+   "Blei",
+   "Zinn",
+   "Quecksilber",
+   "Aluminium"
+  ],
+  "c": 2,
+  "e": "Quecksilber schmilzt bei -39 °C; es ist das einzige Metall, das bei Raumtemperatur flüssig ist."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Wer schrieb „Faust“?",
+  "o": [
+   "Schiller",
+   "Goethe",
+   "Lessing",
+   "Heine"
+  ],
+  "c": 1,
+  "e": "Goethe arbeitete über 60 Jahre daran; der zweite Teil erschien 1832 posthum."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Wie viele Farben hat ein Regenbogen in der klassischen Zählung?",
+  "o": [
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "c": 2,
+  "e": "Rot, Orange, Gelb, Grün, Blau, Indigo, Violett – die physikalische Grenze ist fließend."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welches Land hat die Form eines Stiefels?",
+  "o": [
+   "Griechenland",
+   "Italien",
+   "Portugal",
+   "Kroatien"
+  ],
+  "c": 1,
+  "e": "Die „Stiefelform“ ist ein Kartenscherz – gemeint ist die Halbinsel Apulien und Kalabrien."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "In welchem Jahr begann der Erste Weltkrieg?",
+  "o": [
+   "1912",
+   "1914",
+   "1917",
+   "1918"
+  ],
+  "c": 1,
+  "e": "Mit der Kriegserklärung Österreich-Ungarns an Serbien am 28. Juli 1914."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welcher ist der größte See Afrikas?",
+  "o": [
+   "Tschadsee",
+   "Victoriasee",
+   "Tanganjikasee",
+   "Malawisee"
+  ],
+  "c": 1,
+  "e": "Der Victoriasee ist 68.000 km² groß; er speist den Nil."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Wie heißt der Übergang von flüssig zu gasförmig?",
+  "o": [
+   "Kondensation",
+   "Verdampfung",
+   "Sublimation",
+   "Erstarrung"
+  ],
+  "c": 1,
+  "e": "Verdampfung unterhalb des Siedepunkts heißt Verdunsten."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welches ist das schnellste Landtier?",
+  "o": [
+   "Löwe",
+   "Gepard",
+   "Antilope",
+   "Pferd"
+  ],
+  "c": 1,
+  "e": "Der Gepard erreicht kurzzeitig über 100 km/h, hält das aber nur wenige Sekunden."
+ },
+ {
+  "mode": "general",
+  "step": 5,
+  "q": "Welche zwei Farben trägt die Flagge Spaniens?",
+  "o": [
+   "Blau und Weiß",
+   "Rot und Gelb",
+   "Rot und Grün",
+   "Gelb und Schwarz"
+  ],
+  "c": 1,
+  "e": "Rot-Gelb-Rot in waagerechten Streifen, der gelbe Streifen doppelt so breit."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Wer war der erste Mensch auf dem Mond?",
+  "o": [
+   "Juri Gagarin",
+   "Buzz Aldrin",
+   "Neil Armstrong",
+   "Michael Collins"
+  ],
+  "c": 2,
+  "e": "Am 21. Juli 1969 (UTC), Apollo 11. Aldrin folgte 19 Minuten später."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Welches war die Hauptstadt des Byzantinischen Reiches?",
+  "o": [
+   "Athen",
+   "Rom",
+   "Konstantinopel",
+   "Alexandria"
+  ],
+  "c": 2,
+  "e": "Konstantinopel, das heutige Istanbul, war über 1.000 Jahre lang das Zentrum des Reiches."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Welches Element hat das Symbol W?",
+  "o": [
+   "Wolfram",
+   "Wasserstoff",
+   "Wismut",
+   "Zink"
+  ],
+  "c": 0,
+  "e": "W von Wolfram – im Englischen tungsten, daher das Symbol W."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Wie viele Sinfonien vollendete Ludwig van Beethoven?",
+  "o": [
+   "7",
+   "8",
+   "9",
+   "11"
+  ],
+  "c": 2,
+  "e": "Neun; die Zehnte blieb Fragment. Die Neunte gilt als erste mit Chor."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Welches Land hat die längste Küstenlinie der Welt?",
+  "o": [
+   "Russland",
+   "Kanada",
+   "Indonesien",
+   "Australien"
+  ],
+  "c": 1,
+  "e": "Kanada hat rund 202.000 Kilometer Küste – der längste Wert aller Staaten."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Wer entwickelte die Relativitätstheorie?",
+  "o": [
+   "Newton",
+   "Einstein",
+   "Planck",
+   "Bohr"
+  ],
+  "c": 1,
+  "e": "Die spezielle 1905, die allgemeine 1915."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Welche ist die größte Wüste der Erde?",
+  "o": [
+   "Sahara",
+   "Gobi",
+   "Antarktis",
+   "Kalahari"
+  ],
+  "c": 2,
+  "e": "Die Antarktis ist mit rund 14 Mio. km² die größte Wüste – sie ist nur aus Eis statt Sand."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Aus welcher Pflanze gewinnt man Safran?",
+  "o": [
+   "Sonnenblume",
+   "Krokus",
+   "Ringelblume",
+   "Lavendel"
+  ],
+  "c": 1,
+  "e": "Crocus sativus; für ein Kilo werden rund 150.000 Blüten von Hand geerntet."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Zwischen welchen beiden Ländern liegt der Titicacasee?",
+  "o": [
+   "Chile und Argentinien",
+   "Peru und Bolivien",
+   "Ecuador und Kolumbien",
+   "Brasilien und Paraguay"
+  ],
+  "c": 1,
+  "e": "Er ist der höchstgelegene schiffbare See der Welt, auf 3.812 Metern."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Wer schrieb „Don Quijote“?",
+  "o": [
+   "Lope de Vega",
+   "Miguel de Cervantes",
+   "Federico García Lorca",
+   "Bécquer"
+  ],
+  "c": 1,
+  "e": "Cervantes veröffentlichte den ersten Teil 1605 – viele sehen darin den ersten modernen Roman."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Wie viele Kammern hat das menschliche Herz?",
+  "o": [
+   "2",
+   "3",
+   "4",
+   "6"
+  ],
+  "c": 2,
+  "e": "Zwei Vorhöfe, zwei Kammern; die linke Kammer pumpt in den Körperkreislauf."
+ },
+ {
+  "mode": "general",
+  "step": 6,
+  "q": "Warum ist der Mars rot?",
+  "o": [
+   "Wegen Eis",
+   "Wegen Eisenoxid im Boden",
+   "Wegen Vulkanismus",
+   "Wegen gefrorenem Kohlendioxid"
+  ],
+  "c": 1,
+  "e": "Rost – fein verteiltes Eisenoxid im Staub, das langwelliges Licht streut."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welcher Staat liegt in den meisten Zeitzonen?",
+  "o": [
+   "Russland",
+   "Frankreich",
+   "USA",
+   "China"
+  ],
+  "c": 1,
+  "e": "Frankreich hat zwölf Zeitzonen – wegen der Überseegebiete von Polynesien bis Réunion."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Aus welchem Material besteht die Mine eines Bleistifts?",
+  "o": [
+   "Blei",
+   "Graphit",
+   "Zinn",
+   "Kohle aus Holz"
+  ],
+  "c": 1,
+  "e": "Graphit, eine Form des Kohlenstoffs. „Blei“ ist nur ein historischer Name."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Wer war der erste Bundeskanzler der Bundesrepublik Deutschland?",
+  "o": [
+   "Konrad Adenauer",
+   "Willy Brandt",
+   "Ludwig Erhard",
+   "Kurt Schumacher"
+  ],
+  "c": 0,
+  "e": "Adenauer amtierte von 1949 bis 1963 – länger als jeder andere Kanzler außer Kohl."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "In welchem Jahr wurde die UNO gegründet?",
+  "o": [
+   "1919",
+   "1945",
+   "1948",
+   "1950"
+  ],
+  "c": 1,
+  "e": "Am 24. Oktober 1945 in San Francisco, kurz nach dem Ende des Zweiten Weltkriegs."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Wie tief ist der Marianengraben ungefähr?",
+  "o": [
+   "7.000 m",
+   "9.000 m",
+   "11.000 m",
+   "14.000 m"
+  ],
+  "c": 2,
+  "e": "Rund 11.000 Meter; 2019 tauchte Victor Vescovo bis 10.925 Meter hinab."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welche Sprache hat die meisten Muttersprachler?",
+  "o": [
+   "Englisch",
+   "Spanisch",
+   "Mandarin",
+   "Hindi"
+  ],
+  "c": 2,
+  "e": "Mandarin mit rund 940 Mio. Muttersprachlern; Englisch führt erst mit Zweitsprachlern."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welcher Komponist schrieb „Die vier Jahreszeiten“?",
+  "o": [
+   "Bach",
+   "Händel",
+   "Vivaldi",
+   "Telemann"
+  ],
+  "c": 2,
+  "e": "Vivaldi schrieb sie um 1723 als vier Violinkonzerte."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Wie viele Knochen hat ein Neugeborenes ungefähr?",
+  "o": [
+   "206",
+   "230",
+   "270",
+   "300"
+  ],
+  "c": 2,
+  "e": "Rund 270 – viele verwachsen später; deshalb hat ein Erwachsener nur 206."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welches Land ist der größte Kaffeeproduzent der Welt?",
+  "o": [
+   "Kolumbien",
+   "Vietnam",
+   "Brasilien",
+   "Äthiopien"
+  ],
+  "c": 2,
+  "e": "Brasilien liefert rund ein Drittel der Welternte."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welche Einheit misst die elektrische Spannung?",
+  "o": [
+   "Ampere",
+   "Watt",
+   "Volt",
+   "Ohm"
+  ],
+  "c": 2,
+  "e": "Volt, benannt nach Alessandro Volta, dem Erfinder der Batterie."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "In welcher Stadt steht die Sixtinische Kapelle?",
+  "o": [
+   "Florenz",
+   "Vatikanstadt",
+   "Venedig",
+   "Assisi"
+  ],
+  "c": 1,
+  "e": "Sie steht im Vatikan und wird für das Konklave genutzt."
+ },
+ {
+  "mode": "general",
+  "step": 7,
+  "q": "Welcher Planet ist der größte unseres Sonnensystems?",
+  "o": [
+   "Saturn",
+   "Neptun",
+   "Jupiter",
+   "Uranus"
+  ],
+  "c": 2,
+  "e": "Jupiter hat den 11-fachen Erddurchmesser; der Große Rote Fleck ist ein Sturm größer als die Erde."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Wer entdeckte die Wirkung des Penizillins?",
+  "o": [
+   "Robert Koch",
+   "Alexander Fleming",
+   "Louis Pasteur",
+   "Marie Curie"
+  ],
+  "c": 1,
+  "e": "Fleming bemerkte 1928, dass Schimmelpilze Bakterien abtöten."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welches Land führte als erstes das Frauenwahlrecht auf nationaler Ebene ein?",
+  "o": [
+   "USA",
+   "Neuseeland",
+   "Finnland",
+   "Deutschland"
+  ],
+  "c": 1,
+  "e": "Neuseeland 1893 – fast 30 Jahre vor den USA."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welches ist das härteste natürliche Material?",
+  "o": [
+   "Quarz",
+   "Korund",
+   "Diamant",
+   "Topas"
+  ],
+  "c": 2,
+  "e": "Diamant, Härte 10 auf der Mohs-Skala – eine Form des Kohlenstoffs."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welche Stadt liegt auf zwei Kontinenten?",
+  "o": [
+   "Moskau",
+   "Istanbul",
+   "Kairo",
+   "Dubai"
+  ],
+  "c": 1,
+  "e": "Istanbul liegt beidseits des Bosporus in Europa und Asien."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welcher französische König wurde „Sonnenkönig“ genannt?",
+  "o": [
+   "Ludwig XIII.",
+   "Ludwig XIV.",
+   "Franz I.",
+   "Heinrich IV."
+  ],
+  "c": 1,
+  "e": "Ludwig XIV., der Versailles ausbauen ließ und 72 Jahre regierte."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welches Element hat das Symbol Ag?",
+  "o": [
+   "Gold",
+   "Silber",
+   "Argon",
+   "Aluminium"
+  ],
+  "c": 1,
+  "e": "Ag von argentum – Silber. Gold ist Au, Argon ist Ar."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Wer schrieb „Die Verwandlung“?",
+  "o": [
+   "Thomas Mann",
+   "Franz Kafka",
+   "Robert Musil",
+   "Hermann Hesse"
+  ],
+  "c": 1,
+  "e": "Kafka, 1915 erschienen – der erste Satz über Gregor Samsa ist weltberühmt."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Wie viele Meter hat eine Seemeile?",
+  "o": [
+   "1.500",
+   "1.609",
+   "1.852",
+   "2.000"
+  ],
+  "c": 2,
+  "e": "1.852 Meter – eine Bogenminute entlang eines Meridians."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welches Tier ist das Wappentier Kanadas?",
+  "o": [
+   "Elch",
+   "Biber",
+   "Bär",
+   "Luchs"
+  ],
+  "c": 1,
+  "e": "Der Biber steht seit 1975 auf dem kanadischen Ein-Cent-Stück und gilt als Nationaltier."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Welche zwei Staaten haben die längste gemeinsame Grenze der Welt?",
+  "o": [
+   "Russland und China",
+   "USA und Kanada",
+   "Chile und Argentinien",
+   "Indien und China"
+  ],
+  "c": 1,
+  "e": "Rund 8.900 Kilometer, davon ein Großteil durch Alaska."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "Aus welcher Pflanze wird Schokolade gemacht?",
+  "o": [
+   "Kaffeestrauch",
+   "Kakaobaum",
+   "Vanilleorchidee",
+   "Zuckerrohr"
+  ],
+  "c": 1,
+  "e": "Aus den Samen des Kakaobaums; die Fermentation erzeugt erst das Aroma."
+ },
+ {
+  "mode": "general",
+  "step": 8,
+  "q": "In welchem Land entstanden die Olympischen Spiele der Antike?",
+  "o": [
+   "Italien",
+   "Griechenland",
+   "Ägypten",
+   "Türkei"
+  ],
+  "c": 1,
+  "e": "In Olympia ab 776 v. Chr., zu Ehren des Zeus."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welcher Maler schnitt sich ein Ohr ab?",
+  "o": [
+   "Picasso",
+   "Van Gogh",
+   "Gauguin",
+   "Monet"
+  ],
+  "c": 1,
+  "e": "Van Gogh in Arles 1888; die genauen Umstände sind bis heute umstritten."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Wer war der erste römische Kaiser?",
+  "o": [
+   "Julius Cäsar",
+   "Augustus",
+   "Nero",
+   "Trajan"
+  ],
+  "c": 1,
+  "e": "Octavian, ab 27 v. Chr. Augustus genannt – Cäsar war nie Kaiser, sondern Diktator."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welche Säure macht Zitronen sauer?",
+  "o": [
+   "Essigsäure",
+   "Zitronensäure",
+   "Milchsäure",
+   "Ameisensäure"
+  ],
+  "c": 1,
+  "e": "Zitronensäure, etwa fünf bis acht Prozent des Safts."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welches Bauwerk ist das größte Wasserkraftwerk der Welt?",
+  "o": [
+   "Itaipú",
+   "Drei-Schluchten-Damm",
+   "Assuan-Staudamm",
+   "Hoover Dam"
+  ],
+  "c": 1,
+  "e": "Der Drei-Schluchten-Damm am Jangtse, 22,5 Gigawatt installiert."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welches Land hat die meisten aktiven Vulkane?",
+  "o": [
+   "Japan",
+   "Indonesien",
+   "Island",
+   "Chile"
+  ],
+  "c": 1,
+  "e": "Indonesien liegt am Pazifischen Feuerring und zählt rund 130 aktive Vulkane."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Wer schrieb die „Odyssee“?",
+  "o": [
+   "Homer",
+   "Vergil",
+   "Sophokles",
+   "Herodot"
+  ],
+  "c": 0,
+  "e": "Homer, vermutlich im 8. Jahrhundert v. Chr.; Vergil schrieb die Aeneis."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Aus welchem Land stammt der Tee ursprünglich?",
+  "o": [
+   "Indien",
+   "China",
+   "Japan",
+   "Sri Lanka"
+  ],
+  "c": 1,
+  "e": "China, wo Tee seit Jahrtausenden angebaut wird; Indien folgte erst im 19. Jahrhundert."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Wie viele Zähne hat ein erwachsener Hund?",
+  "o": [
+   "32",
+   "38",
+   "42",
+   "48"
+  ],
+  "c": 2,
+  "e": "42 Zähne – deutlich mehr als der Mensch, passend zum Raubtiergebiss."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welche Stadt wurde 79 n. Chr. vom Vesuv verschüttet?",
+  "o": [
+   "Herculaneum",
+   "Pompeji",
+   "Neapel",
+   "Ostia"
+  ],
+  "c": 1,
+  "e": "Pompeji und Herculaneum – Pompeji ist wegen der Ascheschicht besonders gut erhalten."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Welches ist der tiefste See der Welt?",
+  "o": [
+   "Baikalsee",
+   "Tanganjikasee",
+   "Kaspisches Meer",
+   "Victoriasee"
+  ],
+  "c": 0,
+  "e": "1.642 Meter tief; er enthält rund ein Fünftel des Süßwassers der Erde."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Zu welcher Sportart gehört der Begriff „Albatros“?",
+  "o": [
+   "Tennis",
+   "Golf",
+   "Cricket",
+   "Segeln"
+  ],
+  "c": 1,
+  "e": "Drei Schläge unter Par an einem Loch."
+ },
+ {
+  "mode": "general",
+  "step": 9,
+  "q": "Wie viele Sterne zeigt die Flagge der Europäischen Union?",
+  "o": [
+   "6",
+   "12",
+   "15",
+   "27"
+  ],
+  "c": 1,
+  "e": "Zwölf goldene Sterne auf blauem Grund – zwölf als Symbol der Vollkommenheit, nicht als Zahl der Mitglieder."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Wer war Bundeskanzler während der deutschen Wiedervereinigung?",
+  "o": [
+   "Willy Brandt",
+   "Helmut Schmidt",
+   "Helmut Kohl",
+   "Gerhard Schröder"
+  ],
+  "c": 2,
+  "e": "Kohl amtierte 1982 bis 1998 und gilt als „Kanzler der Einheit“."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welches Metall hat die höchste Schmelztemperatur?",
+  "o": [
+   "Platin",
+   "Wolfram",
+   "Titan",
+   "Molybdän"
+  ],
+  "c": 1,
+  "e": "Wolfram schmilzt bei 3.422 °C – deshalb die Glühwendel in alten Glühbirnen."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welches ist die größte Insel der Welt?",
+  "o": [
+   "Neuguinea",
+   "Borneo",
+   "Grönland",
+   "Madagaskar"
+  ],
+  "c": 2,
+  "e": "Grönland mit 2,17 Mio. km²; Australien zählt als Kontinent, nicht als Insel."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "In welchem Jahr betrat der erste Mensch den Mond?",
+  "o": [
+   "1961",
+   "1965",
+   "1969",
+   "1972"
+  ],
+  "c": 2,
+  "e": "Apollo 11, Juli 1969."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welche Sprache wird in Brasilien gesprochen?",
+  "o": [
+   "Spanisch",
+   "Portugiesisch",
+   "Französisch",
+   "Niederländisch"
+  ],
+  "c": 1,
+  "e": "Portugiesisch – Brasilien war bis 1822 portugiesische Kolonie."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welche Blutgefäße führen Blut vom Herzen weg?",
+  "o": [
+   "Venen",
+   "Arterien",
+   "Kapillaren",
+   "Lymphgefäße"
+  ],
+  "c": 1,
+  "e": "Arterien führen vom Herzen weg, Venen zum Herzen hin."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Wer schrieb den Roman „1984“?",
+  "o": [
+   "Aldous Huxley",
+   "George Orwell",
+   "Ray Bradbury",
+   "H. G. Wells"
+  ],
+  "c": 1,
+  "e": "Orwell, 1949 erschienen – Huxley schrieb „Schöne neue Welt“."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welches Mineral gibt Granit seine Härte?",
+  "o": [
+   "Feldspat",
+   "Quarz",
+   "Glimmer",
+   "Kalzit"
+  ],
+  "c": 1,
+  "e": "Quarz mit Härte 7; Feldspat und Glimmer sind die anderen Hauptbestandteile."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welcher ist der größte Vulkan der Erde gemessen am Volumen?",
+  "o": [
+   "Ätna",
+   "Teide",
+   "Mauna Loa",
+   "Olympus Mons"
+  ],
+  "c": 2,
+  "e": "Mauna Loa auf Hawaii – vom Meeresboden gerechnet rund 4.000 km³. Olympus Mons liegt auf dem Mars."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welche Erfindung wird Johannes Gutenberg zugeschrieben?",
+  "o": [
+   "Das Papier",
+   "Der Buchdruck mit beweglichen Lettern",
+   "Die Druckpresse mit Walzen",
+   "Die Schrifttype aus Blei"
+  ],
+  "c": 1,
+  "e": "Um 1450 in Mainz; die 42-zeilige Bibel ist sein Hauptwerk."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Wie viele Spieler stehen beim Volleyball pro Team auf dem Feld?",
+  "o": [
+   "5",
+   "6",
+   "7",
+   "8"
+  ],
+  "c": 1,
+  "e": "Sechs; seit 1998 gibt es zusätzlich den Libero, der nur hinten spielt."
+ },
+ {
+  "mode": "general",
+  "step": 10,
+  "q": "Welches Land Südamerikas hat die meisten Einwohner?",
+  "o": [
+   "Argentinien",
+   "Kolumbien",
+   "Brasilien",
+   "Peru"
+  ],
+  "c": 2,
+  "e": "Brasilien mit rund 215 Mio. Einwohnern."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Wer war der letzte Kaiser des Weströmischen Reiches?",
+  "o": [
+   "Konstantin",
+   "Romulus Augustulus",
+   "Theodosius",
+   "Julian"
+  ],
+  "c": 1,
+  "e": "Er wurde 476 abgesetzt – das gilt als Ende des Weströmischen Reiches."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welches Enzym spaltet Milchzucker?",
+  "o": [
+   "Amylase",
+   "Laktase",
+   "Lipase",
+   "Pepsin"
+  ],
+  "c": 1,
+  "e": "Fehlt Laktase, spricht man von Laktoseintoleranz – in Südeuropa weit verbreitet."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welches ist die längste Gebirgskette der Erde?",
+  "o": [
+   "Himalaja",
+   "Anden",
+   "Mittelozeanischer Rücken",
+   "Rocky Mountains"
+  ],
+  "c": 2,
+  "e": "Der mittelozeanische Rücken zieht sich über rund 65.000 Kilometer durch alle Ozeane – unter Wasser."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welcher Frieden beendete den Dreißigjährigen Krieg?",
+  "o": [
+   "Frieden von Utrecht",
+   "Westfälischer Friede",
+   "Frieden von Paris",
+   "Frieden von Wien"
+  ],
+  "c": 1,
+  "e": "1648 in Münster und Osnabrück geschlossen – er begründete das moderne Völkerrecht."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welche gilt als älteste durchgehend betriebene Universität der Welt?",
+  "o": [
+   "Oxford",
+   "Sorbonne",
+   "Bologna",
+   "Padua"
+  ],
+  "c": 2,
+  "e": "Bologna, gegründet um 1088."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Wie viel Prozent der Erdoberfläche sind von Wasser bedeckt?",
+  "o": [
+   "61 %",
+   "66 %",
+   "71 %",
+   "78 %"
+  ],
+  "c": 2,
+  "e": "Rund 71 Prozent – der größte Teil davon Salzwasser in den Ozeanen."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Wer bestieg als Erster den Everest ohne zusätzlichen Sauerstoff?",
+  "o": [
+   "Reinhold Messner",
+   "Edmund Hillary",
+   "Tenzing Norgay",
+   "Hans Kammerlander"
+  ],
+  "c": 0,
+  "e": "Messner und Peter Habeler 1978; Messner folgte 1980 solo ohne Sauerstoff."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welches Element hat das Symbol Sb?",
+  "o": [
+   "Silber",
+   "Antimon",
+   "Schwefel",
+   "Selen"
+  ],
+  "c": 1,
+  "e": "Sb von stibium – Antimon; Silber ist Ag."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welche Periode ging dem Kambrium voraus?",
+  "o": [
+   "Jura",
+   "Ediacarium",
+   "Trias",
+   "Devon"
+  ],
+  "c": 1,
+  "e": "Das Ediacarium endete vor rund 538 Mio. Jahren; danach explodierte die Artenvielfalt."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Wer komponierte den „Boléro“?",
+  "o": [
+   "Debussy",
+   "Ravel",
+   "Saint-Saëns",
+   "Fauré"
+  ],
+  "c": 1,
+  "e": "Maurice Ravel, 1928 – ein einziges Crescendo über einen gleichbleibenden Rhythmus."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Wie viele Chromosomen hat eine menschliche Körperzelle?",
+  "o": [
+   "23",
+   "44",
+   "46",
+   "48"
+  ],
+  "c": 2,
+  "e": "46 – 23 Paare; Keimzellen haben je 23."
+ },
+ {
+  "mode": "general",
+  "step": 11,
+  "q": "Welche Stadt war die Hauptstadt des Inkareiches?",
+  "o": [
+   "Lima",
+   "Cusco",
+   "Quito",
+   "La Paz"
+  ],
+  "c": 1,
+  "e": "Cusco auf 3.400 Metern; die Spanier bauten ihre Stadt auf den Inka-Mauern."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Wie hieß der erste künstliche Satellit?",
+  "o": [
+   "Explorer 1",
+   "Sputnik 1",
+   "Vostok 1",
+   "Telstar"
+  ],
+  "c": 1,
+  "e": "Sputnik 1, Oktober 1957 – der Startschuss für den Wettlauf ins All."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welche Stadt war die Hauptstadt des Aztekenreiches?",
+  "o": [
+   "Teotihuacán",
+   "Tenochtitlan",
+   "Tikal",
+   "Chichén Itzá"
+  ],
+  "c": 1,
+  "e": "Tenochtitlan lag auf einer Insel im Texcoco-See – darunter liegt heute Mexiko-Stadt."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Wie viele Jahre dauerte der Hundertjährige Krieg?",
+  "o": [
+   "100",
+   "106",
+   "116",
+   "124"
+  ],
+  "c": 2,
+  "e": "Von 1337 bis 1453 – also 116 Jahre, trotz des Namens."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welches Metall ist das leichteste?",
+  "o": [
+   "Aluminium",
+   "Lithium",
+   "Magnesium",
+   "Natrium"
+  ],
+  "c": 1,
+  "e": "Lithium hat eine Dichte von 0,53 g/cm³ – leicht genug, um auf Wasser zu schwimmen."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Wer schrieb den Roman „Ulysses“?",
+  "o": [
+   "Virginia Woolf",
+   "James Joyce",
+   "Thomas Mann",
+   "Marcel Proust"
+  ],
+  "c": 1,
+  "e": "Joyce, 1922 in Paris veröffentlicht – ein einziger Tag in Dublin."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welcher Fluss fließt durch Bagdad?",
+  "o": [
+   "Euphrat",
+   "Tigris",
+   "Jordan",
+   "Karun"
+  ],
+  "c": 1,
+  "e": "Der Tigris; Euphrat und Tigris umschließen das Zweistromland."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Wo liegt der tiefste Punkt an Land?",
+  "o": [
+   "Totes Meer",
+   "Turpan-Senke",
+   "Death Valley",
+   "Kaspische Senke"
+  ],
+  "c": 0,
+  "e": "Rund 430 Meter unter dem Meeresspiegel – und mit über 30 Prozent Salzgehalt extrem salzig."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welches Tier hat das größte Auge im Tierreich?",
+  "o": [
+   "Blauwal",
+   "Kolosskalmar",
+   "Riesenschildkröte",
+   "Pottwal"
+  ],
+  "c": 1,
+  "e": "Der Kolosskalmar hat Augen bis 27 Zentimeter Durchmesser – so groß wie ein Fußball."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welcher Planet rotiert rückwärts, also entgegen dem Uhrzeigersinn?",
+  "o": [
+   "Merkur",
+   "Venus",
+   "Mars",
+   "Jupiter"
+  ],
+  "c": 1,
+  "e": "Venus dreht retrograd und braucht 243 Tage für eine Umdrehung – länger als ein Venusjahr."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "In welchem Jahr trat die demokratische Verfassung Spaniens in Kraft?",
+  "o": [
+   "1975",
+   "1978",
+   "1981",
+   "1986"
+  ],
+  "c": 1,
+  "e": "Nach Francos Tod 1975 und der Transition 1978 per Referendum angenommen."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welche Einheit hat das Symbol Pa?",
+  "o": [
+   "Pascal",
+   "Pikofarad",
+   "Pond",
+   "Parsec"
+  ],
+  "c": 0,
+  "e": "Pascal – Druck als Kraft pro Fläche, 1 Pa = 1 N/m²."
+ },
+ {
+  "mode": "general",
+  "step": 12,
+  "q": "Welches ist die größte Wüste außerhalb der Polarregionen?",
+  "o": [
+   "Gobi",
+   "Sahara",
+   "Kalahari",
+   "Arabische Wüste"
+  ],
+  "c": 1,
+  "e": "Die Sahara mit rund 9 Mio. km² – sie war vor 6.000 Jahren noch grün."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Wer formulierte das Gravitationsgesetz?",
+  "o": [
+   "Kepler",
+   "Galileo",
+   "Newton",
+   "Copernicus"
+  ],
+  "c": 2,
+  "e": "Newton 1687 in den „Principia“ – Kepler beschrieb die Bahnen, Newton die Kraft."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "In welchem heutigen Land wurde die älteste bekannte Knochenflöte gefunden?",
+  "o": [
+   "Österreich",
+   "Deutschland",
+   "Frankreich",
+   "Slowenien"
+  ],
+  "c": 1,
+  "e": "In der Höhle Hohle Fels auf der Schwäbischen Alb, rund 40.000 Jahre alt."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welches Element hat die Ordnungszahl 47?",
+  "o": [
+   "Gold",
+   "Silber",
+   "Kupfer",
+   "Quecksilber"
+  ],
+  "c": 1,
+  "e": "Silber; Gold hat 79, Kupfer 29."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Wer umsegelte als erster Europäer das Kap der Guten Hoffnung?",
+  "o": [
+   "Vasco da Gama",
+   "Bartolomeu Dias",
+   "Magellan",
+   "Kolumbus"
+  ],
+  "c": 1,
+  "e": "Dias 1488; da Gama fand zehn Jahre später den Seeweg nach Indien."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welcher ist der höchste Wasserfall der Welt?",
+  "o": [
+   "Niagara",
+   "Victoriafälle",
+   "Salto Ángel",
+   "Iguazú"
+  ],
+  "c": 2,
+  "e": "Der Salto Ángel in Venezuela fällt 979 Meter frei – der längste Fall der Welt."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welche zwei Elemente bilden Kochsalz?",
+  "o": [
+   "Kalium und Chlor",
+   "Natrium und Chlor",
+   "Natrium und Sauerstoff",
+   "Kalzium und Chlor"
+  ],
+  "c": 1,
+  "e": "Natriumchlorid, NaCl."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "In welcher Stadt hatte der Völkerbund seinen Sitz?",
+  "o": [
+   "Paris",
+   "Genf",
+   "Den Haag",
+   "Brüssel"
+  ],
+  "c": 1,
+  "e": "Genf, ab 1920 – die Nachfolgeorganisation UNO sitzt in New York."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Wer schrieb den Roman „Die Pest“?",
+  "o": [
+   "Sartre",
+   "Camus",
+   "Gide",
+   "Malraux"
+  ],
+  "c": 1,
+  "e": "Albert Camus, 1947 – oft als Gleichnis auf die Besatzung gelesen."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welches Land hat die meisten Inseln?",
+  "o": [
+   "Indonesien",
+   "Kanada",
+   "Schweden",
+   "Philippinen"
+  ],
+  "c": 2,
+  "e": "Schweden mit rund 267.000 Inseln – die meisten davon winzig und unbewohnt."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welcher ist der größte Mond des Saturn?",
+  "o": [
+   "Enceladus",
+   "Titan",
+   "Rhea",
+   "Mimas"
+  ],
+  "c": 1,
+  "e": "Titan ist größer als der Planet Merkur und hat eine dichte Stickstoffatmosphäre."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Wie heißt der Knochen im Oberarm?",
+  "o": [
+   "Femur",
+   "Humerus",
+   "Radius",
+   "Tibia"
+  ],
+  "c": 1,
+  "e": "Humerus – der Oberschenkelknochen heißt Femur, die Speiche Radius."
+ },
+ {
+  "mode": "general",
+  "step": 13,
+  "q": "Welcher Kontinent hat keine echte Wüste?",
+  "o": [
+   "Europa",
+   "Südamerika",
+   "Asien",
+   "Australien"
+  ],
+  "c": 0,
+  "e": "In Europa gibt es keine Wüste im geografischen Sinn – Trockengebiete wie die Bardenas sind Halbwüsten."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wer entdeckte das Elektron?",
+  "o": [
+   "Rutherford",
+   "J. J. Thomson",
+   "Bohr",
+   "Millikan"
+  ],
+  "c": 1,
+  "e": "Thomson 1897 mit Kathodenstrahlen – Rutherford entdeckte später den Atomkern."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wie heißt das größte Korallenriff der Welt?",
+  "o": [
+   "Rotes Meer",
+   "Great Barrier Reef",
+   "Belize Barrier Reef",
+   "Malediven"
+  ],
+  "c": 1,
+  "e": "Es erstreckt sich über 2.300 Kilometer vor der Küste Queenslands."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welches Element hat das Symbol Xe?",
+  "o": [
+   "Xenon",
+   "Xanthophyll",
+   "Xylem",
+   "Xenotim"
+  ],
+  "c": 0,
+  "e": "Xenon, ein Edelgas – der Name bedeutet „das Fremde“."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welcher Papst trat 2013 als erster seit Jahrhunderten zurück?",
+  "o": [
+   "Johannes Paul II.",
+   "Benedikt XVI.",
+   "Franziskus",
+   "Johannes XXIII."
+  ],
+  "c": 1,
+  "e": "Benedikt XVI. erklärte seinen Rücktritt mit fehlenden Kräften – Papst Franziskus folgte."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wie lange braucht das Sonnenlicht bis zur Erde?",
+  "o": [
+   "Sofort",
+   "Etwa 8 Minuten",
+   "Etwa 30 Minuten",
+   "Etwa 3 Stunden"
+  ],
+  "c": 1,
+  "e": "Rund 8 Minuten 20 Sekunden für 150 Mio. Kilometer."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wie heißt die Hauptstadt von Kasachstan?",
+  "o": [
+   "Almaty",
+   "Astana",
+   "Bischkek",
+   "Taschkent"
+  ],
+  "c": 1,
+  "e": "Astana – 2019 bis 2022 hieß sie Nur-Sultan."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welcher Naturstoff macht Chilischoten scharf?",
+  "o": [
+   "Piperin",
+   "Capsaicin",
+   "Allicin",
+   "Menthol"
+  ],
+  "c": 1,
+  "e": "Capsaicin; Piperin ist der scharfe Stoff im Pfeffer."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wer schrieb „Madame Bovary“?",
+  "o": [
+   "Balzac",
+   "Flaubert",
+   "Zola",
+   "Stendhal"
+  ],
+  "c": 1,
+  "e": "Gustave Flaubert, 1856 – der Roman führte zu einem Aufsehen erregenden Prozess."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welcher ist der längste Eisenbahntunnel der Welt?",
+  "o": [
+   "Gotthard-Basistunnel",
+   "Brenner-Basistunnel",
+   "Eurotunnel",
+   "Seikan-Tunnel"
+  ],
+  "c": 0,
+  "e": "57 Kilometer, 2016 eröffnet; der Brenner-Basistunnel wird ihn mit 64 km ablösen."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welche Farbe hat das Blut von Kraken?",
+  "o": [
+   "Rot",
+   "Blau",
+   "Grün",
+   "Farblos"
+  ],
+  "c": 1,
+  "e": "Blau – sie transportieren Sauerstoff mit Hämocyanin statt Hämoglobin."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Wie viele Nullen hat eine Billion im Deutschen?",
+  "o": [
+   "6",
+   "9",
+   "12",
+   "15"
+  ],
+  "c": 2,
+  "e": "Eine Billion = 10 hoch 12, also zwölf Nullen – im Englischen ist „billion“ die Milliarde."
+ },
+ {
+  "mode": "general",
+  "step": 14,
+  "q": "Welcher Stern ist der Sonne am nächsten?",
+  "o": [
+   "Sirius",
+   "Proxima Centauri",
+   "Alpha Centauri A",
+   "Barnards Stern"
+  ],
+  "c": 1,
+  "e": "Proxima Centauri, 4,24 Lichtjahre entfernt."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wer war der erste Mensch im Weltraum?",
+  "o": [
+   "Alan Shepard",
+   "Juri Gagarin",
+   "German Titow",
+   "John Glenn"
+  ],
+  "c": 1,
+  "e": "Gagarin am 12. April 1961, ein einziger Orbit in 108 Minuten."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Welches ist das schwerste natürlich vorkommende Element?",
+  "o": [
+   "Blei",
+   "Uran",
+   "Plutonium",
+   "Radium"
+  ],
+  "c": 1,
+  "e": "Uran mit Ordnungszahl 92 – Plutonium entsteht praktisch nur künstlich."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "In welcher Stadt fanden 1912 die Olympischen Sommerspiele statt?",
+  "o": [
+   "London",
+   "Stockholm",
+   "Paris",
+   "Berlin"
+  ],
+  "c": 1,
+  "e": "Stockholm; die Spiele 1916 fielen dann dem Ersten Weltkrieg zum Opfer."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wer schrieb das „Nibelungenlied“?",
+  "o": [
+   "Wolfram von Eschenbach",
+   "Der Verfasser ist unbekannt",
+   "Walther von der Vogelweide",
+   "Hartmann von Aue"
+  ],
+  "c": 1,
+  "e": "Der Autor ist nicht überliefert; die älteste Handschrift stammt um 1200."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wie schnell ist der Schall in Luft bei 20 °C?",
+  "o": [
+   "171 m/s",
+   "343 m/s",
+   "486 m/s",
+   "1.000 m/s"
+  ],
+  "c": 1,
+  "e": "Rund 343 Meter pro Sekunde – deshalb hört man den Donner später als den Blitz."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Welche gilt als älteste Republik der Welt?",
+  "o": [
+   "Rom",
+   "San Marino",
+   "Venedig",
+   "Andorra"
+  ],
+  "c": 1,
+  "e": "San Marino beruft sich auf eine Gründung im Jahr 301 – Venedig war eine Oligarchie."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Welches ist der flächengrößte See der Erde?",
+  "o": [
+   "Oberer See",
+   "Baikalsee",
+   "Kaspisches Meer",
+   "Viktoriasee"
+  ],
+  "c": 2,
+  "e": "Das Kaspische Meer, 371.000 km² – ein Salzsee, kein Meer."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wer beschrieb den Blutkreislauf korrekt?",
+  "o": [
+   "Galen",
+   "William Harvey",
+   "Vesalius",
+   "Paracelsus"
+  ],
+  "c": 1,
+  "e": "Harvey 1628 – Galens Lehre von der Blutneubildung hatte über 1.400 Jahre gegolten."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Welche Einheit misst die magnetische Flussdichte?",
+  "o": [
+   "Gauß",
+   "Tesla",
+   "Weber",
+   "Henry"
+  ],
+  "c": 1,
+  "e": "Tesla; Gauß ist die ältere CGS-Einheit, 1 T = 10.000 Gauß."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wer schrieb „Die göttliche Komödie“?",
+  "o": [
+   "Petrarca",
+   "Dante Alighieri",
+   "Boccaccio",
+   "Ariost"
+  ],
+  "c": 1,
+  "e": "Dante, um 1320 vollendet – die Reise durch Hölle, Läuterungsberg und Paradies."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Wie viele Sekunden hat ein Tag?",
+  "o": [
+   "3.600",
+   "43.200",
+   "86.400",
+   "172.800"
+  ],
+  "c": 2,
+  "e": "86.400 Sekunden – 24 Stunden mal 3.600."
+ },
+ {
+  "mode": "general",
+  "step": 15,
+  "q": "Welche Sprache löste Latein als Amtssprache des Oströmischen Reiches ab?",
+  "o": [
+   "Arabisch",
+   "Griechisch",
+   "Syrisch",
+   "Koptisch"
+  ],
+  "c": 1,
+  "e": "Ab dem 7. Jahrhundert Griechisch – Latein blieb nur in der Verwaltungstradition."
+ }
+]

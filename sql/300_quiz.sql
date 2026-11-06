@@ -272,7 +272,10 @@ begin
   v_elapsed := greatest(
     0, least(30, coalesce(extract(epoch from (now() - v_run.shown_at))::integer, 30))
   );
+  -- p_choice < 0 = der Client hat die Uhr ablaufen lassen und gibt ohne
+  -- Antwort ab. Das ist ein Zeitablauf, auch wenn die 4-s-Kulanz noch läuft.
   v_timeout := v_run.shown_at is null
+    or p_choice < 0
     or now() > v_run.shown_at + interval '34 seconds';
   v_ok := (not v_timeout) and p_choice = v_q.correct;
 

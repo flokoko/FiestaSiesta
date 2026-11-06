@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity } from 'lucide-react'
+import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity, Trophy } from 'lucide-react'
 import { APP_VERSION } from '../version'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -30,6 +30,12 @@ export default function MoreSheet({
       hint: '7-Tage-Vorschau',
       icon: CloudSun,
       action: () => { onNavigate('weather'); onClose() },
+    },
+    {
+      label: 'Quiz',
+      hint: '15 Stufen, Rangliste',
+      icon: Trophy,
+      action: () => { onNavigate('quiz'); onClose() },
     },
     {
       label: 'Bristol',
