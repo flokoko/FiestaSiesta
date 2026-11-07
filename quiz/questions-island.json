@@ -4,12 +4,12 @@
   "step": 1,
   "q": "Wie heißt die Hauptstadt von Gran Canaria?",
   "o": [
-   "Las Palmas de Gran Canaria",
    "Maspalomas",
+   "Las Palmas de Gran Canaria",
    "Santa Cruz de Tenerife",
    "Telde"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Las Palmas de Gran Canaria, kurz „Las Palmas“, liegt im Nordosten der Insel."
  },
  {
@@ -18,11 +18,11 @@
   "q": "Zu welchem Land gehören die Kanaren?",
   "o": [
    "Portugal",
-   "Spanien",
    "Frankreich",
+   "Spanien",
    "Marokko"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Spanien – die Kanaren sind eine autonome Gemeinschaft mit eigener Regierung in Santa Cruz de Tenerife und Las Palmas."
  },
  {
@@ -32,10 +32,10 @@
   "o": [
    "Portugiesisch",
    "Italienisch",
-   "Spanisch",
-   "Französisch"
+   "Französisch",
+   "Spanisch"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Spanisch, genauer der kanarische Dialekt – man duzt hier traditionell auch Fremde, das „tú“ ist normal."
  },
  {
@@ -43,12 +43,12 @@
   "step": 1,
   "q": "Welche Währung gilt auf den Kanaren?",
   "o": [
-   "Peseta",
+   "Euro",
    "Kanarische Krone",
    "Dollar",
-   "Euro"
+   "Peseta"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Euro. Die Kanaren sind EU-Gebiet, aber nicht im Zollgebiet der EU."
  },
  {
@@ -56,12 +56,12 @@
   "step": 1,
   "q": "Wie heißt der berühmte Fels im Inselinneren?",
   "o": [
-   "Roque Nublo",
    "El Teide",
+   "Roque Nublo",
    "Dedo de Dios",
    "Montserrat"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Der Roque Nublo ist das Wahrzeichen der Insel – ein 80 Meter hoher Basaltfelsen auf 1.813 Metern."
  },
  {
@@ -70,11 +70,11 @@
   "q": "Wie heißt die Nachbarinsel westlich von Gran Canaria?",
   "o": [
    "Lanzarote",
-   "Teneriffa",
    "Fuerteventura",
+   "Teneriffa",
    "La Gomera"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Teneriffa mit dem Teide (3.718 m). Fuerteventura liegt im Osten."
  },
  {
@@ -84,10 +84,10 @@
   "o": [
    "Mittelmeer",
    "Vor Portugal",
-   "Vor der Küste Marokkos",
-   "Karibik"
+   "Karibik",
+   "Vor der Küste Marokkos"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Rund 210 Kilometer westlich der marokkanischen Küste, auf der Afrikanischen Platte."
  },
  {
@@ -95,12 +95,12 @@
   "step": 1,
   "q": "Wie heißen die großen Dünen im Süden?",
   "o": [
-   "Dünen von las Canteras",
+   "Dünen von Maspalomas",
    "Dünen von Arinaga",
    "Dünen von Amadores",
-   "Dünen von Maspalomas"
+   "Dünen von las Canteras"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Die Dünen von Maspalomas sind Naturschutzgebiet und wandern mit dem Wind langsam weiter."
  },
  {
@@ -108,12 +108,12 @@
   "step": 1,
   "q": "Was sind „papas arrugadas“?",
   "o": [
-   "In Salzwasser gekochte Kartoffeln",
    "Frittierte Fischstücke",
+   "In Salzwasser gekochte Kartoffeln",
    "Gefüllte Paprika",
    "Ein Käse"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Kleine Kartoffeln, in sehr salzigem Wasser gekocht – die Schale runzelt (daher der Name)."
  },
  {
@@ -122,11 +122,11 @@
   "q": "Wie kommt man am schnellsten nach Teneriffa?",
   "o": [
    "Mit dem Zug",
-   "Mit der Fähre",
    "Über den Flughafen nur mit Umweg",
+   "Mit der Fähre",
    "Mit der Seilbahn"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Fähre ab Agaete (Fred. Olsen) oder ab Las Palmas, rund 80 Minuten."
  },
  {
@@ -136,10 +136,10 @@
   "o": [
    "Mit der Bahn",
    "Nur mit dem Taxi",
-   "Mit dem Bus oder Auto",
-   "Nur zu Fuß"
+   "Nur zu Fuß",
+   "Mit dem Bus oder Auto"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Ein Zug auf die Insel existiert bis heute nicht; Busse heißen hier „guaguas“."
  },
  {
@@ -147,12 +147,12 @@
   "step": 1,
   "q": "Welche Farbe hat der Sand in den Dünen von Maspalomas?",
   "o": [
-   "Schwarz",
+   "Goldbraun",
    "Weiß",
    "Rot",
-   "Goldbraun"
+   "Schwarz"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Goldbrauner Sand, der von den Passatwinden aus der Sahara und vom Strand herangetragen wird."
  },
  {
@@ -160,12 +160,12 @@
   "step": 2,
   "q": "Wie viele große Inseln gehören zu den Kanaren?",
   "o": [
-   "7",
-   "6",
    "5",
+   "6",
+   "7",
    "9"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Sieben große: El Hierro, La Palma, La Gomera, Teneriffa, Gran Canaria, Fuerteventura und Lanzarote. La Graciosa ist seit 2018 die achte bewohnte."
  },
  {
@@ -174,11 +174,11 @@
   "q": "Welcher Berg ist der höchste Spaniens?",
   "o": [
    "Roque Nublo",
-   "Teide",
+   "Pico de las Nieves",
    "Mulhacén",
-   "Pico de las Nieves"
+   "Teide"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Der Teide auf Teneriffa mit 3.718 Metern – auch der höchste Berg auf spanischem Boden."
  },
  {
@@ -186,12 +186,12 @@
   "step": 2,
   "q": "Wie heißt die rundliche Form der Insel auf der Karte?",
   "o": [
-   "Lang und schmal",
-   "Dreieckig",
    "Fast kreisförmig",
+   "Dreieckig",
+   "Lang und schmal",
    "Herzförmig"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Gran Canaria ist fast kreisrund, rund 50 Kilometer im Durchmesser."
  },
  {
@@ -200,11 +200,11 @@
   "q": "Wie heißen die tiefen Trockentäler der Insel?",
   "o": [
    "Ramblas",
-   "Valles",
+   "Barrancos",
    "Calderas",
-   "Barrancos"
+   "Valles"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Barrancos. Bei seltenem Starkregen führen sie reißende Sturzbäche."
  },
  {
@@ -212,12 +212,12 @@
   "step": 2,
   "q": "Was ist „gofio“?",
   "o": [
-   "Geröstetes Getreidemehl",
-   "Ein Käse",
    "Ein Fischgericht",
+   "Ein Käse",
+   "Geröstetes Getreidemehl",
    "Ein Wein"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Gofio war das Grundnahrungsmittel der Inselbewohner – geröstetes, gemahlenes Getreide, heute in Milch oder Eintopf."
  },
  {
@@ -226,11 +226,11 @@
   "q": "Wie heißen die Saucen zu den Kartoffeln?",
   "o": [
    "Salsas",
-   "Mojos",
+   "Chimichurris",
    "Aliolis",
-   "Chimichurris"
+   "Mojos"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Mojo rojo (scharf, rot) und Mojo verde (grün, mit Koriander)."
  },
  {
@@ -238,12 +238,12 @@
   "step": 2,
   "q": "In welchem Ort steht das Wahrzeichen mit den zwei Felsenbuchten im Norden?",
   "o": [
-   "Puerto de Mogán",
-   "Agaete",
    "Las Palmas",
+   "Agaete",
+   "Puerto de Mogán",
    "Arucas"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Die Playa de las Canteras in Las Palmas gilt als eine der besten Stadtstrände Europas."
  },
  {
@@ -252,11 +252,11 @@
   "q": "Welche Frucht wird auf der Insel in großen Mengen angebaut?",
   "o": [
    "Äpfel",
-   "Datteln",
+   "Bananen",
    "Kirschen",
-   "Bananen"
+   "Datteln"
   ],
-  "c": 3,
+  "c": 1,
   "e": "„Plátano de Canarias“ – die kleinen, aromatischen Bananen mit geschützter Herkunftsbezeichnung."
  },
  {
@@ -264,12 +264,12 @@
   "step": 2,
   "q": "Wie heißt der größte Hafen der Insel?",
   "o": [
-   "Puerto de la Luz",
-   "Puerto Rico",
    "Arinaga",
+   "Puerto Rico",
+   "Puerto de la Luz",
    "Mogán"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Der Puerto de la Luz in Las Palmas – einer der wichtigsten Atlantikhäfen mit riesigem Umschlag."
  },
  {
@@ -278,11 +278,11 @@
   "q": "Was bedeutet „calima“?",
   "o": [
    "Ein Regenguss",
-   "Saharastaub in der Luft",
+   "Ein Brand",
    "Ein Erdbeben",
-   "Ein Brand"
+   "Saharastaub in der Luft"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Heißer Wind aus der Sahara mit Staub – die Sicht wird milchig, die Temperatur steigt deutlich."
  },
  {
@@ -290,12 +290,12 @@
   "step": 2,
   "q": "Welche Stadt liegt im Nordwesten und ist für ihre Kirche bekannt?",
   "o": [
-   "Agüimes",
-   "Mogán",
    "Teror",
+   "Mogán",
+   "Agüimes",
    "Fataga"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Teror mit der Basilika Nuestra Señora del Pino – die Schutzpatronin der Insel."
  },
  {
@@ -304,11 +304,11 @@
   "q": "Wie heißt der Ort mit den berühmten Höhlenwohnungen im Süden?",
   "o": [
    "Temisas",
-   "Tejeda",
+   "Guayadeque",
    "Artenara",
-   "Guayadeque"
+   "Tejeda"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Im Barranco de Guayadeque liegen Wohnhöhlen und Restaurants direkt im Fels."
  },
  {
@@ -316,12 +316,12 @@
   "step": 3,
   "q": "Welcher ist der höchste Berg der Insel?",
   "o": [
-   "Morro de la Agujereada",
+   "Teide",
    "Pico de las Nieves",
    "Roque Nublo",
-   "Teide"
+   "Morro de la Agujereada"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Der Morro de la Agujereada mit 1.956 Metern – der Pico de las Nieves daneben ist mit 1.949 Metern der zweithöchste."
  },
  {
@@ -329,12 +329,12 @@
   "step": 3,
   "q": "Wie groß ist Gran Canaria?",
   "o": [
-   "620 km²",
    "1.560 km²",
+   "620 km²",
    "2.400 km²",
    "3.000 km²"
   ],
-  "c": 1,
+  "c": 0,
   "e": "1.560 km² – damit die drittgrößte der Kanaren nach Teneriffa und Fuerteventura."
  },
  {
@@ -343,11 +343,11 @@
   "q": "Wie viele Einwohner hat die Insel etwa?",
   "o": [
    "180.000",
-   "430.000",
    "860.000",
+   "430.000",
    "1,5 Mio."
   ],
-  "c": 2,
+  "c": 1,
   "e": "Rund 864.000 (2024) – davon etwa die Hälfte in Las Palmas und Umgebung."
  },
  {
@@ -357,10 +357,10 @@
   "o": [
    "Die Strände",
    "Die Häfen",
-   "Die Dünen",
-   "Die Palmen"
+   "Die Palmen",
+   "Die Dünen"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Palmen. Der vollständige Name lautet Las Palmas de Gran Canaria."
  },
  {
@@ -368,12 +368,12 @@
   "step": 3,
   "q": "Welches Tier ist auf der Insel weit verbreitet und endemisch?",
   "o": [
-   "Die Kanareneidechse",
+   "Der Igel",
    "Der Luchs",
    "Das Murmeltier",
-   "Der Igel"
+   "Die Kanareneidechse"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Gallotia stehlini, die Kanareneidechse – sie sonnt sich auf Mauern und Steinen."
  },
  {
@@ -381,12 +381,12 @@
   "step": 3,
   "q": "Wie heißt der Vulkankrater nahe Las Palmas?",
   "o": [
-   "Caldera de Taburiente",
    "Caldera de Bandama",
+   "Caldera de Taburiente",
    "Caldera de Tejeda",
    "Krater von Fataga"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Die Caldera de Bandama – rund 1.000 Meter im Durchmesser und 200 Meter tief."
  },
  {
@@ -395,11 +395,11 @@
   "q": "Was ist der „Roque“ in Ortsnamen wie Roque Nublo?",
   "o": [
    "Ein Wald",
-   "Ein Bach",
    "Ein Fels",
+   "Ein Bach",
    "Ein Dorf"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Roque heißt Fels – im Kanarischen sind es oft Basaltfelsen oder Felskegel."
  },
  {
@@ -409,10 +409,10 @@
   "o": [
    "Teneriffa Nord",
    "Las Palmas Sur",
-   "Maspalomas",
-   "Gran Canaria"
+   "Gran Canaria",
+   "Maspalomas"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Flughafen Gran Canaria, Kürzel LPA, in der Bucht von Gando."
  },
  {
@@ -420,12 +420,12 @@
   "step": 3,
   "q": "Wann blühen die Mandelbäume im Inselinneren?",
   "o": [
-   "Im Februar",
+   "Im Oktober",
    "Im Juli",
    "Im Mai",
-   "Im Oktober"
+   "Im Februar"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Rund um Tejeda im Februar – dann feiert man dort das Mandelblütenfest."
  },
  {
@@ -433,12 +433,12 @@
   "step": 3,
   "q": "Welche Bäume prägen die Bergwälder?",
   "o": [
-   "Eichen",
    "Kanarische Kiefern",
+   "Eichen",
    "Buchen",
    "Birken"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Pinus canariensis – sehr feuerfest, treibt nach Bränden aus dem Stamm wieder aus."
  },
  {
@@ -447,11 +447,11 @@
   "q": "Was ist eine „guagua“?",
   "o": [
    "Ein Boot",
-   "Ein Kuchen",
    "Der Bus",
+   "Ein Kuchen",
    "Ein Lied"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Das kanarische Wort für Bus – stammt vermutlich aus dem Kubanischen."
  },
  {
@@ -461,10 +461,10 @@
   "o": [
    "San Mateo",
    "Agaete",
-   "Santa Brígida",
-   "Arucas"
+   "Arucas",
+   "Santa Brígida"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Arucas – dort steht die Brennerei Arehucas und die neugotische Kirche San Juan Bautista."
  },
  {
@@ -628,12 +628,12 @@
   "step": 5,
   "q": "Welchen Berg sieht man bei klarer Sicht am Horizont?",
   "o": [
-   "Den Teide auf Teneriffa",
    "Fuerteventuras Vulkane",
+   "Den Teide auf Teneriffa",
    "Die Berge von La Gomera",
    "Madeiras Gipfel"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Vom Pico de las Nieves aus ist der Teide bei klarer Luft am Horizont zu erkennen – 60 km entfernt."
  },
  {
@@ -642,11 +642,11 @@
   "q": "Wie alt ist die Insel geologisch ungefähr?",
   "o": [
    "1,5 Mio. Jahre",
-   "14,5 Mio. Jahre",
    "80 Mio. Jahre",
+   "14,5 Mio. Jahre",
    "300 Mio. Jahre"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Rund 14,5 Millionen Jahre – die ältesten Gesteine liegen im Südwesten."
  },
  {
@@ -656,10 +656,10 @@
   "o": [
    "Vor 20.000 Jahren",
    "Vor 200 Jahren",
-   "Vor 2.000 Jahren",
-   "Er ist noch aktiv"
+   "Er ist noch aktiv",
+   "Vor 2.000 Jahren"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Die letzte Eruption war die von Bandama vor rund 2.000 Jahren."
  },
  {
@@ -667,12 +667,12 @@
   "step": 5,
   "q": "Wie hoch ist der Roque Nublo?",
   "o": [
-   "1.200 m",
+   "1.813 m",
    "1.600 m",
    "2.100 m",
-   "1.813 m"
+   "1.200 m"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Der Gipfel liegt auf 1.813 Metern; der Fels selbst ragt etwa 80 Meter aus dem Sattel."
  },
  {
@@ -680,12 +680,12 @@
   "step": 5,
   "q": "Welche Pflanze liefert den roten Farbstoff, mit dem die Insel früher handelte?",
   "o": [
-   "Koschenille",
    "Indigo",
+   "Koschenille",
    "Krapp",
    "Safran"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Die Cochenille-Schildlaus auf Feigenkakteen – im 19. Jahrhundert wichtigster Export."
  },
  {
@@ -694,11 +694,11 @@
   "q": "Wie heißt das Schutzgebiet im Südwesten mit Kiefernwald?",
   "o": [
    "Tamadaba",
-   "Alle drei",
    "Pilancones",
+   "Alle drei",
    "Inagua"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Alle drei sind Naturparks im Südwesten; zusammen bilden sie einen großen Waldgürtel."
  },
  {
@@ -708,10 +708,10 @@
   "o": [
    "Ein Brunnen",
    "Ein Hotel",
-   "Ein Aussichtspunkt",
-   "Ein Parkplatz"
+   "Ein Parkplatz",
+   "Ein Aussichtspunkt"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Aussichtspunkt – an der Straße ins Gebirge gibt es viele davon."
  },
  {
@@ -719,12 +719,12 @@
   "step": 5,
   "q": "Welches Meer umgibt die Insel?",
   "o": [
-   "Mittelmeer",
+   "Atlantik",
    "Nordsee",
    "Rotes Meer",
-   "Atlantik"
+   "Mittelmeer"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Atlantik – mit Passatwinden, die den Norden feucht und den Süden trocken machen."
  },
  {
@@ -732,12 +732,12 @@
   "step": 5,
   "q": "Warum ist der Norden grüner als der Süden?",
   "o": [
-   "Passatwolken regnen dort ab",
    "Mehr Flüsse",
+   "Passatwolken regnen dort ab",
    "Mehr Bewässerung",
    "Höhere Lage"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Die Passatwinde stauen sich an den Bergen, der Norden bekommt Nebel und Regen, der Süden bleibt trocken."
  },
  {
@@ -746,11 +746,11 @@
   "q": "Wie heißt der Ort mit den Kanälen und dem kleinen Strand im Südwesten?",
   "o": [
    "Puerto Rico",
-   "Puerto de Mogán",
    "Arguineguín",
+   "Puerto de Mogán",
    "Playa del Cura"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Puerto de Mogán – „Klein-Venedig“ genannt, mit Kanälen und Fischerbooten."
  },
  {
@@ -760,10 +760,10 @@
   "o": [
    "Gouda",
    "Parmesan",
-   "Queso de flor",
-   "Feta"
+   "Feta",
+   "Queso de flor"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Queso de flor – mit der Blüte der Artischockendistel hergestellt, auf Gran Canaria eine Spezialität."
  },
  {
@@ -771,12 +771,12 @@
   "step": 5,
   "q": "Wie heißt der höchste Ort der Insel?",
   "o": [
-   "San Mateo",
+   "Artenara",
    "Tejeda",
    "Temisas",
-   "Artenara"
+   "San Mateo"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Artenara liegt auf rund 1.270 Metern – viele Häuser sind in den Fels gebaut."
  },
  {
@@ -784,12 +784,12 @@
   "step": 6,
   "q": "Wer gründete 1478 die Stadt Las Palmas?",
   "o": [
-   "Juan Rejón",
-   "Pedro de Vera",
    "Fernando Guanarteme",
+   "Pedro de Vera",
+   "Juan Rejón",
    "Christoph Kolumbus"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Juan Rejón landete am 24. Juni 1478 an der Mündung des Barranco de Guiniguada – dort liegt heute Vegueta."
  },
  {
@@ -798,11 +798,11 @@
   "q": "In welchem Jahr war die Eroberung der Insel abgeschlossen?",
   "o": [
    "1478",
-   "1483",
+   "1502",
    "1492",
-   "1502"
+   "1483"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Pedro de Vera unterwarf 1483 die letzten Widerstandsnester bei Gáldar."
  },
  {
@@ -810,12 +810,12 @@
   "step": 6,
   "q": "Wie nennt man die Ureinwohner Gran Canarias?",
   "o": [
-   "Guanches",
-   "Bimbaches",
    "Canarios",
+   "Bimbaches",
+   "Guanches",
    "Arucas"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Canarios – „Guanches“ sind die Ureinwohner Teneriffas. Die Bezeichnungen werden oft verwechselt."
  },
  {
@@ -824,11 +824,11 @@
   "q": "Wie heißt die bemalte Höhle bei Gáldar?",
   "o": [
    "Cueva de los Verdes",
-   "Cueva del Rey",
+   "Cueva Pintada",
    "Cueva de Guayadeque",
-   "Cueva Pintada"
+   "Cueva del Rey"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Die Cueva Pintada ist für ihre geometrischen Wandmalereien berühmt und heute Museum."
  },
  {
@@ -836,12 +836,12 @@
   "step": 6,
   "q": "Welches Haus in Las Palmas erinnert an Kolumbus?",
   "o": [
-   "Casa de Colón",
-   "Casa de Vera",
    "Palacio Episcopal",
+   "Casa de Vera",
+   "Casa de Colón",
    "Casa de la Cultura"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Kolumbus stoppte 1492 auf dem Weg nach Amerika, um das Ruder der „Pinta“ reparieren zu lassen."
  },
  {
@@ -850,11 +850,11 @@
   "q": "Welche Kirche steht im Zentrum von Vegueta?",
   "o": [
    "San Juan Bautista",
-   "Kathedrale Santa Ana",
+   "Iglesia de San Telmo",
    "Basílica del Pino",
-   "Iglesia de San Telmo"
+   "Kathedrale Santa Ana"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Die Kathedrale Santa Ana – 1497 begonnen und über Jahrhunderte weitergebaut."
  },
  {
@@ -862,12 +862,12 @@
   "step": 6,
   "q": "Wie viele Gemeinden hat Gran Canaria?",
   "o": [
-   "14",
-   "18",
    "21",
+   "18",
+   "14",
    "27"
   ],
-  "c": 2,
+  "c": 0,
   "e": "21 Municipios – Temisas gehört zur Gemeinde Agüimes."
  },
  {
@@ -876,11 +876,11 @@
   "q": "Wie heißt die Autobahn entlang der Ostküste?",
   "o": [
    "A-7",
-   "TF-1",
+   "GC-1",
    "GC-60",
-   "GC-1"
+   "TF-1"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Die GC-1 führt von Las Palmas über den Flughafen bis nach Mogán."
  },
  {
@@ -888,12 +888,12 @@
   "step": 6,
   "q": "Was ist ein „almogarén“?",
   "o": [
-   "Eine Kultstätte der Ureinwohner",
-   "Ein Bauernhaus",
    "Ein Hafen",
+   "Ein Bauernhaus",
+   "Eine Kultstätte der Ureinwohner",
    "Eine Zisterne"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Heilige Stätten unter freiem Himmel – der Roque Bentayga ist die bekannteste."
  },
  {
@@ -902,11 +902,11 @@
   "q": "Welches Getränk wird aus Zuckerrohr gebrannt?",
   "o": [
    "Wein",
-   "Rum",
+   "Cidre",
    "Bier",
-   "Cidre"
+   "Rum"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Rum – die Brennerei Arehucas in Arucas ist die bekannteste der Kanaren."
  },
  {
@@ -914,12 +914,12 @@
   "step": 6,
   "q": "Woher kam die Kartoffel, die hier „papa“ heißt?",
   "o": [
-   "Aus Afrika",
-   "Aus Asien",
    "Aus Südamerika",
+   "Aus Asien",
+   "Aus Afrika",
    "Aus Europa"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Ursprünglich aus den Anden; über die spanischen Kolonien kam sie auf die Inseln und nach Europa."
  },
  {
@@ -928,11 +928,11 @@
   "q": "Welches Fest ist das größte in Las Palmas?",
   "o": [
    "Die Semana Santa",
-   "Das Mandelblütenfest",
+   "Der Karneval",
    "Das Erntedankfest",
-   "Der Karneval"
+   "Das Mandelblütenfest"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Der Karneval von Las Palmas zählt zu den größten Spaniens – mit der berühmten Drag-Queen-Gala."
  },
  {
@@ -940,12 +940,12 @@
   "step": 7,
   "q": "Seit wann ist Gran Canaria UNESCO-Biosphärenreservat?",
   "o": [
-   "2005",
+   "2019",
    "1995",
    "2013",
-   "2019"
+   "2005"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Seit 2005 – rund 43 Prozent der Inselfläche gehören dazu, plus ein großer Meeresstreifen."
  },
  {
@@ -953,12 +953,12 @@
   "step": 7,
   "q": "Wie viel Prozent der Inselfläche sind Biosphärenreservat?",
   "o": [
-   "23 %",
    "43 %",
+   "23 %",
    "33 %",
    "63 %"
   ],
-  "c": 1,
+  "c": 0,
   "e": "43 Prozent – der Südwesten mit Tamadaba, Inagua, Pilancones und der Caldera de Tejeda."
  },
  {
@@ -967,11 +967,11 @@
   "q": "Wer ist die Schutzpatronin der Insel?",
   "o": [
    "Virgen del Carmen",
-   "Santa Ana",
    "Virgen del Pino",
+   "Santa Ana",
    "Santa Lucía"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Die Jungfrau vom Pinienbaum in Teror; ihr Fest ist am 8. September."
  },
  {
@@ -981,10 +981,10 @@
   "o": [
    "Aus Skandinavien",
    "Aus Griechenland",
-   "Aus Südamerika",
-   "Von den Berbern Nordafrikas"
+   "Von den Berbern Nordafrikas",
+   "Aus Südamerika"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Berber vom Beginn unserer Zeitrechnung – Inschriften in libysch-berberischer Schrift belegen es."
  },
  {
@@ -992,12 +992,12 @@
   "step": 7,
   "q": "Welcher Widerstandskämpfer der Canarios ist legendär?",
   "o": [
-   "Doramas",
+   "Bentayga",
    "Guanarteme",
    "Tenesor",
-   "Bentayga"
+   "Doramas"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Doramas führte den Guerillakampf in den Wäldern – heute nach ihm benannt: das Dorf Doramas und der Parque Doramas."
  },
  {
@@ -1005,12 +1005,12 @@
   "step": 7,
   "q": "Wer war der letzte Herrscher, der sich taufen ließ und Frieden schloss?",
   "o": [
-   "Doramas",
    "Fernando Guanarteme",
+   "Doramas",
    "Pedro de Vera",
    "Juan Rejón"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Tenesor Semidán, getauft als Fernando Guanarteme – er verhandelte 1483 die Übergabe."
  },
  {
@@ -1019,11 +1019,11 @@
   "q": "Welcher Dichter und Schriftsteller wurde in Las Palmas geboren?",
   "o": [
    "Miguel de Unamuno",
-   "Federico García Lorca",
    "Benito Pérez Galdós",
+   "Federico García Lorca",
    "Camilo José Cela"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Galdós (1843–1920), Autor der „Pérez Galdós“-Romane über Madrid – sein Geburtshaus ist Museum."
  },
  {
@@ -1033,10 +1033,10 @@
   "o": [
    "Plácido Domingo",
    "Luciano Pavarotti",
-   "José Carreras",
-   "Alfredo Kraus"
+   "Alfredo Kraus",
+   "José Carreras"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Alfredo Kraus (1927–1999); das Auditorium an der Playa de las Canteras trägt seinen Namen."
  },
  {
@@ -1044,12 +1044,12 @@
   "step": 7,
   "q": "Welcher Felsen in Agaete ist als „Finger Gottes“ bekannt?",
   "o": [
-   "Dedo de Dios",
+   "El Fraile",
    "Roque Nublo",
    "Roque Bentayga",
-   "El Fraile"
+   "Dedo de Dios"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Die Felsnadel „Dedo de Dios“ – ihre Spitze brach 2005 bei einem Sturm ab."
  },
  {
@@ -1057,12 +1057,12 @@
   "step": 7,
   "q": "Wann griff eine niederländische Flotte Las Palmas an?",
   "o": [
-   "1499",
    "1599",
+   "1499",
    "1648",
    "1704"
   ],
-  "c": 1,
+  "c": 0,
   "e": "1599 unter Pieter van der Does – die Stadt wurde geplündert, aber nicht dauerhaft eingenommen."
  },
  {
@@ -1071,11 +1071,11 @@
   "q": "Welche Insel ist für ihre Pfeifsprache bekannt?",
   "o": [
    "Lanzarote",
-   "El Hierro",
    "La Gomera",
+   "El Hierro",
    "La Palma"
   ],
-  "c": 2,
+  "c": 1,
   "e": "El Silbo Gomero – eine Pfeifsprache, die über die Schluchten trägt und heute in der Schule gelehrt wird."
  },
  {
@@ -1085,10 +1085,10 @@
   "o": [
    "Bananen",
    "Salz",
-   "Wein",
-   "Cochenille-Farbstoff"
+   "Cochenille-Farbstoff",
+   "Wein"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Der rote Farbstoff der Schildlaus auf Feigenkakteen – bis synthetische Farben ihn verdrängten."
  },
  {
@@ -1252,12 +1252,12 @@
   "step": 9,
   "q": "Welcher Fink lebt nur im Kiefernwald von Inagua?",
   "o": [
-   "Gran-Canaria-Teydefink",
    "Buchfink",
+   "Gran-Canaria-Teydefink",
    "Grünfink",
    "Stieglitz"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Der Blaufink (Gran-Canaria-Teydefink) brütet fast nur in den Kiefernwäldern von Inagua – Bestand im niedrigen dreistelligen Bereich."
  },
  {
@@ -1266,11 +1266,11 @@
   "q": "Wie heißt der Lorbeerwald der feuchten Nordhänge?",
   "o": [
    "Monteverde",
-   "Laurisilva",
    "Pinar",
+   "Laurisilva",
    "Fayal"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Laurisilva – ein Relikt des Tertiärs, das auf den Kanaren die Eiszeit überlebt hat."
  },
  {
@@ -1280,10 +1280,10 @@
   "o": [
    "Zypresse",
    "Olivenbaum",
-   "Drachenbaum",
-   "Kastanie"
+   "Kastanie",
+   "Drachenbaum"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Dracaena draco – sein rotes Harz galt als „Drachenblut“ und wurde als Heilmittel gehandelt."
  },
  {
@@ -1291,12 +1291,12 @@
   "step": 9,
   "q": "Woher stammt der Feigenkaktus der Insel?",
   "o": [
-   "Aus Indien",
+   "Aus Mexiko",
    "Aus Marokko",
    "Aus Spanien",
-   "Aus Mexiko"
+   "Aus Indien"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Er kam nach 1492 aus Amerika – und mit ihm die Cochenille-Schildlaus."
  },
  {
@@ -1304,12 +1304,12 @@
   "step": 9,
   "q": "Welche Wolkenformation liegt oft über dem Norden?",
   "o": [
-   "Mar de nubes",
    "Calima",
+   "Mar de nubes",
    "Bruma seca",
    "Nube baja"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Ein „Meer aus Wolken“, das sich am Passat staut und den Norden feucht hält."
  },
  {
@@ -1318,11 +1318,11 @@
   "q": "Wie schützt sich die Kanarische Kiefer gegen Feuer?",
   "o": [
    "Sie wächst nur im Regen",
-   "Dicke Rinde",
    "Ihre Nadeln brennen nicht",
+   "Dicke Rinde",
    "Sie speichert Wasser"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Die dicke Rinde isoliert die Knospen; nach einem Brand treibt der Baum aus dem Stamm neu aus."
  },
  {
@@ -1332,10 +1332,10 @@
   "o": [
    "Juli und August",
    "Dezember und Januar",
-   "Frühling und Herbst",
-   "Nur nach Regen"
+   "Nur nach Regen",
+   "Frühling und Herbst"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Frühling und Herbst – im Sommer ist es im Süden sehr heiß, im Winter kann es oben kalt und windig sein."
  },
  {
@@ -1343,12 +1343,12 @@
   "step": 9,
   "q": "Was ist ein „tajinaste“?",
   "o": [
-   "Ein Vogel",
+   "Eine Pflanze mit Blütenkerze",
    "Ein Tanz",
    "Ein Werkzeug",
-   "Eine Pflanze mit Blütenkerze"
+   "Ein Vogel"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Natternkopf-Arten (Echium) mit hohen Blütenständen – auf Gran Canaria mehrere endemische Arten."
  },
  {
@@ -1356,12 +1356,12 @@
   "step": 9,
   "q": "Warum gibt es so viele endemische Arten?",
   "o": [
-   "Weil die Insel lange isoliert war",
    "Weil die Insel groß ist",
+   "Weil die Insel lange isoliert war",
    "Weil es viel regnet",
    "Weil es keine Menschen gab"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Isolation über Millionen Jahre bei großer Höhenvielfalt – daraus entstanden eigene Arten."
  },
  {
@@ -1370,11 +1370,11 @@
   "q": "Welche Gefahr bedroht die Wälder im Sommer am meisten?",
   "o": [
    "Schnee",
-   "Waldbrand",
    "Sturmflut",
+   "Waldbrand",
    "Erdbeben"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Dürre und Hitze machen die Kiefernwälder anfällig; die Feuerwehr rechnet mit jedem Sommer."
  },
  {
@@ -1384,10 +1384,10 @@
   "o": [
    "Bis 400 m",
    "Bis 1.000 m",
-   "Bis 2.000 m",
-   "Bis zum Gipfel"
+   "Bis zum Gipfel",
+   "Bis 2.000 m"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Von etwa 800 bis knapp 2.000 Metern – darüber nur noch Ginster und Fels."
  },
  {
@@ -1395,12 +1395,12 @@
   "step": 9,
   "q": "Welches Tier der Küste kann man vom Boot aus sehen?",
   "o": [
-   "Seeotter",
+   "Wale und Delfine",
    "Pinguine",
    "Robben",
-   "Wale und Delfine"
+   "Seeotter"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Vor der Südwestküste leben Große Tümmler und Rundkopfdelfine ganzjährig."
  },
  {
@@ -1408,12 +1408,12 @@
   "step": 10,
   "q": "Wie heißt das kanarische Dessert aus Eigelb, Mandeln und Sirup?",
   "o": [
-   "Bienmesabe",
-   "Flan",
    "Tarta de Santiago",
+   "Flan",
+   "Bienmesabe",
    "Turrón"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Bienmesabe – „schmeckt mir gut“ – wird kalt gelöffelt oder als Brotaufstrich gegessen."
  },
  {
@@ -1422,11 +1422,11 @@
   "q": "Welcher Eintopf aus Fisch ist typisch kanarisch?",
   "o": [
    "Paella",
-   "Sancocho",
+   "Cocido",
    "Fabada",
-   "Cocido"
+   "Sancocho"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Sancocho – mit Salzwasserfisch, Kartoffeln und Mojo; auf den Kanaren ein Festtagsessen."
  },
  {
@@ -1434,12 +1434,12 @@
   "step": 10,
   "q": "Was ist „ropa vieja“?",
   "o": [
-   "Ein Kleidungsstück",
-   "Ein Nachtisch",
    "Ein Eintopf mit Fleisch und Kichererbsen",
+   "Ein Nachtisch",
+   "Ein Kleidungsstück",
    "Ein Salat"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Wörtlich „alte Kleider“ – ein Eintopf aus Rind- oder Schweinefleisch, Kichererbsen und Tomate."
  },
  {
@@ -1448,11 +1448,11 @@
   "q": "Was ist „ron miel“?",
   "o": [
    "Ein Wein",
-   "Ein Kuchen",
+   "Rum mit Honig",
    "Ein Käse",
-   "Rum mit Honig"
+   "Ein Kuchen"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Honigrum – ein Likör aus Rum und kanarischem Honig, sehr süß."
  },
  {
@@ -1460,12 +1460,12 @@
   "step": 10,
   "q": "Von welcher Insel kommt „almogrote“?",
   "o": [
-   "La Gomera",
-   "Gran Canaria",
    "Lanzarote",
+   "Gran Canaria",
+   "La Gomera",
    "El Hierro"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Ein Aufstrich aus gereiftem Käse, Paprika und Olivenöl – klassisch von La Gomera."
  },
  {
@@ -1474,11 +1474,11 @@
   "q": "Welche Rebsorte ist typisch für die kanarischen Rotweine?",
   "o": [
    "Tempranillo",
-   "Listán Negro",
+   "Merlot",
    "Rioja",
-   "Merlot"
+   "Listán Negro"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Listán Negro – eine alte, fast nur hier angebaute Sorte."
  },
  {
@@ -1486,12 +1486,12 @@
   "step": 10,
   "q": "Was ist „miel de palma“?",
   "o": [
-   "Palmzucker",
-   "Palmwein",
    "Palmhonig",
+   "Palmwein",
+   "Palmzucker",
    "Palmöl"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Ein Sirup, der aus dem Saft der Kanarischen Palme gekocht wird – vor allem auf La Gomera."
  },
  {
@@ -1500,11 +1500,11 @@
   "q": "Wann feiert man den Karneval auf der Insel?",
   "o": [
    "Im Dezember",
-   "Im Juli",
+   "Im Februar",
    "Im Oktober",
-   "Im Februar"
+   "Im Juli"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Der Karneval liegt im Februar, die großen Umzüge finden in Las Palmas statt."
  },
  {
@@ -1512,12 +1512,12 @@
   "step": 10,
   "q": "Was aßen die Ureinwohner als Grundnahrungsmittel?",
   "o": [
-   "Gofio",
-   "Reis",
    "Kartoffeln",
+   "Reis",
+   "Gofio",
    "Mais"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Gofio aus geröstetem Weizen oder Gerste – Kartoffeln und Mais kamen erst nach 1492."
  },
  {
@@ -1526,11 +1526,11 @@
   "q": "Was ist „queso de flor“?",
   "o": [
    "Ein Blumenstrauß",
-   "Käse mit Distelblüte",
+   "Ein Likör",
    "Ein Kuchen",
-   "Ein Likör"
+   "Käse mit Distelblüte"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Der Labersatz stammt aus der Blüte der Artischockendistel – daher der Name und der feine Geschmack."
  },
  {
@@ -1538,12 +1538,12 @@
   "step": 10,
   "q": "Welcher Fisch ist auf den Kanaren eine Spezialität?",
   "o": [
-   "Hering",
-   "Kabeljau",
    "Vieja",
+   "Kabeljau",
+   "Hering",
    "Lachs"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Die Vieja (Papageifisch) – meist gebraten mit Mojo, manchmal mit Knochen serviert."
  },
  {
@@ -1552,11 +1552,11 @@
   "q": "Was trinkt man traditionell zum Kaffee dazu?",
   "o": [
    "Ein Glas Milch",
-   "Tee",
+   "Ein kleiner Schnaps",
    "Ein Bier",
-   "Ein kleiner Schnaps"
+   "Tee"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Ein „chupito“ – oft Ron miel oder ein Kräuterschnaps, häufig aufs Haus."
  },
  {
@@ -1564,12 +1564,12 @@
   "step": 11,
   "q": "Wie viele große Eruptionsphasen durchlief die Insel?",
   "o": [
-   "Drei",
+   "Sieben",
    "Zwei",
    "Fünf",
-   "Sieben"
+   "Drei"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Ciclo I (alte Basalte), Ciclo II (Roque-Nublo-Formation) und Ciclo III (die jüngeren Vulkanbauten im Norden)."
  },
  {
@@ -1577,12 +1577,12 @@
   "step": 11,
   "q": "Welcher Berg gab der zweiten Eruptionsphase den Namen?",
   "o": [
-   "Teide",
    "Roque Nublo",
+   "Teide",
    "Bandama",
    "Pico de las Nieves"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Die „Roque-Nublo-Formation“ prägt weite Teile des Inselinneren – mit mächtigen Brekzien und Lavaströmen."
  },
  {
@@ -1591,11 +1591,11 @@
   "q": "Wie breit ist die Caldera de Tejeda?",
   "o": [
    "5 km",
-   "30 km",
    "15 km",
+   "30 km",
    "50 km"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Rund 15 Kilometer – ein eingebrochener Vulkankessel, in dem Tejeda und Artenara liegen."
  },
  {
@@ -1605,10 +1605,10 @@
   "o": [
    "Ein Karstloch",
    "Ein Schildvulkan",
-   "Ein Kratersee",
-   "Ein Maar"
+   "Ein Maar",
+   "Ein Kratersee"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Ein Maar – ein Explosionskrater, entstanden als Magma auf Grundwasser traf."
  },
  {
@@ -1616,12 +1616,12 @@
   "step": 11,
   "q": "Wie entsteht ein Maar?",
   "o": [
-   "Magma trifft auf Grundwasser und verdampft explosionsartig",
+   "Durch einen Meteoriten",
    "Durch Erosion",
    "Durch ein Erdbeben",
-   "Durch einen Meteoriten"
+   "Magma trifft auf Grundwasser und verdampft explosionsartig"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Das Wasser verdampft schlagartig, der Druck sprengt einen Trichter – daher die steilen Wände."
  },
  {
@@ -1629,12 +1629,12 @@
   "step": 11,
   "q": "Wo liegen die ältesten Gesteine der Insel?",
   "o": [
-   "Im Norden",
    "Im Südwesten",
+   "Im Norden",
    "Im Osten",
    "Auf dem Gipfel"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Im Südwesten um La Aldea und Güigüí – dort ist die Insel am ältesten."
  },
  {
@@ -1643,11 +1643,11 @@
   "q": "Wie viele Mikroklimazonen hat Gran Canaria?",
   "o": [
    "4",
-   "7",
    "14",
+   "7",
    "21"
   ],
-  "c": 2,
+  "c": 1,
   "e": "14 – deshalb der Beiname „Kontinent im Miniaturformat“."
  },
  {
@@ -1657,10 +1657,10 @@
   "o": [
    "Mistral",
    "Bora",
-   "Scirocco",
-   "Passatwinde"
+   "Passatwinde",
+   "Scirocco"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Die Passatwinde (alisios) wehen aus Nordost und teilen die Insel in feuchten Norden und trockenen Süden."
  },
  {
@@ -1668,12 +1668,12 @@
   "step": 11,
   "q": "Wie lang ist die Küstenlinie der Insel?",
   "o": [
-   "236 km",
+   "500 km",
    "120 km",
    "380 km",
-   "500 km"
+   "236 km"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Rund 236 Kilometer – bei nur 50 Kilometern Durchmesser."
  },
  {
@@ -1681,12 +1681,12 @@
   "step": 11,
   "q": "Wie weit ist es von Gran Canaria bis nach Marokko?",
   "o": [
-   "80 km",
    "210 km",
+   "80 km",
    "400 km",
    "700 km"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Etwa 210 Kilometer bis zur afrikanischen Küste."
  },
  {
@@ -1695,11 +1695,11 @@
   "q": "Was ist ein „malpaís“?",
   "o": [
    "Ein schlechtes Land",
-   "Ein Sumpf",
    "Ein Lavafeld",
+   "Ein Sumpf",
    "Ein Weinberg"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Wörtlich „schlechtes Land“ – eine raue Lavalandschaft, auf der kaum etwas wächst."
  },
  {
@@ -1709,10 +1709,10 @@
   "o": [
    "Es regnet nicht",
    "Das Wasser verdunstet sofort",
-   "Die Täler sind zu steil",
-   "Das Wasser versickert im porösen Vulkangestein"
+   "Das Wasser versickert im porösen Vulkangestein",
+   "Die Täler sind zu steil"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Das Regenwasser verschwindet im Gestein und tritt weiter unten wieder aus – deshalb die vielen Trockentäler."
  },
  {
@@ -1876,12 +1876,12 @@
   "step": 13,
   "q": "Was ist „lucha canaria“?",
   "o": [
-   "Ein Ringkampf",
    "Ein Tanz",
+   "Ein Ringkampf",
    "Ein Lied",
    "Ein Stockkampf"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Ein Ringkampf aus der Tradition der Inseln: Ziel ist, den Gegner aus dem Gleichgewicht zu bringen, nicht ihn zu verletzen."
  },
  {
@@ -1890,11 +1890,11 @@
   "q": "Was ist der „juego del palo“?",
   "o": [
    "Ein Kartenspiel",
-   "Ein Stockkampf",
    "Ein Brettspiel",
+   "Ein Stockkampf",
    "Ein Tanz"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Ein Kampf mit langen Stöcken – früher Hirtenwaffe, heute Sport und Schaukampf."
  },
  {
@@ -1904,10 +1904,10 @@
   "o": [
    "Die Gitarre",
    "Die Trompete",
-   "Das Timple",
-   "Die Flöte"
+   "Die Flöte",
+   "Das Timple"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Das Timple, eine kleine fünfsaitige Gitarre – gebaut aus heimischem Holz."
  },
  {
@@ -1915,12 +1915,12 @@
   "step": 13,
   "q": "Was ist der „salto del pastor“?",
   "o": [
-   "Ein Tanzsprung",
+   "Der Sprung mit dem Hirtenstab",
    "Ein Kampfsport",
    "Ein Wettrennen",
-   "Der Sprung mit dem Hirtenstab"
+   "Ein Tanzsprung"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Hirten sprangen mit einem langen Holzstab über Schluchten und Hänge – heute ein Sport."
  },
  {
@@ -1928,12 +1928,12 @@
   "step": 13,
   "q": "Wie heißt der typische kanarische Gesang?",
   "o": [
-   "Isa",
    "Fado",
+   "Isa",
    "Flamenco",
    "Copla"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Die Isa – daneben Folía und Malagueña, meist von Gitarre und Timple begleitet."
  },
  {
@@ -1942,11 +1942,11 @@
   "q": "Wo wird das Fest der Schutzpatronin der Insel gefeiert?",
   "o": [
    "In Arucas",
-   "In Teror",
    "In Maspalomas",
+   "In Teror",
    "In Agüimes"
   ],
-  "c": 1,
+  "c": 2,
   "e": "In Teror, jedes Jahr am 8. September – Pilger kommen aus der ganzen Insel."
  },
  {
@@ -1956,10 +1956,10 @@
   "o": [
    "Casa de Colón",
    "Museo del Prado",
-   "Museo Elder",
-   "Museo Canario"
+   "Museo Canario",
+   "Museo Elder"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Das Museo Elder im alten Marktgebäude am Hafen – Physik und Technik zum Anfassen."
  },
  {
@@ -1967,12 +1967,12 @@
   "step": 13,
   "q": "Wie heißt der botanische Garten der Insel?",
   "o": [
-   "Jardín Botánico Real",
+   "Jardín Canario Viera y Clavijo",
    "Jardín de Aclimatación",
    "Parque Doramas",
-   "Jardín Canario Viera y Clavijo"
+   "Jardín Botánico Real"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Der Jardín Canario in Las Palmas zeigt die Flora der Kanaren, benannt nach dem Naturforscher Viera y Clavijo."
  },
  {
@@ -1980,12 +1980,12 @@
   "step": 13,
   "q": "Was zeigt das Museo Canario?",
   "o": [
-   "Funde der Ureinwohner",
    "Autos",
+   "Funde der Ureinwohner",
    "Meeresfische",
    "Waffen"
   ],
-  "c": 0,
+  "c": 1,
   "e": "Schädel, Mumien und Werkzeuge der Canarios – eine der wichtigsten Sammlungen der Kanaren."
  },
  {
@@ -1994,11 +1994,11 @@
   "q": "Welches Fest feiert man in Tejeda im Februar?",
   "o": [
    "Den Karneval",
-   "Die Mandelblüte",
    "Das Weinlesefest",
+   "Die Mandelblüte",
    "Das Fischerfest"
   ],
-  "c": 1,
+  "c": 2,
   "e": "Wenn die Mandelbäume blühen, feiert Tejeda das Mandelblütenfest mit Musik und markt."
  },
  {
@@ -2008,10 +2008,10 @@
   "o": [
    "Rot und Gelb",
    "Grün und Weiß",
-   "Weiß, Blau und Gelb",
-   "Blau und Weiß"
+   "Blau und Weiß",
+   "Weiß, Blau und Gelb"
   ],
-  "c": 2,
+  "c": 3,
   "e": "Senkrecht Weiß, Blau und Gelb – die Farben stehen für Atlantik und Sonne."
  },
  {
@@ -2019,12 +2019,12 @@
   "step": 13,
   "q": "Wo steht das Auditorium mit dem Namen eines Tenors?",
   "o": [
-   "In Telde",
+   "In Las Palmas",
    "In Maspalomas",
    "In Arucas",
-   "In Las Palmas"
+   "In Telde"
   ],
-  "c": 3,
+  "c": 0,
   "e": "Das Auditorio Alfredo Kraus an der Playa de las Canteras – direkt am Wasser."
  },
  {
@@ -2032,12 +2032,12 @@
   "step": 14,
   "q": "Wie viele Einwohner hat Temisas etwa?",
   "o": [
-   "285",
-   "85",
    "900",
+   "85",
+   "285",
    "2.100"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Rund 285 (2023) – ein Dorf mit Landwirtschaft und einigen Ferienhäusern."
  },
  {
@@ -2046,11 +2046,11 @@
   "q": "Zu welcher Gemeinde gehört Temisas?",
   "o": [
    "Telde",
-   "Agüimes",
+   "Santa Lucía",
    "San Bartolomé de Tirajana",
-   "Santa Lucía"
+   "Agüimes"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Gemeinde Agüimes – die Stadt liegt rund 15 Autominuten entfernt."
  },
  {
@@ -2058,12 +2058,12 @@
   "step": 14,
   "q": "Wie heißt das Olivenöl aus dem Tal von Temisas?",
   "o": [
-   "Aceite del Valle",
-   "Aceite de Agüimes",
    "Caserío de Temisas",
+   "Aceite de Agüimes",
+   "Aceite del Valle",
    "Faro Verde"
   ],
-  "c": 2,
+  "c": 0,
   "e": "„Caserío de Temisas“ – gepresst in der kommunalen Ölmühle von Agüimes."
  },
  {
@@ -2072,11 +2072,11 @@
   "q": "Was steht oberhalb von Temisas auf einem Berg?",
   "o": [
    "Eine Windfarm",
-   "Ein Kloster",
+   "Eine Sternwarte",
    "Ein Leuchtturm",
-   "Eine Sternwarte"
+   "Ein Kloster"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Das Observatorio Astronómico de Temisas – Führungen nach Absprache."
  },
  {
@@ -2084,12 +2084,12 @@
   "step": 14,
   "q": "Wie viele Einwohner hat Las Palmas?",
   "o": [
-   "Etwa 380.000",
-   "Etwa 120.000",
    "Etwa 700.000",
+   "Etwa 120.000",
+   "Etwa 380.000",
    "Etwa 1,2 Mio."
   ],
-  "c": 0,
+  "c": 2,
   "e": "Rund 380.000 in der Stadt – mit Umland kommt die Inselhälfte zusammen."
  },
  {
@@ -2098,11 +2098,11 @@
   "q": "Welche Stadt ist die zweitgrößte der Insel?",
   "o": [
    "Maspalomas",
-   "Telde",
+   "Agaete",
    "Arucas",
-   "Agaete"
+   "Telde"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Telde im Osten – rund 100.000 Einwohner, oft übersehen, aber älter als Las Palmas."
  },
  {
@@ -2110,12 +2110,12 @@
   "step": 14,
   "q": "Wie hoch ist der Leuchtturm von Maspalomas?",
   "o": [
-   "26 m",
-   "38 m",
    "56 m",
+   "38 m",
+   "26 m",
    "90 m"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Der Turm misst 54,7 Meter, mit der Laterne 60 Meter über dem Meer."
  },
  {
@@ -2124,11 +2124,11 @@
   "q": "Wann ging der Leuchtturm von Maspalomas in Betrieb?",
   "o": [
    "1870",
-   "1936",
+   "1890",
    "1912",
-   "1890"
+   "1936"
   ],
-  "c": 3,
+  "c": 1,
   "e": "In der Nacht zum 1. Februar 1890 – Bauzeit rund 25 Jahre."
  },
  {
@@ -2136,12 +2136,12 @@
   "step": 14,
   "q": "Wer entwarf den Leuchtturm?",
   "o": [
-   "Juan de León y Castillo",
-   "Néstor Álamo",
    "Benito Pérez Galdós",
+   "Néstor Álamo",
+   "Juan de León y Castillo",
    "Alfredo Kraus"
   ],
-  "c": 0,
+  "c": 2,
   "e": "Der Ingenieur aus Telde; sein Bruder Fernando war Minister und ließ den Hafen ausbauen."
  },
  {
@@ -2150,11 +2150,11 @@
   "q": "Wie viele Kanareninseln sind bewohnt?",
   "o": [
    "Sieben",
-   "Acht",
+   "Zehn",
    "Neun",
-   "Zehn"
+   "Acht"
   ],
-  "c": 1,
+  "c": 3,
   "e": "Acht – La Graciosa bei Lanzarote ist seit 2018 offiziell die achte bewohnte Insel."
  },
  {
@@ -2162,12 +2162,12 @@
   "step": 14,
   "q": "Wer ist Hauptstadt der Autonomen Gemeinschaft?",
   "o": [
-   "Nur Las Palmas",
-   "Nur Santa Cruz",
    "Beide",
+   "Nur Santa Cruz",
+   "Nur Las Palmas",
    "Telde"
   ],
-  "c": 2,
+  "c": 0,
   "e": "Die Kanaren haben zwei Hauptstädte: Las Palmas und Santa Cruz de Tenerife, im jährlichen Wechsel."
  },
  {
@@ -2176,11 +2176,11 @@
   "q": "Wie lange fährt man von Temisas nach Arinaga an die Küste?",
   "o": [
    "Etwa 10 Minuten",
-   "Etwa 90 Minuten",
+   "Etwa 30 Minuten",
    "Etwa 60 Minuten",
-   "Etwa 30 Minuten"
+   "Etwa 90 Minuten"
   ],
-  "c": 3,
+  "c": 1,
   "e": "Rund 20 Kilometer über die GC-550 und die GC-1 – je nach Verkehr gut eine halbe Stunde."
  },
  {
@@ -2188,12 +2188,12 @@
   "step": 15,
   "q": "Wie heißt die zweite Eruptionsphase der Insel?",
   "o": [
-   "Ciclo Roque Nublo",
+   "Ciclo Tamadaba",
    "Ciclo Bandama",
    "Ciclo Tejeda",
-   "Ciclo Tamadaba"
+   "Ciclo Roque Nublo"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Nach dem alten Basaltzyklus folgte der Roque-Nublo-Zyklus – er formte die Kuppen und Blockdecken."
  },
  {
@@ -2201,12 +2201,12 @@
   "step": 15,
   "q": "Aus welchem Gestein besteht der Roque Nublo?",
   "o": [
-   "Granit",
    "Phonolith",
+   "Granit",
    "Sandstein",
    "Kalk"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Phonolith, ein hell klingender Vulkanit – schlägt man daran, gibt er einen Klang."
  },
  {
@@ -2215,11 +2215,11 @@
   "q": "Wie hoch ist der Pico de las Nieves?",
   "o": [
    "1.813 m",
-   "1.956 m",
    "1.949 m",
+   "1.956 m",
    "2.020 m"
   ],
-  "c": 2,
+  "c": 1,
   "e": "1.949 Meter – sieben Meter niedriger als der Morro de la Agujereada daneben."
  },
  {
@@ -2229,10 +2229,10 @@
   "o": [
    "700 m",
    "70 m",
-   "170 m",
-   "7 m"
+   "7 m",
+   "170 m"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Nur sieben Meter – der eigentliche Gipfel ist kaum bekannt und hat keinen Aussichtspunkt."
  },
  {
@@ -2240,12 +2240,12 @@
   "step": 15,
   "q": "Welchen Namen trägt die Insel in alten Überlieferungen?",
   "o": [
-   "Tamarán",
+   "Titerrogatra",
    "Achinech",
    "Benahoare",
-   "Titerrogatra"
+   "Tamarán"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Für Gran Canaria ist „Tamarán“ überliefert; Achinech ist Teneriffa, Benahoare La Palma."
  },
  {
@@ -2253,12 +2253,12 @@
   "step": 15,
   "q": "Welche Sprache sprachen die Ureinwohner?",
   "o": [
-   "Latein",
    "Eine Berbersprache",
+   "Latein",
    "Arabisch",
    "Eine eigene isolierte Sprache"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Berberisch – libysch-berberische Inschriften im Welterbegebiet belegen es."
  },
  {
@@ -2267,11 +2267,11 @@
   "q": "Wie viele Höhlen umfasst das Welterbegebiet?",
   "o": [
    "Etwa 150",
-   "Etwa 500",
    "Etwa 1.500",
+   "Etwa 500",
    "Etwa 5.000"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Rund 1.500 natürliche und künstliche Höhlen – Wohnungen, Kornspeicher, Zisternen und Grabstätten."
  },
  {
@@ -2281,10 +2281,10 @@
   "o": [
    "Fataga",
    "Maspalomas",
-   "Agüimes",
-   "Gáldar"
+   "Gáldar",
+   "Agüimes"
   ],
-  "c": 3,
+  "c": 2,
   "e": "Gáldar – Sitz eines Guanarteme, mit der Cueva Pintada als Zentrum."
  },
  {
@@ -2292,12 +2292,12 @@
   "step": 15,
   "q": "Wie lange dauerte die Eroberung der Insel?",
   "o": [
-   "Fünf Jahre",
+   "Zwanzig Jahre",
    "Ein Jahr",
    "Drei Monate",
-   "Zwanzig Jahre"
+   "Fünf Jahre"
   ],
-  "c": 0,
+  "c": 3,
   "e": "Von 1478 bis 1483 – fünf Jahre mit erbittertem Widerstand."
  },
  {
@@ -2305,12 +2305,12 @@
   "step": 15,
   "q": "Womit wurde Las Palmas im 16. Jahrhundert reich?",
   "o": [
-   "Gold aus Amerika",
    "Zuckerrohr und Handel",
+   "Gold aus Amerika",
    "Salz",
    "Wein"
   ],
-  "c": 1,
+  "c": 0,
   "e": "Zuckerrohr aus Madeira und der Atlantikhandel – der Hafen wurde zum Umschlagplatz."
  },
  {
@@ -2319,11 +2319,11 @@
   "q": "Was war die „Casa de los Gobernadores“?",
   "o": [
    "Ein Gefängnis",
-   "Ein Kloster",
    "Der Gouverneurspalast",
+   "Ein Kloster",
    "Ein Zollhaus"
   ],
-  "c": 2,
+  "c": 1,
   "e": "Der Sitz der Gouverneure in Vegueta – auf seinen Fundamenten steht heute die Casa de Colón."
  },
  {
@@ -2333,10 +2333,1180 @@
   "o": [
    "Kanarische Kiefer",
    "Mandelbaum",
-   "Ölbaum",
-   "Drachenbaum"
+   "Drachenbaum",
+   "Ölbaum"
+  ],
+  "c": 2,
+  "e": "„Drachenblut“ aus Dracaena draco – rot, harzig und jahrhundertelang gehandelt."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Was ist ein „chiringuito“?",
+  "o": [
+   "Ein Taxi",
+   "Ein Strandlokal",
+   "Ein Ferienhaus",
+   "Ein Marktstand"
+  ],
+  "c": 1,
+  "e": "Eine einfache Strandbar – oft aus Holz, mit Blick aufs Wasser."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Was bedeutet „cerrado“?",
+  "o": [
+   "Geöffnet",
+   "Reserviert",
+   "Geschlossen",
+   "Ausverkauft"
+  ],
+  "c": 2,
+  "e": "Geschlossen. Das Gegenstück ist „abierto“."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Was ist ein „cortado“?",
+  "o": [
+   "Ein Nachtisch",
+   "Ein Bier",
+   "Ein Schnaps",
+   "Ein Espresso mit wenig Milch"
   ],
   "c": 3,
-  "e": "„Drachenblut“ aus Dracaena draco – rot, harzig und jahrhundertelang gehandelt."
+  "e": "Espresso mit einem Schuss Milch – die kanarische Standardbestellung am Tresen."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Wie sagt man auf Spanisch „Prost“?",
+  "o": [
+   "¡Salud!",
+   "¡Vamos!",
+   "¡Bueno!",
+   "¡Gracias!"
+  ],
+  "c": 0,
+  "e": "„¡Salud!“ – wörtlich „Gesundheit“. Beim Anstoßen mit dem Glas auch „¡Chin-chín!“."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Was bedeutet „agua sin gas“?",
+  "o": [
+   "Wasser mit Kohlensäure",
+   "Stilles Wasser",
+   "Warmes Wasser",
+   "Eiswasser"
+  ],
+  "c": 1,
+  "e": "Stilles Wasser; mit Kohlensäure heißt es „con gas“."
+ },
+ {
+  "mode": "island",
+  "step": 1,
+  "q": "Was heißt „la cuenta, por favor“?",
+  "o": [
+   "Die Karte, bitte",
+   "Ein Taxi, bitte",
+   "Die Rechnung, bitte",
+   "Noch ein Brot, bitte"
+  ],
+  "c": 2,
+  "e": "Der Satz, den man am Ende jedes Essens braucht."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "Was ist ein „mercadillo“?",
+  "o": [
+   "Ein Flohmarkt-Zelt",
+   "Ein Supermarkt",
+   "Ein Wochenmarkt",
+   "Ein Hafen"
+  ],
+  "c": 2,
+  "e": "Der typische Bauernmarkt – in Agüimes und San Bartolomé mehrmals im Monat."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "In welchem Monat regnet es auf der Insel am meisten?",
+  "o": [
+   "Juli",
+   "April",
+   "September",
+   "Dezember"
+  ],
+  "c": 3,
+  "e": "Dezember – im Süden fällt selbst dann kaum mehr als 20 Millimeter im ganzen Monat."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "Wie viele Stunden Sonne hat ein Julitag im Schnitt?",
+  "o": [
+   "Etwa 9,5",
+   "Etwa 6",
+   "Etwa 4",
+   "Etwa 7,5"
+  ],
+  "c": 0,
+  "e": "Rund 9,5 Stunden – im Dezember sind es nur knapp sechs."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "Wie warm ist das Meer im Winter?",
+  "o": [
+   "Etwa 12 Grad",
+   "Etwa 19 Grad",
+   "Etwa 24 Grad",
+   "Etwa 15 Grad"
+  ],
+  "c": 1,
+  "e": "Rund 19 Grad im Januar; im September erreicht es 23 Grad."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "Was heißt „¿Cuánto cuesta?“",
+  "o": [
+   "Wo ist die Toilette?",
+   "Wie spät ist es?",
+   "Was kostet das?",
+   "Wie geht es dir?"
+  ],
+  "c": 2,
+  "e": "„Wie viel kostet das?“ – im Laden und auf dem Markt der wichtigste Satz."
+ },
+ {
+  "mode": "island",
+  "step": 2,
+  "q": "Was bedeutet „abierto“?",
+  "o": [
+   "Geschlossen",
+   "Frei",
+   "Besetzt",
+   "Geöffnet"
+  ],
+  "c": 3,
+  "e": "Geöffnet – steht oft auf Schildern an Läden und Restaurants."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Welcher Ort liegt am westlichsten Rand der Insel?",
+  "o": [
+   "Artenara",
+   "Mogán",
+   "Agaete",
+   "La Aldea de San Nicolás"
+  ],
+  "c": 3,
+  "e": "La Aldea de San Nicolás an der Westküste – von Temisas aus ist das die weiteste Ecke der Insel."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Was ist ein „guachinche“?",
+  "o": [
+   "Eine einfache, familiengeführte Kneipe",
+   "Ein Strandbad",
+   "Ein Weingut",
+   "Ein Bus"
+  ],
+  "c": 0,
+  "e": "Ursprünglich ein Weinausschank mit einfachem Essen – vor allem auf Teneriffa verbreitet."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Über welche Straße fährt man von Temisas nach Santa Lucía?",
+  "o": [
+   "GC-1",
+   "GC-550",
+   "GC-60",
+   "GC-500"
+  ],
+  "c": 1,
+  "e": "Die GC-550 führt von Temisas aus nach Santa Lucía de Tirajana."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Was ist „queso frito“?",
+  "o": [
+   "Schmelzkäse",
+   "Käsekuchen",
+   "Gebratener Käse",
+   "Käsesuppe"
+  ],
+  "c": 2,
+  "e": "Gebratene Käsescheiben, meist mit Mojo oder Honig – eine der häufigsten Vorspeisen."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Wie heißt die Hauptstadt der Nachbarinsel Teneriffa?",
+  "o": [
+   "Adeje",
+   "La Laguna",
+   "Puerto de la Cruz",
+   "Santa Cruz de Tenerife"
+  ],
+  "c": 3,
+  "e": "Santa Cruz de Tenerife – gemeinsam mit Las Palmas eine der beiden Hauptstädte der Kanaren."
+ },
+ {
+  "mode": "island",
+  "step": 3,
+  "q": "Wie lange dauert die Fähre von Agaete nach Teneriffa ungefähr?",
+  "o": [
+   "80 Minuten",
+   "20 Minuten",
+   "3 Stunden",
+   "5 Stunden"
+  ],
+  "c": 0,
+  "e": "Rund 80 Minuten mit der Schnellfähre – die Alternative ist der Flug ab LPA."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "Welcher Naturpark liegt im Nordwesten der Insel?",
+  "o": [
+   "Tamadaba",
+   "Inagua",
+   "Pilancones",
+   "Güigüí"
+  ],
+  "c": 0,
+  "e": "Der Naturpark Tamadaba mit Kiefernwald und Steilküste – im Biosphärenreservat gelegen."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "Zu welcher Gemeinde gehören die Dünen von Maspalomas?",
+  "o": [
+   "Mogán",
+   "San Bartolomé de Tirajana",
+   "Agüimes",
+   "Telde"
+  ],
+  "c": 1,
+  "e": "San Bartolomé de Tirajana – die Gemeinde reicht von der Küste bis in die Berge."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "An welche drei Gemeinden grenzt die Caldera de Bandama?",
+  "o": [
+   "Arucas, Firgas, Teror",
+   "Telde, Agüimes, Ingenio",
+   "Las Palmas, Santa Brígida, Telde",
+   "Santa Brígida, San Mateo, Valleseco"
+  ],
+  "c": 2,
+  "e": "Der Krater liegt genau am Treffpunkt dieser drei Gemeinden."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "Wie hoch ist der Pico de Bandama?",
+  "o": [
+   "369 m",
+   "469 m",
+   "769 m",
+   "569 m"
+  ],
+  "c": 3,
+  "e": "569 Meter – von der Kante blickt man 200 Meter senkrecht in den Krater."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "Was ist ein „paseo marítimo“?",
+  "o": [
+   "Eine Strandpromenade",
+   "Ein Parkplatz",
+   "Ein Fischerboot",
+   "Ein Wanderweg im Gebirge"
+  ],
+  "c": 0,
+  "e": "Die Promenade am Wasser – in Las Palmas zieht sie sich kilometerlang an der Stadt entlang."
+ },
+ {
+  "mode": "island",
+  "step": 4,
+  "q": "Was bedeutet „sombra“?",
+  "o": [
+   "Sonne",
+   "Schatten",
+   "Sand",
+   "Wind"
+  ],
+  "c": 1,
+  "e": "Schatten. Im Süden ist ein Platz im Schatten oft die wichtigere Frage als der Blick aufs Meer."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Wie heißt die Kanarische Kiefer auf Latein?",
+  "o": [
+   "Pinus sylvestris",
+   "Pinus canariensis",
+   "Pinus pinea",
+   "Pinus halepensis"
+  ],
+  "c": 1,
+  "e": "Pinus canariensis – sie wächst nur auf den Kanaren."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Welche Blume gilt als Charakterpflanze der Kanaren?",
+  "o": [
+   "Kanarische Rose",
+   "Wilde Lilie",
+   "Kanaren-Glockenblume",
+   "Kanaren-Mohn"
+  ],
+  "c": 2,
+  "e": "Die Kanaren-Glockenblume (Canarina canariensis) – sie wächst im Lorbeerwald."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Welche Wolfsmilch prägt die trockenen Hänge im Süden?",
+  "o": [
+   "Zypressen-Wolfsmilch",
+   "Alpen-Wolfsmilch",
+   "Sonnwend-Wolfsmilch",
+   "Kanaren-Wolfsmilch"
+  ],
+  "c": 3,
+  "e": "Die Kanaren-Wolfsmilch – sukkulent, giftig und an Trockenheit angepasst."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Wie hoch ist der Teide auf Teneriffa?",
+  "o": [
+   "3.718 m",
+   "2.350 m",
+   "4.018 m",
+   "2.718 m"
+  ],
+  "c": 0,
+  "e": "3.718 Meter – der höchste Berg Spaniens, vom Meer aus gerechnet."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Wie weit sind Gran Canaria und Teneriffa voneinander entfernt?",
+  "o": [
+   "Etwa 20 km",
+   "Etwa 60 km",
+   "Etwa 120 km",
+   "Etwa 200 km"
+  ],
+  "c": 1,
+  "e": "Rund 60 Kilometer – die Fähre braucht deshalb nur gut eine Stunde."
+ },
+ {
+  "mode": "island",
+  "step": 5,
+  "q": "Welcher Nationalpark liegt auf La Gomera?",
+  "o": [
+   "Timanfaya",
+   "Teide",
+   "Garajonay",
+   "Caldera de Taburiente"
+  ],
+  "c": 2,
+  "e": "Der Garajonay-Nationalpark mit seinem Nebelwald – seit 1986 Weltnaturerbe."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Was ist ein „guanche“?",
+  "o": [
+   "Ein Fischerboot",
+   "Ein kanarischer Käse",
+   "Ein Ureinwohner Teneriffas",
+   "Ein Tanz"
+  ],
+  "c": 2,
+  "e": "Die Guanchen lebten auf Teneriffa; auf Gran Canaria heißen die Ureinwohner Canarios."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Wer war Pedro de Vera?",
+  "o": [
+   "Der erste Bischof von Las Palmas",
+   "Ein französischer Seefahrer",
+   "Ein kanarischer Dichter",
+   "Der Eroberer, der die Insel 1483 unterwarf"
+  ],
+  "c": 3,
+  "e": "Er beendete 1483 den Widerstand bei Gáldar und gilt als Vollender der Eroberung."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Welcher Kiefernwald liegt im Südwesten der Insel?",
+  "o": [
+   "Inagua",
+   "Tamadaba",
+   "Pilancones",
+   "Los Tilos"
+  ],
+  "c": 0,
+  "e": "Der Wald von Inagua – Lebensraum des Blaufinks und Teil des Biosphärenreservats."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Wie heißt die Lagune hinter den Dünen von Maspalomas?",
+  "o": [
+   "Salinas de Arinaga",
+   "Charca de Maspalomas",
+   "Charco del Palo",
+   "Laguna Verde"
+  ],
+  "c": 1,
+  "e": "Die Charca ist ein Feuchtgebiet mit Vögeln und steht unter Naturschutz."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Welcher Küstenort hat einen kleinen Fischerhafen an der Westküste?",
+  "o": [
+   "Meloneras",
+   "Arinaga",
+   "Puerto de las Nieves",
+   "San Agustín"
+  ],
+  "c": 2,
+  "e": "Puerto de las Nieves bei Agaete – von dort fährt die Fähre nach Teneriffa."
+ },
+ {
+  "mode": "island",
+  "step": 6,
+  "q": "Welche Stadt liegt südlich von Las Palmas an der Ostküste?",
+  "o": [
+   "Arucas",
+   "Teror",
+   "Gáldar",
+   "Telde"
+  ],
+  "c": 3,
+  "e": "Telde – heute die zweitgrößte Stadt der Insel, mit alter Altstadt."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "Welche Farbe haben die Häuser in Temisas?",
+  "o": [
+   "Naturstein",
+   "Ocker",
+   "Blau",
+   "Weiß"
+  ],
+  "c": 3,
+  "e": "Weiß gekalkte Fassaden mit Ziegeldächern – dafür wurde Temisas zum „Caserío Canario Representativo“ erklärt."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "Welche Dächer prägen die alten Häuser der Insel?",
+  "o": [
+   "Arabische Ziegel",
+   "Schiefer",
+   "Stroh",
+   "Beton"
+  ],
+  "c": 0,
+  "e": "Rote Tonziegel; die Bauform mit zwei oder vier Dachflächen ist typisch kanarisch."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "Was ist die „almazara“ in Agüimes?",
+  "o": [
+   "Die Markthalle",
+   "Die kommunale Ölmühle",
+   "Das Rathaus",
+   "Der Schlachthof"
+  ],
+  "c": 1,
+  "e": "Dort pressen die Olivenbauern der Gemeinde ihr Öl – daraus wird „Caserío de Temisas“."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "Ab welchem Monat wird in Agüimes Olivenöl gepresst?",
+  "o": [
+   "Januar",
+   "März",
+   "September",
+   "Juli"
+  ],
+  "c": 2,
+  "e": "Ab September, wenn die Oliven reif sind; die Mühle steht dann der Gemeinde zur Verfügung."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "Wer ist der Schutzpatron von Temisas?",
+  "o": [
+   "San Pedro",
+   "San Juan Bautista",
+   "Santiago",
+   "San Miguel Arcángel"
+  ],
+  "c": 3,
+  "e": "Erzengel Michael – ihm gilt das Dorffest."
+ },
+ {
+  "mode": "island",
+  "step": 7,
+  "q": "In welchem Monat feiert Temisas sein Dorffest?",
+  "o": [
+   "September",
+   "März",
+   "Mai",
+   "Dezember"
+  ],
+  "c": 0,
+  "e": "Rund um den 29. September, den Michaelstag, mit Messe, Umzug und Tanzabend."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "Wie heißt die Bucht mit dem Flughafen von Gran Canaria?",
+  "o": [
+   "Bucht von Gando",
+   "Bucht von Arinaga",
+   "Bucht von El Confital",
+   "Bucht von Mogán"
+  ],
+  "c": 0,
+  "e": "Der Flughafen LPA liegt in der Bucht von Gando, östlich von Telde."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "An welchem Barranco liegt Temisas?",
+  "o": [
+   "Barranco de Guayadeque",
+   "Barranco de Temisas",
+   "Barranco Hondo",
+   "Barranco de la Virgen"
+  ],
+  "c": 1,
+  "e": "Das Dorf liegt am Rand des Barranco de Temisas, der zur Küste bei Arinaga führt."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "Welche Gemeinde hat die meisten Einwohner der Insel?",
+  "o": [
+   "Telde",
+   "San Bartolomé de Tirajana",
+   "Las Palmas de Gran Canaria",
+   "Arucas"
+  ],
+  "c": 2,
+  "e": "Las Palmas – rund 380.000 Einwohner, fast die Hälfte der Inselbevölkerung im Großraum."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "Was ist ein „casco histórico“?",
+  "o": [
+   "Die Umgehungsstraße",
+   "Der Hafen",
+   "Der Friedhof",
+   "Die Altstadt"
+  ],
+  "c": 3,
+  "e": "Der historische Ortskern – in Agüimes, Telde und Las Palmas gut erhalten."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "Wie viele der acht Kanareninseln sind vulkanischen Ursprungs?",
+  "o": [
+   "Alle acht",
+   "Nur fünf",
+   "Nur drei",
+   "Nur die großen"
+  ],
+  "c": 0,
+  "e": "Alle acht – der gesamte Archipel ist vulkanisch entstanden, über einem Hotspot im Atlantik."
+ },
+ {
+  "mode": "island",
+  "step": 8,
+  "q": "Welche Stadt liegt im Inselinneren und ist für Wasser bekannt?",
+  "o": [
+   "Agaete",
+   "Firgas",
+   "Arinaga",
+   "Mogán"
+  ],
+  "c": 1,
+  "e": "Firgas – der Ort lebt von seinen Quellen und füllt seit Generationen Mineralwasser ab."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Wie heißt die Kanarische Palme auf Latein?",
+  "o": [
+   "Cocos nucifera",
+   "Phoenix canariensis",
+   "Washingtonia filifera",
+   "Roystonea regia"
+  ],
+  "c": 1,
+  "e": "Phoenix canariensis – sie wächst in den feuchten Barrancos und liefert den Palmhonig."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Welche ist die kleinste bewohnte Insel der Kanaren?",
+  "o": [
+   "El Hierro",
+   "La Gomera",
+   "La Graciosa",
+   "Lobos"
+  ],
+  "c": 2,
+  "e": "La Graciosa bei Lanzarote – seit 2018 offiziell die achte bewohnte Insel, keine 30 km² groß."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Welche Kanareninsel liegt Afrika am nächsten?",
+  "o": [
+   "Teneriffa",
+   "Gran Canaria",
+   "La Palma",
+   "Fuerteventura"
+  ],
+  "c": 3,
+  "e": "Fuerteventura – nur rund 100 Kilometer von der marokkanischen Küste entfernt."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Auf welcher Insel steht der höchste Berg der Kanaren?",
+  "o": [
+   "Teneriffa",
+   "El Hierro",
+   "La Palma",
+   "Gran Canaria"
+  ],
+  "c": 0,
+  "e": "Der Teide auf Teneriffa mit 3.718 Metern."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Wie heißt der älteste Nationalpark der Kanaren?",
+  "o": [
+   "Garajonay",
+   "Teide",
+   "Timanfaya",
+   "Caldera de Taburiente"
+  ],
+  "c": 1,
+  "e": "Der Teide-Nationalpark, ausgewiesen 1954 – heute Weltnaturerbe."
+ },
+ {
+  "mode": "island",
+  "step": 9,
+  "q": "Welcher Vogel brütet in den Kiefernwäldern von Inagua?",
+  "o": [
+   "Turmfalke",
+   "Kolkrabe",
+   "Blaufink",
+   "Buchfink"
+  ],
+  "c": 2,
+  "e": "Der Gran-Canaria-Blaufink – nur wenige hundert Tiere, die meisten davon am Roque Nublo und in Inagua."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Welche Farbe hat der Leuchtturm von Maspalomas?",
+  "o": [
+   "Gelb",
+   "Rot-weiß",
+   "Grau-weiß",
+   "Schwarz"
+  ],
+  "c": 2,
+  "e": "Grau-weiß – er ist aus Werkstein gemauert und nicht gestrichen."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Wie weit reicht das Licht des Leuchtturms von Maspalomas?",
+  "o": [
+   "5 Seemeilen",
+   "80 Seemeilen",
+   "40 Seemeilen",
+   "19 Seemeilen"
+  ],
+  "c": 3,
+  "e": "Rund 19 Seemeilen, also etwa 35 Kilometer."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Wie hoch liegt das Feuer des Leuchtturms über dem Meer?",
+  "o": [
+   "60 m",
+   "45 m",
+   "30 m",
+   "90 m"
+  ],
+  "c": 0,
+  "e": "60 Meter – der Turm selbst misst knapp 55 Meter."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Wer ließ den Hafen von Las Palmas ausbauen?",
+  "o": [
+   "Benito Pérez Galdós",
+   "Fernando León y Castillo",
+   "Néstor Álamo",
+   "Juan de León y Castillo"
+  ],
+  "c": 1,
+  "e": "Der Minister aus Telde – sein Bruder Juan entwarf den Leuchtturm von Maspalomas."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Wie wird der Leuchtturm heute betrieben?",
+  "o": [
+   "Nur bei Sturm",
+   "Von einem Leuchtturmwärter",
+   "Automatisch ohne Wärter",
+   "Nur im Winter"
+  ],
+  "c": 2,
+  "e": "Seit den 1970er Jahren automatisch – der Wärterberuf ist dort Geschichte."
+ },
+ {
+  "mode": "island",
+  "step": 10,
+  "q": "Welche Funktion hat der Leuchtturm heute noch?",
+  "o": [
+   "Wetterstation",
+   "Funkturm",
+   "Museum ohne Technik",
+   "Seezeichen für die Schifffahrt"
+  ],
+  "c": 3,
+  "e": "Er ist weiter aktives Seezeichen – und daneben ein Ausstellungsort zur Geschichte des Leuchtturms."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "Wie hieß Las Palmas bei seiner Gründung 1478?",
+  "o": [
+   "Puerto Real",
+   "Ciudad de Gran Canaria",
+   "Villa de Vegueta",
+   "Real de Las Palmas"
+  ],
+  "c": 3,
+  "e": "Juan Rejón gründete ein befestigtes Lager, das „Real de Las Palmas“ – daraus wurde die Stadt."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "An welchem Barranco wurde Las Palmas gegründet?",
+  "o": [
+   "Guiniguada",
+   "Barranco Hondo",
+   "Barranco de Temisas",
+   "Barranco de Moya"
+  ],
+  "c": 0,
+  "e": "An der Mündung des Barranco de Guiniguada liegt heute der Stadtteil Vegueta."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "Welcher spanische König besuchte 1906 die Insel?",
+  "o": [
+   "Juan Carlos I.",
+   "Alfonso XIII.",
+   "Alfonso XII.",
+   "Ferdinand VII."
+  ],
+  "c": 1,
+  "e": "Alfonso XIII. kam 1906 – der erste Besuch eines spanischen Monarchen auf Gran Canaria."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "Welche Sprache brachten die Eroberer mit?",
+  "o": [
+   "Galicisch",
+   "Katalanisch",
+   "Kastilisch",
+   "Portugiesisch"
+  ],
+  "c": 2,
+  "e": "Kastilisch, das heutige Spanisch – der kanarische Dialekt hat davon viele Eigenheiten bewahrt."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "Wie heißt der Platz vor der Kathedrale in Vegueta?",
+  "o": [
+   "Plaza de San Telmo",
+   "Plaza del Pino",
+   "Plaza de España",
+   "Plaza de Santa Ana"
+  ],
+  "c": 3,
+  "e": "Die Plaza de Santa Ana mit den Palmen, der Kathedrale und dem alten Rathaus."
+ },
+ {
+  "mode": "island",
+  "step": 11,
+  "q": "Wie viele der beiden geplanten Türme der Kathedrale wurden fertiggestellt?",
+  "o": [
+   "Einer",
+   "Keiner",
+   "Beide",
+   "Drei"
+  ],
+  "c": 0,
+  "e": "Nur der Südturm – der Nordturm blieb unvollendet, ein sehr typisches Bild der Stadt."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Wie viel Landfläche umfasst das Biosphärenreservat?",
+  "o": [
+   "66.000 ha",
+   "36.000 ha",
+   "16.000 ha",
+   "96.000 ha"
+  ],
+  "c": 0,
+  "e": "Rund 66.000 Hektar Land plus 38.000 Hektar Meeresfläche."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Welche zwei Stätten nennt die UNESCO als heilige Tempel?",
+  "o": [
+   "Roque Nublo und Teide",
+   "Risco Caído und Roque Bentayga",
+   "Cueva Pintada und Gáldar",
+   "Tamadaba und Inagua"
+  ],
+  "c": 1,
+  "e": "Beide waren Zeremonienplätze – Risco Caído mit der berühmten Höhle 6, Bentayga als Felsheiligtum."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Womit belegen die Forscher die Herkunft der Ureinwohner?",
+  "o": [
+   "Mit Keramik aus Griechenland",
+   "Mit römischen Münzen",
+   "Mit libysch-berberischen Inschriften",
+   "Mit Schriftrollen"
+  ],
+  "c": 2,
+  "e": "Die Inschriften im Welterbegebiet gelten als westlichster Ausdruck der amazighischen Kultur."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Wann erkannte man den archäologischen Wert von Risco Caído?",
+  "o": [
+   "1896",
+   "1936",
+   "2012",
+   "1996"
+  ],
+  "c": 3,
+  "e": "Erst 1996 wurde klar, was in den Höhlen steckt – 2019 folgte der Welterbetitel."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Wie viel Prozent der Inselfläche gehören zum Welterbe?",
+  "o": [
+   "Etwa 11 %",
+   "Etwa 3 %",
+   "Etwa 25 %",
+   "Etwa 40 %"
+  ],
+  "c": 0,
+  "e": "Rund elf Prozent – die Kulturlandschaft umfasst 18.000 Hektar."
+ },
+ {
+  "mode": "island",
+  "step": 12,
+  "q": "Welche Gemeinde gehört NICHT zum Welterbegebiet?",
+  "o": [
+   "Artenara",
+   "Mogán",
+   "Agaete",
+   "Tejeda"
+  ],
+  "c": 1,
+  "e": "Artenara, Tejeda, Agaete und Gáldar bilden das Welterbe; Mogán liegt im Südwesten."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Welche Olivensorten werden für das Öl aus Temisas verwendet?",
+  "o": [
+   "Kalamata und Manzanilla",
+   "Verdial, Arbequina und Picual",
+   "Frantoio und Leccino",
+   "Arbequina und Kalamata"
+  ],
+  "c": 1,
+  "e": "Das Öl „Caserío de Temisas“ wird aus diesen drei Sorten gepresst."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Woraus wird Mojo picón gemacht?",
+  "o": [
+   "Tomaten und Basilikum",
+   "Joghurt und Gurke",
+   "Getrocknete Chilis, Knoblauch, Öl und Essig",
+   "Mandeln und Honig"
+  ],
+  "c": 2,
+  "e": "Der rote Mojo – scharf, aber selten wirklich brennend."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Welcher Ort liegt höher: Tejeda oder Temisas?",
+  "o": [
+   "Beide gleich",
+   "Temisas",
+   "Temisas liegt höher",
+   "Tejeda"
+  ],
+  "c": 3,
+  "e": "Tejeda liegt auf rund 1.050 Metern, Temisas auf 687."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Welcher Ort liegt höher: Artenara oder Tejeda?",
+  "o": [
+   "Artenara",
+   "Tejeda",
+   "Beide gleich",
+   "Keiner, beide unter 900 m"
+  ],
+  "c": 0,
+  "e": "Artenara liegt mit rund 1.270 Metern höher und ist der höchste Ort der Insel."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Wie viele Höhenmeter liegen zwischen Temisas und dem Inselgipfel?",
+  "o": [
+   "Etwa 800 m",
+   "Etwa 1.270 m",
+   "Etwa 400 m",
+   "Etwa 1.800 m"
+  ],
+  "c": 1,
+  "e": "1.956 Meter Gipfel minus 687 Meter Temisas – gut 1.270 Meter."
+ },
+ {
+  "mode": "island",
+  "step": 13,
+  "q": "Wie lange fährt man von Temisas zum Roque Nublo?",
+  "o": [
+   "Etwa 25 Minuten",
+   "Etwa 40 Minuten",
+   "Etwa 70 Minuten",
+   "Etwa 120 Minuten"
+  ],
+  "c": 2,
+  "e": "Rund 70 Minuten für 40 Kilometer – die Serpentinen kosten mehr Zeit als die Strecke vermuten lässt."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Wie viele Einwohner hat die Insel pro Quadratkilometer?",
+  "o": [
+   "Etwa 150",
+   "Etwa 300",
+   "Etwa 554",
+   "Etwa 900"
+  ],
+  "c": 2,
+  "e": "Rund 554 – damit ist Gran Canaria dichter besiedelt als die meisten Regionen Spaniens."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Wie viele Inseln gehören zur Provinz Las Palmas?",
+  "o": [
+   "Zwei",
+   "Fünf",
+   "Vier",
+   "Drei"
+  ],
+  "c": 3,
+  "e": "Gran Canaria, Fuerteventura und Lanzarote."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Welche Inseln gehören zur Provinz Santa Cruz de Tenerife?",
+  "o": [
+   "Vier",
+   "Zwei",
+   "Drei",
+   "Fünf"
+  ],
+  "c": 0,
+  "e": "Teneriffa, La Palma, La Gomera und El Hierro."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Wo hat das Cabildo von Gran Canaria seinen Sitz?",
+  "o": [
+   "Arucas",
+   "Las Palmas",
+   "Santa Brígida",
+   "Telde"
+  ],
+  "c": 1,
+  "e": "In Las Palmas – das Cabildo ist die Inselregierung mit eigenen Zuständigkeiten."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Welcher Gipfel ist der höchste der Provinz Las Palmas?",
+  "o": [
+   "Roque Nublo",
+   "Pico de las Nieves",
+   "Morro de la Agujereada",
+   "Teide"
+  ],
+  "c": 2,
+  "e": "Der Morro de la Agujereada – der Pico de las Nieves liegt sieben Meter darunter."
+ },
+ {
+  "mode": "island",
+  "step": 14,
+  "q": "Welche Währung galt in Spanien vor dem Euro?",
+  "o": [
+   "Escudo",
+   "Real",
+   "Duro",
+   "Peseta"
+  ],
+  "c": 3,
+  "e": "Die Peseta, bis 2002 – danach kam der Euro."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Woher stammt vermutlich der Name „Canaria“?",
+  "o": [
+   "Von der Farbe des Sandes",
+   "Von den Kanarienvögeln",
+   "Von einem Berberkönig",
+   "Von den großen Hunden der Insel"
+  ],
+  "c": 3,
+  "e": "Plinius berichtet von großen Hunden (canes) – die Kanarienvögel wurden erst später nach der Insel benannt."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Welcher römische Autor nannte die Insel „Canaria“?",
+  "o": [
+   "Plinius der Ältere",
+   "Tacitus",
+   "Vergil",
+   "Strabon"
+  ],
+  "c": 0,
+  "e": "In seiner Naturgeschichte beschreibt er die glücklichen Inseln vor der Küste Afrikas."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Wie viele Jahre liegen zwischen der Eroberung der Insel und Kolumbus' Besuch?",
+  "o": [
+   "5 Jahre",
+   "9 Jahre",
+   "14 Jahre",
+   "20 Jahre"
+  ],
+  "c": 1,
+  "e": "1483 und 1492 – neun Jahre."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Warum heißt der Pico de las Nieves „Schneegipfel“?",
+  "o": [
+   "Weil dort Wolken hängen",
+   "Weil er das ganze Jahr weiß aussieht",
+   "Weil dort im Winter der meiste Schnee liegt",
+   "Weil der Name von einem Heiligen stammt"
+  ],
+  "c": 2,
+  "e": "Dort sammelte man im 17. Jahrhundert Schnee in Gruben und brachte ihn als Eis nach Las Palmas."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Womit wurde der Schnee vom Pico de las Nieves früher nach Las Palmas gebracht?",
+  "o": [
+   "Mit Karren über die Küste",
+   "Mit der Bahn",
+   "Per Schiff",
+   "Mit Maultieren"
+  ],
+  "c": 3,
+  "e": "In Blöcken, gut verpackt – Eis war ein Luxusgut und wurde auch medizinisch genutzt."
+ },
+ {
+  "mode": "island",
+  "step": 15,
+  "q": "Wie viele Meter trennen Temisas von der Küste bei Arinaga?",
+  "o": [
+   "Etwa 690 m",
+   "Etwa 300 m",
+   "Etwa 500 m",
+   "Etwa 1.000 m"
+  ],
+  "c": 0,
+  "e": "Temisas liegt auf 687 Metern – die Küste darunter auf Meereshöhe."
  }
 ]
