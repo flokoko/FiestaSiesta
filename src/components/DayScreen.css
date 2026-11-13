@@ -10,21 +10,35 @@
 
 /* Tagesleiste bleibt beim Scrollen unter der Kopfzeile stehen. Der Offset
    kommt aus --day-strip-top (DayScreen misst die Kopfzeilenhöhe), damit die
-   Leiste nicht halb unter dem Header verschwindet. */
+   Leiste nicht halb unter dem Header verschwindet.
+
+   Am Seitenanfang hat das Band bewusst KEINE Fläche: die Chips liegen wie auf
+   dem Listen-Screen direkt auf der Aurora. Erst im geklebten Zustand
+   (.is-stuck, setzt DayScreen per Scroll-Messung) bekommt es die Glasfläche —
+   dann muss es den Inhalt darunter abdecken, sonst scheint er zwischen den
+   Chips durch. Eine feste Platte mit runden Ecken und eigenem Schatten lag
+   vorher wie ein fremdes Brett über dem Verlauf und passte nicht zur
+   Transparenz der übrigen Flächen (Flo, 11/2026). */
 #root .day-strip-wrap {
   position: sticky;
   top: var(--day-strip-top, 52px);
   z-index: 30;
   margin: 0 -2px 10px;
   padding: 4px 2px 6px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  transition: background 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+
+#root .day-strip-wrap.is-stuck {
   /* --bg ist deckend (--header-bg ist es nicht: 50 % Alpha, damit kam der
      Inhalt durch die Leiste, sobald backdrop-filter fehlt — headless Chromium
      und ältere WebViews rechnen es als `none`). */
-  background: color-mix(in srgb, var(--bg) 93%, transparent);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border-radius: 18px;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 60%, transparent);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 #root .day-strip {

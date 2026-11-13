@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
   CalendarPlus, Sunrise, Sunset, CloudRain, ShoppingCart, Backpack, Wallet, Activity,
@@ -71,16 +71,35 @@ export default function DayScreen({
 
   // Die Tagesleiste klebt unter der Kopfzeile — deren Höhe ist nicht konstant
   // (Font-Tausch, Rotation), deshalb messen statt einen festen Wert raten.
+  // Sie ist außerdem nur im geklebten Zustand eine Fläche: am Seitenanfang
+  // liegen die Chips wie auf den anderen Screens direkt auf der Aurora, erst
+  // beim Scrollen bekommt das Band die Glasfläche der Kopfzeile.
   const stripRef = useRef<HTMLDivElement | null>(null)
+  const [stripStuck, setStripStuck] = useState(false)
   useEffect(() => {
     const header = document.querySelector('.app-header')
     const el = stripRef.current
     if (!header || !el) return
-    const apply = () => el.style.setProperty('--day-strip-top', `${Math.round(header.getBoundingClientRect().height)}px`)
+    let top = Math.round(header.getBoundingClientRect().height)
+    const sync = () => {
+      const stuck = el.getBoundingClientRect().top <= top + 1
+      setStripStuck((prev) => (prev === stuck ? prev : stuck))
+    }
+    const apply = () => {
+      top = Math.round(header.getBoundingClientRect().height)
+      el.style.setProperty('--day-strip-top', `${top}px`)
+      sync()
+    }
     apply()
     const ro = new ResizeObserver(apply)
     ro.observe(header)
-    return () => ro.disconnect()
+    window.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('scroll', sync)
+      window.removeEventListener('resize', sync)
+    }
   }, [])
   const selectedDate = days[selectedIndex] ?? TRIP_START
   const selectedIso = isoDay(selectedDate)
@@ -200,7 +219,7 @@ export default function DayScreen({
 
   return (
     <div className="day-screen">
-      <div className="day-strip-wrap" ref={stripRef}>
+      <div className={`day-strip-wrap${stripStuck ? ' is-stuck' : ''}`} ref={stripRef}>
         <div className="cat-strip day-strip" role="tablist" aria-label="Reisetage">
           {days.map((date, index) => {
             const isSel = index === selectedIndex
