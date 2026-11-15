@@ -26,7 +26,7 @@ vi.mock('../../lib/supabase', () => {
   }
 })
 
-import { useOfflineQueue } from '../useOfflineQueue'
+import { isNetworkFailure, remapTempId, useOfflineQueue, type QueuedOp } from '../useOfflineQueue'
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -108,5 +108,94 @@ describe('useOfflineQueue', () => {
       window.dispatchEvent(new Event('online'))
     })
     expect(result.current.isOnline).toBe(true)
+  })
+})
+
+describe('isNetworkFailure — Verbindungsproblem oder Serverbefehl?', () => {
+  it('Netz-/Abbruchklassen sind Wiederholungsfälle', () => {
+    // TypeError: „Failed to fetch" / „NetworkError"
+    expect(isNetworkFailure(new TypeError('Failed to fetch'))).toBe(true)
+    expect(isNetworkFailure(new Error('Failed to fetch'))).toBe(true)
+    // Abort/Timeout (AbortController, Timeout-Wrapper)
+    expect(isNetworkFailure(new DOMException('aborted', 'AbortError'))).toBe(true)
+    expect(isNetworkFailure(new DOMException('timeout', 'TimeoutError'))).toBe(true)
+  })
+
+  it('Postgrest-Fehler mit code sind endgültig (kein Retry, kein Parken als Netzfehler)', () => {
+    expect(isNetworkFailure({ code: 'PGRST205', message: 'x' })).toBe(false)
+    expect(isNetworkFailure({ code: '22P02', message: 'x' })).toBe(false)
+  })
+
+  it('Fremde Meldungen ohne Netz-Stichwort sind kein Netzfehler', () => {
+    expect(isNetworkFailure(new Error('JWT expired'))).toBe(false)
+  })
+})
+
+describe('remapTempId — Temp-ID auf echte UUID umschreiben', () => {
+  it('schreibt alle Vorkommen um (skalar + Array) und lässt sonst nichts anfassen', () => {
+    const realId = 'c9a8b7c6-1234-4abc-8def-000000000001'
+    const queue: QueuedOp[] = [
+      { id: 'op-1', type: 'insert', table: 'items', payload: { name: 'Wasser' }, clientId: 'temp-1', timestamp: 111 },
+      { id: 'op-2', type: 'update', table: 'items', payload: { is_checked: true }, filterColumn: 'id', filterValue: 'temp-1', timestamp: 222 },
+      { id: 'op-3', type: 'delete', table: 'items', payload: {}, filterColumn: 'id', filterValue: ['temp-1', 'other'], timestamp: 333 },
+      { id: 'op-4', type: 'update', table: 'items', payload: { is_checked: false }, filterColumn: 'id', filterValue: ['other', 'temp-1', 'temp-1'], timestamp: 444 },
+      // Fremde Tabelle: kein Umschreiben
+      { id: 'op-5', type: 'update', table: 'expenses', payload: { amount: 1 }, filterColumn: 'id', filterValue: 'temp-1', timestamp: 555 },
+    ]
+    localStorage.setItem('offline_queue', JSON.stringify(queue))
+
+    remapTempId('items', 'temp-1', realId)
+
+    const after = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    // Reihenfolge, ids und timestamps unangetastet
+    expect(after.map((q) => q.id)).toEqual(['op-1', 'op-2', 'op-3', 'op-4', 'op-5'])
+    expect(after.map((q) => q.timestamp)).toEqual([111, 222, 333, 444, 555])
+    // Insert selbst: clientId bleibt (der Flush entfernt den Op ohnehin)
+    expect(after[0].clientId).toBe('temp-1')
+    // Skalares filterValue umgeschrieben
+    expect(after[1].filterValue).toBe(realId)
+    // Array umgeschrieben, fremde Werte bleiben
+    expect(after[2].filterValue).toEqual([realId, 'other'])
+    // Mehrfache Vorkommen im selben Array: alle umgeschrieben
+    expect(after[3].filterValue).toEqual(['other', realId, realId])
+    // Andere Tabelle unverändert
+    expect(after[4].filterValue).toBe('temp-1')
+  })
+})
+
+describe('enqueue — Dedup und FIFO', () => {
+  // Eigene Ausräum-Regeln wie im Describe oben: der Speicher wird geleert,
+  // sonst läuft der Modul-Singleton (queueLengthState) über die Tests hinweg.
+  beforeEach(() => {
+    localStorageMock.clear()
+    vi.clearAllMocks()
+  })
+
+  it('zwei Updates auf dieselbe Zeile werden zu einem (der letzte gewinnt)', () => {
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'update', table: 'items', payload: { is_checked: true }, filterColumn: 'id', filterValue: 'row-1' })
+    })
+    act(() => {
+      result.current.enqueue({ type: 'update', table: 'items', payload: { is_checked: false }, filterColumn: 'id', filterValue: 'row-1' })
+    })
+    expect(result.current.queueLength).toBe(1)
+    const queue = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    expect(queue).toHaveLength(1)
+    expect((queue[0].payload as { is_checked: boolean }).is_checked).toBe(false)
+  })
+
+  it('zwei Inserts bleiben beide und liegen in Reihenfolge', () => {
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'A' } })
+    })
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'B' } })
+    })
+    expect(result.current.queueLength).toBe(2)
+    const queue = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    expect(queue.map((q) => (q.payload as { name: string }).name)).toEqual(['A', 'B'])
+    expect(queue[0].timestamp).toBeLessThanOrEqual(queue[1].timestamp)
   })
 })

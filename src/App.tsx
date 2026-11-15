@@ -204,6 +204,7 @@ export default function App() {
     setList, setAdminUnlocked,
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
     toggleShoppingItem, deleteShoppingItem, undoDelete, batchToggleShoppingItems, toggleBringItem, deleteBringItem, reorderItems, reorderNotes, toggleNoteFavorite,
+    addPendingItem,
     handleJoin, handleLeave, handleRename,
     undoState,
     settlements,
@@ -744,6 +745,11 @@ export default function App() {
               onItemChange={handleShoppingItemsChange}
               onReorder={reorderItems}
               onCategoriesChange={handleCategoriesChange}
+              // Offline angelegte Artikel sofort zeigen (Temp-Zeile statt
+              // Refetch, der offline ohne den neuen Artikel fällt). Der
+              // Callback ist ein useCallback mit stabilen Deps — MemoList
+              // rendert dadurch nicht öfter neu.
+              onOptimisticAdd={addPendingItem}
             />
           </Suspense>
           </ErrorBoundary>

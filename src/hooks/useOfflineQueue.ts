@@ -173,7 +173,7 @@ function refreshQueueLength(): void {
  * ein echter Postgrest-Fehler (RLS, Constraint, gelöschte Zeile) würde sonst
  * die Queue ewig blockieren.
  */
-function isNetworkFailure(e: unknown): boolean {
+export function isNetworkFailure(e: unknown): boolean {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return true
   if (e instanceof DOMException && (e.name === 'AbortError' || e.name === 'TimeoutError')) return true
   if (e instanceof TypeError) return true // fetch failed / Failed to fetch
@@ -219,7 +219,7 @@ async function executeOp(op: QueuedOp): Promise<string | null> {
  * echte UUID, sobald der zugehörige Insert durch ist. Ohne das scheiterten
  * Häkchen und Löschen offline angelegter Zeilen an der uuid-Spalte (22P02).
  */
-function remapTempId(table: string, tempId: string, realId: string): void {
+export function remapTempId(table: string, tempId: string, realId: string): void {
   const queue = loadQueue()
   let changed = false
   const next = queue.map((q) => {
@@ -285,6 +285,21 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
   if (loadQueue().length === 0) return { success: 0, failed: 0 }
   if (!acquireFlushLock()) return { success: 0, failed: 0 }
   isFlushing = true
+
+  // Die Loop-Erneuerung am Schleifenkopf reicht nicht: ein EINZELNER Op kann
+  // länger als LOCK_TTL_MS laufen (Request-Timeout 12 s × bis zu 3 Versuche +
+  // Backoff ≈ 42 s). In der Zeit liefe der Lock ab, ein zweiter Tab würde ihn
+  // übernehmen und denselben, noch in der Queue stehenden Op parallel
+  // ausführen → doppelte Zeilen. Der Heartbeat hält unseren Lock solange am
+  // Leben, wie dieser Tab flusht.
+  const beat = window.setInterval(() => {
+    try {
+      flushLockTs = Date.now()
+      localStorage.setItem(LOCK_KEY, String(flushLockTs))
+    } catch {
+      // ignore
+    }
+  }, 5_000)
 
   let success = 0
   let failed = 0
@@ -360,6 +375,9 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
       }
     }
   } finally {
+    // Heartbeat zuerst stoppen, danach den Lock freigeben — sonst könnte ein
+    // letzter Tick nach releaseFlushLock einen Lock ins Leben rufen.
+    window.clearInterval(beat)
     isFlushing = false
     releaseFlushLock()
     refreshQueueLength()

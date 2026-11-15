@@ -28,6 +28,8 @@ interface ListScreenProps {
   onItemChange?: () => void
   onReorder?: (listType: ListType, newOrder: string[]) => void
   onCategoriesChange?: () => void
+  /** Offline-Pfad für AddItemForm — Temp-Zeile sofort im Elternteil sichtbar machen. */
+  onOptimisticAdd?: (payload: Record<string, unknown>) => string | undefined
 }
 
 /** Stabile leere Liste — verhindert, dass useMemo im Kind bei jedem Render neu läuft. */
@@ -239,7 +241,7 @@ function DraggableCategorySection({
   )
 }
 
-export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange }: ListScreenProps) {
+export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, onOptimisticAdd }: ListScreenProps) {
   const { toast, confirm } = useToast()
   const [hideChecked, setHideChecked] = usePersistedState<boolean>('fiesta_hide_checked', false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -478,6 +480,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
           listId={listId}
           userName={userName}
           onAdded={onItemChange}
+          onOptimisticAdd={onOptimisticAdd}
           categories={activeCat ? categories.filter(c => c.name === activeCat) : categories}
           listType="shopping"
         />

@@ -67,6 +67,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const [participantId, setParticipantId] = useState<string | null>(null)
   const [shoppingItems, setShoppingItems] = useState<ListItem[]>([])
   const [bringItems, setBringItems] = useState<ListItem[]>([])
+  // Offline angelegte Artikel: Temp-Zeilen, die sofort sichtbar sein müssen.
+  // Bewusst NICHT in shoppingItems/bringItems gemischt — ein elternseitiger
+  // Refetch (setShoppingItems) würde sie sonst löschen, solange die Queue noch
+  // nicht geflusht hat. Der Merge passiert erst am Rückgabe-Objekt.
+  const [pendingItems, setPendingItems] = useState<ListItem[]>([])
   const [categories, setCategories] = useState<ItemCategory[]>([])
   const [notes, setNotes] = useState<QuickNote[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -736,6 +741,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     if (items.length === 0) return
     const ids = items.map(i => i.id)
     setShoppingItems(prev => prev.map(i => ids.includes(i.id) ? { ...i, is_checked: checked } : i))
+    // Temp-Zeilen (offline angelegt) leben nur in pendingItems — das Häkchen
+    // muss sie spiegeln, sonst reagiert die sichtbare Zeile offline nicht.
+    setPendingItems(prev => {
+      if (!prev.some(i => ids.includes(i.id))) return prev
+      return prev.map(i => ids.includes(i.id) ? { ...i, is_checked: checked } : i)
+    })
     if (isOnline) {
       supabase.from('items').update({ is_checked: checked }).in('id', ids).then(({ error }) => {
         if (error) {
@@ -756,6 +767,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const toggleShoppingItem = useCallback((item: ListItem) => {
     const nextChecked = !item.is_checked
     setShoppingItems(prev => prev.map(i => i.id === item.id ? { ...i, is_checked: nextChecked } : i))
+    // Temp-Zeilen spiegeln (siehe batchToggleShoppingItems).
+    setPendingItems(prev => {
+      if (!prev.some(i => i.id === item.id)) return prev
+      return prev.map(i => i.id === item.id ? { ...i, is_checked: nextChecked } : i)
+    })
     // Aktivität: "abgehakt" sofort lokal melden (unabhängig vom Realtime-Echo der eigenen Aktion)
     if (nextChecked) {
       markOwnAction(`check:${item.name}`)
@@ -806,6 +822,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const deleteShoppingItem = useCallback((item: ListItem) => {
     withUndo([item], 'shopping', () => {
       setShoppingItems(prev => prev.filter(i => i.id !== item.id))
+      // Temp-Zeile (offline angelegt) ist nur in pendingItems — dort mitlöschen.
+      setPendingItems(prev => (prev.some(i => i.id === item.id) ? prev.filter(i => i.id !== item.id) : prev))
       if (isOnline) {
         supabase.from('items').delete().eq('id', item.id).then(({ error }) => {
           if (error) {
@@ -964,6 +982,23 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   const shoppingCategories = useMemo(() => deriveCategoriesByType(categories, 'shopping'), [categories])
   const bringCategories = useMemo(() => deriveCategoriesByType(categories, 'bring'), [categories])
 
+  // Temp-Zeilen hinten anhängen (nach list_type gefiltert) — nur im Rückgabewert:
+  // die States selbst bleiben frei von Temp-IDs, damit fetchItems sie nicht
+  // unbeabsichtigt ersetzt. is_checked/is_brought sind dort per Definition
+  // false → abgeleitete Zählungen (checkedCount, brought) zählen nichts doppelt.
+  const visibleShoppingItems = useMemo(
+    () => (pendingItems.some((i) => i.list_type === 'shopping')
+      ? [...shoppingItems, ...pendingItems.filter((i) => i.list_type === 'shopping')]
+      : shoppingItems),
+    [shoppingItems, pendingItems],
+  )
+  const visibleBringItems = useMemo(
+    () => (pendingItems.some((i) => i.list_type === 'bring')
+      ? [...bringItems, ...pendingItems.filter((i) => i.list_type === 'bring')]
+      : bringItems),
+    [bringItems, pendingItems],
+  )
+
   const knownPersons = useMemo(() => deriveKnownPersons(userName, participants), [userName, participants])
 
   const userBalance = useMemo(
@@ -975,7 +1010,46 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
   const isAdmin = useMemo(() => deriveIsAdmin(participants, userName), [participants, userName])
 
-  const checkedCount = useMemo(() => deriveCheckedCount(shoppingItems), [shoppingItems])
+  const checkedCount = useMemo(() => deriveCheckedCount(visibleShoppingItems), [visibleShoppingItems])
+
+  // ── Offline-Anlage: Temp-Zeile sofort statt nach dem Refetch ────────
+  // AddItemForm enqueue offline seinen Insert und ruft (anders als online) KEINEN
+  // Refetch — der würde offline auf den Read-Cache fallen und ohne den neuen
+  // Artikel landen. addPendingItem liefert die Temp-ID für clientId im Queue-Op,
+  // damit späteres Häkchen/Löschen beim Flush auf die echte UUID umbenannt wird.
+  const addPendingItem = useCallback((payload: Record<string, unknown>): string => {
+    const id = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const item: ListItem = {
+      id,
+      list_id: (payload.list_id as string) ?? '',
+      name: (payload.name as string) ?? '',
+      category: (payload.category as string) ?? '',
+      quantity: (payload.quantity as string) ?? '1',
+      assigned_to: (payload.assigned_to as string | null) ?? null,
+      is_checked: false,
+      is_brought: false,
+      created_by: (payload.created_by as string | null) ?? null,
+      created_at: new Date().toISOString(),
+      list_type: (payload.list_type as ListType) ?? 'shopping',
+      sort_order: Number.MAX_SAFE_INTEGER,
+    }
+    setPendingItems((prev) => [...prev, item])
+    return id
+  }, [])
+
+  // Sobald die Queue von > 0 auf 0 fällt (Flush komplett), ersetzen die echten
+  // Serverzeilen die Temp-Zeilen: Auffrischung für beide Listentypen. Das
+  // prevQueueRef-Gerüst verhindert, dass der Effekt bei jedem Render feuert —
+  // er darf nur am Übergang greifen.
+  const prevQueueLengthRef = useRef(queueLength)
+  useEffect(() => {
+    if (prevQueueLengthRef.current > 0 && queueLength === 0 && list) {
+      setPendingItems([])
+      void fetchItems(list.id, 'shopping')
+      void fetchItems(list.id, 'bring')
+    }
+    prevQueueLengthRef.current = queueLength
+  }, [queueLength, list, fetchItems])
 
   // ── Join / Leave / Rename ──────────────────────────────────────────
   const handleJoin = useCallback(async (name: string, l: ShoppingList, pid: string) => {
@@ -1015,6 +1089,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     setParticipantId(null)
     setShoppingItems([])
     setBringItems([])
+    setPendingItems([])
     setCategories([])
     setNotes([])
     setExpenses([])
@@ -1064,8 +1139,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     userName,
     list,
     participantId,
-    shoppingItems,
-    bringItems,
+    /** Echte Zeilen + offline angelegte Temp-Zeilen (hinten) */
+    shoppingItems: visibleShoppingItems,
+    bringItems: visibleBringItems,
     categories,
     notes,
     expenses,
@@ -1113,6 +1189,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     reorderItems,
     reorderNotes,
     toggleNoteFavorite,
+    // offline angelegte Artikel
+    addPendingItem,
     // join/leave/rename
     handleJoin,
     handleLeave,

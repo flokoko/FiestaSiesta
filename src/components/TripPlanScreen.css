@@ -254,6 +254,15 @@
   gap: 10px;
 }
 
+/* Offline-Fallback: der Plan zeigt den letzten bekannten Stand (Cache) statt
+   bei jedem Refetch einen Fehler-Toast zu werfen. */
+.plan-offline-hint {
+  margin: 8px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
 .plan-screen .list-head-text {
   flex: 1;
   min-width: 0;

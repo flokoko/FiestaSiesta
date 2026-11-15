@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase, getSupabaseUrl } from '../lib/supabase'
+import { readCache } from '../lib/readCache'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
@@ -49,6 +50,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   const [rotateArmed, setRotateArmed] = useState(false)
   const [rotating, setRotating] = useState(false)
   const [loading, setLoading] = useState(true)
+  // true, solange der Screen den letzten bekannten Stand zeigt (Netz weg) —
+  // dezente Zeile unter der Kopfzeile statt eines Toasts bei jedem Refetch.
+  const [offlineHint, setOfflineHint] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [addSlot, setAddSlot] = useState<TripSlot | null>(null)
   const [draft, setDraft] = useState('')
@@ -97,19 +101,48 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   const votingRef = useRef<Set<string>>(new Set())
   // ── Doppelklick-Sperre für „Vorschlagen": Insert darf nicht doppelt feuern
   const addingRef = useRef(false)
+  // Sequenz-Guard für load() und die Toast-Bremse: erst der ERSTE Fehlschlag
+  // einer Sichtbarkeitsphase darf den Nutzer mit einem Toast treffen.
+  const seqRef = useRef(0)
+  const failedOnceRef = useRef(false)
+  // Realtime-Debounce-Timer (400 ms) — Cleanup im Unmount-Effekt unten.
+  const realtimeTimerRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
+    // Sequenz-Guard: ein langsamer, scheiternder Lauf darf einen frischeren
+    // Stand nicht mehr überschreiben.
+    const seq = ++seqRef.current
     const [p, v, c, t] = await Promise.all([
       supabase.from('trip_proposals').select('*').eq('list_id', listId).order('created_at'),
       supabase.from('trip_votes').select('*').eq('list_id', listId),
       supabase.from('trip_comments').select('*').eq('list_id', listId).order('created_at'),
       supabase.from('lists').select('ics_token').eq('id', listId).maybeSingle(),
     ])
+    if (seq !== seqRef.current) return
     if (p.error || v.error) {
       setLoading(false)
-      toast(`Reiseplan konnte nicht geladen werden: ${(p.error ?? v.error)?.message}`, 'error')
+      // Offline-Fallback: den letzten bekannten Stand zeigen statt den Screen
+      // zu leeren. Der Cache hält den fertigen Plan (je Tag/Slot der Gewinner) —
+      // frisch gemountet ohne RAM-Stand daraus eine flache Liste bauen; sonst
+      // bleibt der bisherige Stand stehen und nur der Hinweis kommt.
+      const cached = readCache<{ plan: TripPlanMap; count: number }>(listId, 'trip_plan')
+      if (cached) {
+        const fallback = Object.values(cached.plan)
+          .flatMap((day) => Object.values(day))
+          .filter((row): row is TripProposal => Boolean(row))
+        setProposals((current) => (current.length > 0 ? current : fallback))
+        setOfflineHint(true)
+      }
+      // Bremse statt Toast-Wolke: bei schwachem Netz traf sonst JEDER
+      // visibility-/Realtime-Refetch den Nutzer mit derselben Meldung.
+      if (!failedOnceRef.current) {
+        failedOnceRef.current = true
+        toast(`Reiseplan konnte nicht geladen werden: ${(p.error ?? v.error)?.message}`, 'error')
+      }
       return
     }
+    failedOnceRef.current = false
+    setOfflineHint(false)
     const voteRows = (v.data ?? []) as TripVote[]
     const grouped: Record<string, string[]> = {}
     for (const row of voteRows) {
@@ -172,6 +205,9 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
       if (document.visibilityState !== 'visible') return
       if (Date.now() - lastLoadRef.current < 30_000) return
       lastLoadRef.current = Date.now()
+      // Neue Sichtbarkeitsphase: ein Fehlschlag darf wieder einen Toast
+      // auslösen (failedOnceRef betriebsbereit zurücksetzen).
+      failedOnceRef.current = false
       void load()
     }
     document.addEventListener('visibilitychange', onVisible)
@@ -182,8 +218,21 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     listId,
     channelSuffix: ':plan',
     tables: ['trip_proposals', 'trip_votes', 'trip_comments'],
-    onTableChange: () => void load(),
+    // Debounce: eine Vote-Runde erzeugt sonst bis zu vier Vollabfragen je
+    // Event — Muster wie in useTripPlan.ts.
+    onTableChange: () => {
+      if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+      realtimeTimerRef.current = window.setTimeout(() => {
+        realtimeTimerRef.current = null
+        void load()
+      }, 400)
+    },
   })
+
+  // Hängenden Debounce-Timer beim Unmount abräumen.
+  useEffect(() => () => {
+    if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+  }, [])
 
   const fixedCount = useMemo(() => proposals.filter((p) => p.confirmed_at).length, [proposals])
 
@@ -564,6 +613,12 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           <CalendarPlus size={17} strokeWidth={2} />
         </button>
       </header>
+
+      {offlineHint && (
+        <p className="plan-offline-hint" role="status">
+          Zeigt den letzten bekannten Stand — wird synchronisiert, sobald du wieder online bist.
+        </p>
+      )}
 
       {calendarOpen && (
         <div className="plan-calendar">

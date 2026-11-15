@@ -25,7 +25,18 @@ export function useWakeTimer(plan: TripPlanMap): void {
     if (!upcoming) return
 
     const delay = upcoming.at.getTime() - Date.now()
-    if (delay <= 0 || delay > MAX_DELAY_MS) return
+    // Vergangene Wecker klingen still ab (der Server-Cron hat sie längst geschickt
+    // bzw. die Benachrichtigung wurde beim letzten Lauf gezeigt).
+    if (delay <= 0) return
+
+    if (delay > MAX_DELAY_MS) {
+      // Weiter als 26 h entfernt: kein Einzel-Timer möglich. Ohne Wiedervorlage
+      // bliebe der Wecker dauerhaft gar nicht armiert — der Vorlauf-Timer erhöht
+      // nur `round`, danach rechnet der Effekt den verkürzten Abstand neu.
+      const snooze = Math.min(MAX_DELAY_MS, delay - MAX_DELAY_MS + 60_000)
+      const timer = window.setTimeout(() => setRound((n) => n + 1), snooze)
+      return () => window.clearTimeout(timer)
+    }
 
     const timer = window.setTimeout(() => {
       // Ein gedrosselter Hintergrund-Timer feuert oft Minuten bis Stunden später.

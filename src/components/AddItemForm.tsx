@@ -12,6 +12,13 @@ interface AddItemFormProps {
   listId: string
   userName: string
   onAdded?: () => void
+  /**
+   * Offline-Pfad: legt die Zeile SOFORT als Temp-Zeile beim Elternteil an und
+   * liefert die Temp-ID für `clientId` im Queue-Op (Häkchen/Löschen auf der
+   * Zeile werden beim Flush auf die echte UUID umbenannt). `undefined`, wenn
+   * der Elternteil keine Optimistikkette anbietet.
+   */
+  onOptimisticAdd?: (payload: Record<string, unknown>) => string | undefined
   defaultAssignedTo?: string
   placeholder?: string
   categories: ItemCategory[]
@@ -23,6 +30,7 @@ export default function AddItemForm({
   listId,
   userName,
   onAdded,
+  onOptimisticAdd,
   defaultAssignedTo,
   placeholder,
   categories,
@@ -60,18 +68,21 @@ export default function AddItemForm({
     }
 
     if (!isOnline) {
-      // Offline: Eingabe in die Queue legen (Payload wie der Insert inkl.
-      // Defaults für is_checked/is_brought, damit der Flush nicht an
-      // NOT-NULL-Spalten scheitert), Formular leeren und die Zeile sofort
-      // über den Eltern-Callback erscheinen lassen.
-      enqueue({ type: 'insert', table: 'items', payload })
+      // Offline: Temp-Zeile SOFORT beim Elternteil anlegen (onOptimisticAdd
+      // liefert die Temp-ID für `clientId` im Queue-Op) und den Op mit dem
+      // Payload wie dem Insert einreihen (inkl. Defaults für
+      // is_checked/is_brought, damit der Flush nicht an NOT-NULL-Spalten
+      // scheitert). KEIN onAdded?() hier — die elternseitige Auffrischung
+      // fällt offline auf den Read-Cache zurück, der den neuen Artikel nicht
+      // kennt, und würde die Temp-Zeile wieder wegnehmen.
+      const clientId = onOptimisticAdd?.(payload)
+      enqueue({ type: 'insert', table: 'items', payload, clientId })
       setName('')
       setQuantity('')
       setAssignedTo(defaultAssignedTo ?? '')
       setCategory(categories[0]?.name ?? '')
       setExpanded(false)
       toast('Offline gespeichert — wird synchronisiert, sobald du wieder online bist.', 'success')
-      onAdded?.()
       return
     }
 

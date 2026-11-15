@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -35,13 +35,22 @@ const homeIcon = L.divIcon({
   iconAnchor: [8, 8],
 })
 
-function FitRoute({ points }: { points: Array<[number, number]> }) {
+function FitRoute({ points, pointsKey }: { points: Array<[number, number]>; pointsKey: string }) {
   const map = useMap()
+  // Nur bei geändertem Inhalt neu einpassen: `points` wechselt bei manchen
+  // Updates die Identität (Schätzungspunkte), fitBounds würde sonst jeden
+  // Refresh mitten im Zoomen zurückwerfen.
+  const lastKeyRef = useRef<string | null>(null)
+  const pointsRef = useRef(points)
+  pointsRef.current = points
   useEffect(() => {
-    if (points.length === 0) return
-    const bounds = L.latLngBounds(points.map(([lat, lon]) => L.latLng(lat, lon)))
+    if (lastKeyRef.current === pointsKey) return
+    lastKeyRef.current = pointsKey
+    const current = pointsRef.current
+    if (current.length === 0) return
+    const bounds = L.latLngBounds(current.map(([lat, lon]) => L.latLng(lat, lon)))
     map.fitBounds(bounds, { padding: [26, 26], maxZoom: 12 })
-  }, [map, points])
+  }, [map, pointsKey])
   return null
 }
 
@@ -62,16 +71,30 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
   const [route, setRoute] = useState<DayRoute | null>(() => (stops.length > 0 ? quickRouteFor(stops) : null))
   const [loading, setLoading] = useState(false)
 
+  // Inhalts-Schlüssel statt Objekt-Identität: identische Stops (alle 90 s kommt
+  // derselbe Stand) dürfen weder setRoute noch fetchDayRoute erneut auslösen —
+  // setRoute erzeugt sonst trotz Cache-Treffer eine neue Identität und FitRoute
+  // springt.
+  const routeKey = useMemo(
+    () => stops.map((s) => `${s.lat.toFixed(4)},${s.lon.toFixed(4)},${s.label ?? ''}`).join('|'),
+    [stops],
+  )
+  const stopsRef = useRef(stops)
+  stopsRef.current = stops
+  const lastRouteKeyRef = useRef<string | null>(null)
   useEffect(() => {
-    if (stops.length === 0) {
+    if (lastRouteKeyRef.current === routeKey) return
+    lastRouteKeyRef.current = routeKey
+    const current = stopsRef.current
+    if (current.length === 0) {
       setRoute(null)
       return
     }
     // Sofort die Schätzung zeigen, die echte Route nachreichen.
-    setRoute(quickRouteFor(stops))
+    setRoute(quickRouteFor(current))
     let cancelled = false
     setLoading(true)
-    void fetchDayRoute(stops)
+    void fetchDayRoute(current)
       .then((real) => {
         if (!cancelled && real) setRoute(real)
       })
@@ -81,7 +104,7 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
     return () => {
       cancelled = true
     }
-  }, [stops])
+  }, [routeKey])
 
   const stopTimes = useMemo(() => {
     const map = new Map<string, string | null>()
@@ -99,7 +122,16 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
   }, [stops])
 
   const dayLabel = `Tag ${dayIndex + 1} · ${formatDayShort(dayDate)}`
-  const points: Array<[number, number]> = route?.points ?? [HOME_POINT, ...stops.map((s) => [s.lat, s.lon] as [number, number])]
+  const points = useMemo<Array<[number, number]>>(
+    () => route?.points ?? [HOME_POINT, ...stops.map((s) => [s.lat, s.lon] as [number, number])],
+    [route, stops],
+  )
+  // FitRoute passt nur bei geändertem Inhalt neu ein — der Schlüssel ist
+  // der Inhalt, nicht die Identität des Arrays.
+  const pointsKey = useMemo(
+    () => points.map(([lat, lon]) => `${lat.toFixed(4)},${lon.toFixed(4)}`).join('|'),
+    [points],
+  )
 
   return (
     <div className="day-map-screen">
@@ -167,7 +199,7 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
                   <Tooltip direction="top" offset={[0, -12]}>{stop.label}</Tooltip>
                 </Marker>
               ))}
-              <FitRoute points={points} />
+              <FitRoute points={points} pointsKey={pointsKey} />
             </MapContainer>
           </div>
 
