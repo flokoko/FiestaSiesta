@@ -344,7 +344,28 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
             <p>Beste Runde pro Person</p>
           </div>
         </header>
-        <div className="quiz-board-tabs" role="tablist">
+        {/* Tabs per WAI-ARIA: Pfeiltasten/Home/End wandern und wählen, alle
+            außer dem gewählten sind per roving tabindex aus dem Tab-Pol. */}
+        <div
+          className="quiz-board-tabs"
+          role="tablist"
+          onKeyDown={(e) => {
+            const tabs = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+            const at = QUIZ_MODES.findIndex((entry) => entry.mode === boardMode)
+            let idx = at
+            if (e.key === 'ArrowRight') idx += 1
+            else if (e.key === 'ArrowLeft') idx -= 1
+            else if (e.key === 'Home') idx = 0
+            else if (e.key === 'End') idx = QUIZ_MODES.length - 1
+            else return
+            e.preventDefault()
+            idx = Math.max(0, Math.min(QUIZ_MODES.length - 1, idx))
+            const mode = QUIZ_MODES[idx].mode
+            // Auswahl folgt dem Fokus — über den bestehenden Klick-Handler.
+            if (mode !== boardMode) void showBoard(mode)
+            tabs[idx]?.focus()
+          }}
+        >
           {QUIZ_MODES.map((entry) => (
             <button
               key={entry.mode}
@@ -352,6 +373,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
               role="tab"
               aria-selected={boardMode === entry.mode}
               className={`quiz-board-tab${boardMode === entry.mode ? ' is-on' : ''}`}
+              tabIndex={boardMode === entry.mode ? 0 : -1}
               onClick={() => { void showBoard(entry.mode) }}
             >
               {entry.label}
@@ -553,11 +575,15 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
               >
                 <Users size={16} strokeWidth={2} /> Publikum
               </button>
+              {/* Telefonjoker: serverseitig nicht implementiert (quiz_joker('call')
+                  fehlt) — bewusst dauerhaft deaktiviert statt eines Knopfes, der
+                  nur einen Toast auslöst. `jokers.call` ist in der DB per Default
+                  true, taugt also NICHT als Sperre. */}
               <button
                 type="button" className="quiz-joker"
-                disabled={!question.jokers.call || locked}
-                onClick={() => toast('Telefonjoker kommt später — frag die anderen so lange im Chat.', 'info')}
-                aria-label="Telefonjoker"
+                disabled
+                title="Telefonjoker — kommt später"
+                aria-label="Telefonjoker — kommt später"
               >
                 <Phone size={16} strokeWidth={2} /> Telefon
               </button>

@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { readCache, writeCache } from '../lib/readCache'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../context/ToastContext'
 import {
   formatIngredient, parseIngredients, parseSteps, recipeMeta, unitLabel,
 } from '../lib/recipes'
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function RecipesScreen({ listId, userName }: Props) {
+  const { toast, confirm } = useToast()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   // Ohne Empfang in den Bergen: Rezepte sollen trotzdem lesbar sein.
@@ -23,7 +25,6 @@ export default function RecipesScreen({ listId, userName }: Props) {
   const [open, setOpen] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     // Erst der letzte Stand aus dem Gerät — so steht die Küche sofort, auch offline.
@@ -54,12 +55,6 @@ export default function RecipesScreen({ listId, userName }: Props) {
     void load()
   }, [load])
 
-  useEffect(() => {
-    if (!toast) return
-    const timer = window.setTimeout(() => setToast(null), 2600)
-    return () => window.clearTimeout(timer)
-  }, [toast])
-
   /** Zutaten, die noch nicht auf der Einkaufsliste stehen, in einem Rutsch anlegen. */
   const addToShopping = async (recipe: Recipe) => {
     if (busy) return
@@ -76,7 +71,7 @@ export default function RecipesScreen({ listId, userName }: Props) {
         (ingredient) => !known.has(ingredient.name.toLowerCase()),
       )
       if (missing.length === 0) {
-        setToast('Steht alles schon auf der Liste')
+        toast('Steht alles schon auf der Liste', 'info')
         return
       }
 
@@ -105,35 +100,39 @@ export default function RecipesScreen({ listId, userName }: Props) {
         })),
       )
       if (error) {
-        setToast('Konnte nicht speichern — Netz?')
+        toast('Konnte nicht speichern — Netz?', 'error')
         return
       }
       const skipped = recipe.ingredients.length - missing.length
-      setToast(
+      toast(
         missing.length === 1
           ? '1 Zutat auf die Einkaufsliste'
           : `${missing.length} Zutaten auf die Einkaufsliste${skipped > 0 ? ` · ${skipped} stand schon da` : ''}`,
+        'success',
       )
     } finally {
       setBusy(false)
     }
   }
 
-  const remove = async (recipe: Recipe) => {
-    setBusy(true)
-    const { error } = await supabase.from('recipes').delete().eq('id', recipe.id)
-    setBusy(false)
-    if (error) {
-      setToast('Löschen fehlgeschlagen')
-      return
-    }
-    setRecipes((current) => {
-      const next = current.filter((entry) => entry.id !== recipe.id)
-      writeCache<Recipe[]>(listId, 'recipes', next)
-      return next
+  const remove = (recipe: Recipe) => {
+    // Bestätigung wie in den anderen Screens: nichts löscht heimlich weg.
+    confirm(`„${recipe.title}“ löschen?`, async () => {
+      setBusy(true)
+      const { error } = await supabase.from('recipes').delete().eq('id', recipe.id)
+      setBusy(false)
+      if (error) {
+        toast('Löschen fehlgeschlagen', 'error')
+        return
+      }
+      setRecipes((current) => {
+        const next = current.filter((entry) => entry.id !== recipe.id)
+        writeCache<Recipe[]>(listId, 'recipes', next)
+        return next
+      })
+      setOpen(null)
+      toast('Rezept gelöscht', 'success')
     })
-    setOpen(null)
-    setToast('Rezept gelöscht')
   }
 
   const current = recipes.find((recipe) => recipe.id === open) ?? null
@@ -155,8 +154,11 @@ export default function RecipesScreen({ listId, userName }: Props) {
           <h1>Küche</h1>
           <p>
             {loading
-              ? 'lädt'
-              : `${recipes.length === 1 ? '1 Rezept' : `${recipes.length} Rezepte`}${offline ? ' · offline' : ''}`}
+              ? 'Lädt …'
+              : recipes.length === 0
+                // Leere Liste: die Leerzustandskarte spricht — Anzahl ausblenden.
+                ? offline ? 'offline' : ''
+                : `${recipes.length === 1 ? '1 Rezept' : `${recipes.length} Rezepte`}${offline ? ' · offline' : ''}`}
           </p>
         </div>
         <button
@@ -207,7 +209,7 @@ export default function RecipesScreen({ listId, userName }: Props) {
             <button
               type="button"
               className="rc-icon-btn"
-              onClick={() => void remove(current)}
+              onClick={() => remove(current)}
               aria-label={`${current.title} löschen`}
             >
               <Trash2 size={16} strokeWidth={1.9} />
@@ -263,13 +265,11 @@ export default function RecipesScreen({ listId, userName }: Props) {
             })
             setAdding(false)
             setOpen(recipe.id)
-            setToast('Rezept gespeichert')
+            toast('Rezept gespeichert', 'success')
           }}
-          onError={(message) => setToast(message)}
+          onError={(message) => toast(message, 'error')}
         />
       )}
-
-      {toast && <div className="rc-toast">{toast}</div>}
     </div>
   )
 }

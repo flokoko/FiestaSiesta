@@ -97,10 +97,18 @@ interface ProposalRow {
   note: string | null
   place: string | null
   starts_at: string | null
+  /** Zeitpunkt der Bestätigung — Anker für DTSTAMP (siehe unten) */
+  confirmed_at?: string | null
+  created_at?: string | null
 }
 
 function buildCalendar(calendarName: string, rows: ProposalRow[], now = new Date()): string {
-  const stamp = utcStamp(now)
+  // DTSTAMP bewusst PRO ZEILE und aus den Daten abgeleitet, nicht aus `now`:
+  // Ein Stamp pro Request änderte sich bei jedem Abruf, Kalender-Clients
+  // (Google/iOS) werten das als „Termin geändert" und synchronisieren dauerhaft
+  // neu. created_at/confirmed_at stehen erst fest, wenn sich wirklich etwas
+  // geändert hat.
+  const fallback = utcStamp(now)
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -109,8 +117,10 @@ function buildCalendar(calendarName: string, rows: ProposalRow[], now = new Date
     'METHOD:PUBLISH',
     'X-WR-CALNAME:' + escapeIcsText(calendarName),
     'X-WR-TIMEZONE:Atlantic/Canary',
-    'REFRESH-INTERVAL;VALUE=DURATION:PT6H',
-    'X-PUBLISHED-TTL:PT6H',
+    // Abo-Takt und Cache-Header müssen dasselbe sagen (sonst lädt der Client
+    // gegen einen anderen Rhythmus, als der Header verspricht).
+    'REFRESH-INTERVAL;VALUE=DURATION:PT1H',
+    'X-PUBLISHED-TTL:PT1H',
     ...VTIMEZONE_LINES,
   ]
 
@@ -118,6 +128,8 @@ function buildCalendar(calendarName: string, rows: ProposalRow[], now = new Date
     const time = row.starts_at ? row.starts_at.slice(0, 5) : SLOT_TIME[row.slot] ?? '09:00'
     const duration = SLOT_DURATION[row.slot] ?? 120
     const description = [row.note, row.place ? `Ort: ${row.place}` : ''].filter(Boolean).join('\n')
+    const changed = row.confirmed_at ?? row.created_at
+    const stamp = changed ? utcStamp(new Date(changed)) : fallback
     lines.push(
       'BEGIN:VEVENT',
       `UID:${row.day}-${row.slot}@fiesta-siesta`,
@@ -170,7 +182,7 @@ Deno.serve(async (req) => {
 
   const { data: rows, error: planError } = await supabase
     .from('trip_proposals')
-    .select('id, day, slot, title, note, place, starts_at')
+    .select('id, day, slot, title, note, place, starts_at, confirmed_at, created_at')
     .eq('list_id', list.id)
     .not('confirmed_at', 'is', null)
     .order('day', { ascending: true })
@@ -188,7 +200,9 @@ Deno.serve(async (req) => {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': 'inline; filename="fiesta-siesta.ics"',
-      'Cache-Control': 'public, max-age=300',
+      // Gleicher Takt wie REFRESH-INTERVAL im Kalender (PT1H) — vorher stand hier
+      // 5 Minuten, der Kalender versprach 6 Stunden.
+      'Cache-Control': 'public, max-age=3600',
       'Access-Control-Allow-Origin': '*',
     },
   })

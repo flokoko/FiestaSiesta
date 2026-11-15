@@ -3,7 +3,8 @@
 // Fiesta Siesta — prüft die Vorhersage für MORGEN am Unterkunftsort und
 // schickt einen Web-Push, wenn es nass wird.
 //
-// Aufruf: pg_cron (täglich 17:00 UTC = 18:00 Europe/Madrid im Winter).
+// Aufruf: pg_cron (täglich 17:00 UTC = 17:00 Atlantic/Canary im Winter,
+// d. h. 18:00 deutsche Zeit).
 //   Authorization: Bearer <anon key>   (verify_jwt bleibt true)
 //   x-join-code: SIESTA26              (Autorisierung wie bei send-push)
 //
@@ -51,11 +52,16 @@ function corsFor(req: Request): Record<string, string> {
   }
 }
 
-/** Datum in Europe/Madrid als YYYY-MM-DD */
-function madridDate(offsetDays = 0): string {
+/**
+ * Datum auf den KANAREN als YYYY-MM-DD. Nicht Europe/Madrid: die Inseln liegen
+ * eine Stunde zurück, und der Open-Meteo-Abruf unten rechnet seine Tagesgrenzen
+ * ebenfalls in Atlantic/Canary — mit Madrid entstünde an der Tagesgrenze ein
+ * Off-by-one (falscher Tag geprüft).
+ */
+function canaryDate(offsetDays = 0): string {
   const now = new Date(Date.now() + offsetDays * 86400000)
   return new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: 'Atlantic/Canary', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(now)
 }
 
@@ -84,7 +90,7 @@ Deno.serve(async (req) => {
     // `x-day` prüft einen bestimmten Tag (Standard: morgen).
     const dryRun = req.headers.get('x-dry-run') === '1'
     const dayHeader = req.headers.get('x-day') ?? ''
-    const tomorrow = /^\d{4}-\d{2}-\d{2}$/.test(dayHeader) ? dayHeader : madridDate(1)
+    const tomorrow = /^\d{4}-\d{2}-\d{2}$/.test(dayHeader) ? dayHeader : canaryDate(1)
     // Außerhalb des Reisefensters (mit zwei Tagen Vorlauf fürs Packen) nichts schicken.
     const windowStart = new Date(TRIP_START + 'T00:00:00Z')
     windowStart.setUTCDate(windowStart.getUTCDate() - 2)

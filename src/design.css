@@ -3600,6 +3600,15 @@ body::before {
     --surface: rgba(255, 255, 255, 0.92);
     --surface-2: rgba(255, 255, 255, 0.8);
   }
+  /* Dark Mode muss IM Block stehen: `:root[data-theme='dark']` (0,2,0) schlägt
+     das `:root` oben (0,1,0), egal wo es steht — seine halbtransparenten
+     Dark-Werte (0.065/0.045) wären also beim Fehlen von backdrop-filter
+     geblieben und die Bottom-Nav (72 % davon, kein Blur) fast unsichtbar.
+     Basisfarben wie beim Dark-Sheet-Fix unten (26,23,31 / 30,27,36). */
+  :root[data-theme='dark'] {
+    --surface: rgba(26, 23, 31, 0.92);
+    --surface-2: rgba(30, 27, 36, 0.86);
+  }
 }
 
 /* ── 4. Reduzierte Bewegung: alles statisch ───────────────────────── */

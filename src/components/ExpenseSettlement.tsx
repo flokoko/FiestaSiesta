@@ -158,14 +158,19 @@ export default function ExpenseSettlement({
   return (
     <div key="settlement">
       {/* Die Gesamtsumme steht schon im Hero — hier nur noch die Sicht-Auswahl. */}
+      {/* Umschalter als normale Knöpfe mit aria-pressed (wie die money-toggle
+          in ExpenseScreen) — KEINE tablist, die Flächen sind keine Tabs-Panels
+          mit aria-controls. */}
       <div className="expense-toggle expense-settlement-toggle xp-seg">
         <button
+          aria-pressed={view === 'settlement'}
           className={`expense-toggle-btn ${view === 'settlement' ? 'active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setView('settlement') }}
         >
           <Receipt size={15} strokeWidth={2} /> Salden
         </button>
         <button
+          aria-pressed={view === 'charts'}
           className={`expense-toggle-btn ${view === 'charts' ? 'active' : ''}`}
           onClick={() => { navigator.vibrate?.(8); setView('charts') }}
         >
@@ -239,12 +244,14 @@ export default function ExpenseSettlement({
                         step="0.01"
                         inputMode="decimal"
                         placeholder="Betrag"
+                        aria-label="Betrag"
                       />
                       <input
                         type="date"
                         className="expense-settle-date"
                         value={settleDate}
                         onChange={e => setSettleDate(e.target.value)}
+                        aria-label="Datum der Zahlung"
                       />
                       <button
                         className="expense-settle-save"

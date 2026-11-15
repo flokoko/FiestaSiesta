@@ -327,18 +327,39 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   }
 
   /** Fokus zurück auf die Glocke, nachdem der Editor geschlossen wurde. */
-  const focusBell = (proposalId: string) => {
+  const focusBell = useCallback((proposalId: string) => {
     requestAnimationFrame(() => {
       document
         .querySelector<HTMLButtonElement>(`[data-alarm-bell="${proposalId}"]`)
         ?.focus()
     })
-  }
+  }, [])
 
-  const closeAlarm = (proposalId: string) => {
+  const closeAlarm = useCallback((proposalId: string) => {
     setAlarmFor(null)
     focusBell(proposalId)
-  }
+  }, [focusBell])
+
+  // Beim Öffnen direkt ins Zeit-Feld — der Wecker ist dann zwei Klicks weg.
+  useEffect(() => {
+    if (!alarmFor) return
+    document
+      .querySelector<HTMLInputElement>('.plan-alarm-box input[type="time"]')
+      ?.focus()
+  }, [alarmFor])
+
+  // Escape schließt, egal wo der Fokus liegt: der alte Inline-Handler auf der
+  // Box feuerte praktisch nie, weil der Fokus nach dem Öffnen auf der Glocke
+  // außerhalb der Box lag. Nur aktiv, solange ein Editor offen ist; das
+  // Schließen gibt den Fokus wie in closeAlarm an die Glocke zurück.
+  useEffect(() => {
+    if (!alarmFor) return
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeAlarm(alarmFor)
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [alarmFor, closeAlarm])
 
   const openAlarm = (proposal: TripProposal) => {
     if (alarmFor === proposal.id) {
@@ -808,15 +829,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                           {voteCount(proposal)}
                         </button>
                         {alarmFor === proposal.id && (
-                          <div
-                            className="plan-alarm-box"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Escape') {
-                                e.stopPropagation()
-                                closeAlarm(proposal.id)
-                              }
-                            }}
-                          >
+                          <div className="plan-alarm-box">
                             <div className="plan-alarm-row">
                               <label className="plan-wake-time">
                                 <span>Los um</span>
@@ -951,7 +964,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     placeholder={`Was machen wir ${meta.label.toLowerCase()}?`}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAdd(slot.key)}
+                    aria-label="Titel des Vorschlags"
                     autoFocus
                   />
                   <input
@@ -960,6 +973,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     placeholder="Ort oder Maps-Link (optional)"
                     value={draftPlace}
                     onChange={(e) => handlePlaceChange(e.target.value)}
+                    aria-label="Ort oder Maps-Link"
                   />
                   {placeBusy && (
                     <span className="plan-coord-hint is-busy">
@@ -1020,6 +1034,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     placeholder="Notiz (optional)"
                     value={draftNote}
                     onChange={(e) => setDraftNote(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAdd(slot.key)}
+                    aria-label="Notiz"
                   />
                   <div className="plan-form-actions">
                     <button

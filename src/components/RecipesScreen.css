@@ -286,19 +286,3 @@
   gap: 8px;
 }
 
-/* ── Toast ── */
-
-#root .rc-toast {
-  position: fixed;
-  left: 50%;
-  bottom: 92px;
-  transform: translateX(-50%);
-  max-width: min(88vw, 420px);
-  padding: 9px 14px;
-  border-radius: 999px;
-  background: var(--ink-1);
-  color: var(--surface-1);
-  font-size: 12px;
-  text-align: center;
-  z-index: 40;
-}

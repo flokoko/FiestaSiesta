@@ -220,7 +220,27 @@ export default function DayScreen({
   return (
     <div className="day-screen">
       <div className={`day-strip-wrap${stripStuck ? ' is-stuck' : ''}`} ref={stripRef}>
-        <div className="cat-strip day-strip" role="tablist" aria-label="Reisetage">
+        {/* Tabs per WAI-ARIA: Pfeiltasten wandern UND wählen (Auswahl folgt dem
+            Fokus), Home/End an die Ränder — den Chips außen ist mit roving
+            tabindex der Tab-Pol weggenommen. Die Auswahl geht über pickDay,
+            der Scroll-Effekt unten reagiert wie auf den Klick. */}
+        <div
+          className="cat-strip day-strip"
+          role="tablist"
+          aria-label="Reisetage"
+          onKeyDown={(e) => {
+            let idx = selectedIndex
+            if (e.key === 'ArrowRight') idx += 1
+            else if (e.key === 'ArrowLeft') idx -= 1
+            else if (e.key === 'Home') idx = 0
+            else if (e.key === 'End') idx = days.length - 1
+            else return
+            e.preventDefault()
+            idx = Math.max(0, Math.min(days.length - 1, idx))
+            if (idx !== selectedIndex) pickDay(idx)
+            e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[idx]?.focus()
+          }}
+        >
           {days.map((date, index) => {
             const isSel = index === selectedIndex
             const isRealToday = day !== null && index + 1 === day
@@ -231,6 +251,7 @@ export default function DayScreen({
                 role="tab"
                 aria-selected={isSel}
                 className={`cat-chip${isSel ? ' active' : ''}${isRealToday ? ' is-today' : ''}`}
+                tabIndex={isSel ? 0 : -1}
                 onClick={() => pickDay(index)}
               >
                 {formatDayShort(date)}

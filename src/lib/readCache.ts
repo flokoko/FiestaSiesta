@@ -5,13 +5,19 @@
 //
 // Keys are scoped per list:  fs_cache_{listId}_{table}
 
+import { APP_VERSION } from '../version'
+
 interface ReadCacheEntry<T> {
-  v: number
+  v: string
   ts: number
   data: T
 }
 
-const SCHEMA_VERSION = 1
+// Die Version klebt an der App-Version: ein Deploy ändert die Zeilengestalt,
+// alte Einträge (v: 1 oder eine andere Version) werden beim Offline-Start
+// einmalig verworfen, statt tote Zeilen in den State zu setzen — eine
+// konstante SCHEMA_VERSION 1 hat das nie geschafft (Mechanismus war tot).
+const SCHEMA_VERSION = `cache1@${APP_VERSION}`
 
 function cacheKey(listId: string, table: string): string {
   return `fs_cache_${listId}_${table}`

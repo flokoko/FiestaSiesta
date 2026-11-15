@@ -4,7 +4,7 @@
 -- Client bekommt Fragen ausschließlich über die RPCs unten, und die liefern
 -- nur Text + die vier Antworten.
 --
--- Async-Leiter: 15 Stufen, Sicherheitsstufen bei 5 (500 €) und 10 (32.000 €).
+-- Async-Leiter: 15 Stufen, Sicherheitsstufen bei 5 (500 €) und 10 (16.000 €).
 -- Timer: harte Wanduhr, 30 s ab Anzeige, serverseitig mit 4 s Kulanz
 -- (shown_at wird beim ersten quiz_current gesetzt, quiz_answer prüft gegen
 -- die Uhr — nicht gegen den Client).
@@ -95,7 +95,7 @@ revoke all on function public.quiz_ladder() from public;
 grant execute on function public.quiz_ladder() to anon, authenticated;
 
 -- Mitgenommenes Geld, wenn man bei Stufe `s` (die man gerade beantwortet)
--- scheitert: die letzte Sicherheitsstufe (5 → 500 €, 10 → 32.000 €).
+-- scheitert: die letzte Sicherheitsstufe (5 → 500 €, 10 → 16.000 €).
 create or replace function public.quiz_safe_bank(s integer) returns integer
 language sql immutable as $$
   select case
