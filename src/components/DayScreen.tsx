@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
-  CalendarPlus, Sunrise, Sunset, CloudRain, ShoppingCart, Backpack, Wallet, Activity,
+  CalendarPlus, Sunrise, Sunset, Home, CloudRain, ShoppingCart, Backpack, Wallet, Activity,
 } from 'lucide-react'
 import type { TabView } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
@@ -9,8 +9,10 @@ import type { TripForecast } from '../lib/tripWeather'
 import { SLOTS, isoDay } from '../lib/tripPlan'
 import { sunClock } from '../lib/tripWeather'
 import { pointKey } from '../lib/poiWeather'
+import { sunWarning } from '../lib/sunWarning'
 import { usePoiWeather } from '../hooks/usePoiWeather'
 import { useLiveWeather } from '../hooks/useLiveWeather'
+import { useHomeWeather } from '../hooks/useHomeWeather'
 import { useCanaryClock } from '../hooks/useCanaryClock'
 import { hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
@@ -109,6 +111,24 @@ export default function DayScreen({
   const slots = dayPlan ? SLOTS.filter((slot) => dayPlan[slot.key]) : []
   const open = Math.max(0, shoppingCount - shoppingChecked)
   const decidedSlots = Object.values(plan).reduce((n, d) => n + Object.keys(d).length, 0)
+
+  // Heimat-Vergleich („Zu Hause 4° · Regen 20 %“): leise Zeile vor den Zielen.
+  // Ohne gesetzten Heimatort fehlt die Zeile — kein Platzhalter, kein Wachstum.
+  const { home, weather: homeWx } = useHomeWeather()
+  const homeLine = home && homeWx ? (
+    <span className="day-home" title={home.name}>
+      <Home size={12} strokeWidth={2} aria-hidden="true" />
+      <span>Zu Hause {Math.round(homeWx.temp)}° · Regen {Math.round(homeWx.rain)} %</span>
+    </span>
+  ) : null
+
+  // Rückweg im Dunkeln? Nur der letzte Punkt des Tages mit Koordinaten zählt,
+  // und nur wenn die Heimfahrt eine Bergstraße ist (≥ 20 Min) und nach dem
+  // Sonnenuntergang ankommt. Der Hinweis steht unter der Sonnenzeiten-Zeile.
+  const sunWarn = useMemo(
+    () => (dayPlan ? sunWarning({ sunsetIso: wx?.sunset ?? null, plan: dayPlan, day: selectedIso }) : null),
+    [dayPlan, selectedIso, wx?.sunset],
+  )
 
   const kicker = isToday
     ? `Tag ${day} von ${TRIP_LENGTH}`
@@ -396,8 +416,9 @@ export default function DayScreen({
         )}
       </section>
 
-      {(poiLines.length > 0 || (wx?.sunrise && wx?.sunset)) && (
+      {(poiLines.length > 0 || (wx?.sunrise && wx?.sunset) || homeLine || sunWarn) && (
         <div className="day-meta">
+          {homeLine}
           {poiLines.map((line) => (
             <span className="day-poi-row" key={line.id}>
               <WeatherGlyph code={line.weather.code} size={12} className="day-poi-icon" />
@@ -419,6 +440,16 @@ export default function DayScreen({
               <span className="day-sun-sep">·</span>
               <Sunset size={12} strokeWidth={2} aria-hidden="true" />
               <span>{sunClock(wx.sunset)}</span>
+            </span>
+          )}
+          {sunWarn && (
+            <span className="day-sun-warn">
+              <Sunset size={12} strokeWidth={2} aria-hidden="true" />
+              {/* Icon und Text als EIN Span: Flex soll den Satz in sich
+                  umbrechen, nicht auf zwei Spalten verteilen. */}
+              <span>
+                Rückweg von {sunWarn.place} im Dunkeln — Sonnenuntergang {sunWarn.sunsetClock}, {sunWarn.minutes} Min. Fahrt.
+              </span>
             </span>
           )}
         </div>

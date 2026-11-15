@@ -471,6 +471,58 @@
   text-transform: none;
 }
 
+/* Abrechnung kopieren: Kopftitelzeile mit Knopf rechts. Die Kopfzeile darf
+   nicht umbrechen — der Wrapper trägt den Rhythmus (18/8/3) weiter, der
+   Titel verliert seine eigenen Ränder dafür. */
+#root .expense-settlement-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 8px 3px;
+}
+
+#root .expense-settlement-head .expense-settlement-title {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Ruhiger Chip im Stil von .xp-settle-btn. Die Trefferfläche kommt per
+   ::after (26 px hoch = 46 px mit ±10), sonst bläht der Knopf die 11-px-
+   Titelzeile auf 44 px auf. */
+#root .expense-copy-btn {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#root .expense-copy-btn:active { transform: scale(0.96); }
+
+#root .expense-copy-btn::after {
+  content: '';
+  position: absolute;
+  inset: -10px -8px;
+}
+
+/* Schmale Geräte: nur das Icon, der Titel behält seinen Platz (der Name
+   bleibt über aria-label zugänglich). */
+@media (max-width: 359px) {
+  #root .expense-copy-label {
+    display: none;
+  }
+}
+
 /* ── Formular: gleiche ruhige Sprache ── */
 #root .expense-form {
   background: var(--surface);

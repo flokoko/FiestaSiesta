@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, CheckCircle2, Trash2, X, BarChart3, Receipt } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Copy, Trash2, X, BarChart3, Receipt } from 'lucide-react'
 import type { Expense, ExpenseSplit, Settlement } from '../types'
 import {
   computeBalances,
@@ -10,6 +10,7 @@ import {
   fmtDate,
   type SettlementTxn,
 } from '../lib/settlement'
+import { settlementShareText } from '../lib/settlementText'
 import ExpenseCharts from './ExpenseCharts'
 import { supabase } from '../lib/supabase'
 import { todayIso } from '../lib/date'
@@ -23,6 +24,32 @@ interface ExpenseSettlementProps {
   settlements: Settlement[]
   onSettlementsChange: () => void
   onExpensesChange: () => void
+}
+
+/**
+ * Fallback für alte WebViews ohne Clipboard-API: temporäres Textfeld
+ * außerhalb des Sichtbereichs, markieren, `execCommand('copy')`. Klappt
+ * das auch nicht, meldet der Handler das Toast.
+ */
+function copyViaTextarea(text: string): boolean {
+  try {
+    const area = document.createElement('textarea')
+    area.value = text
+    area.setAttribute('readonly', 'true')
+    area.setAttribute('aria-hidden', 'true')
+    area.style.position = 'fixed'
+    area.style.top = '-1000px'
+    area.style.opacity = '0'
+    document.body.appendChild(area)
+    area.select()
+    // Volle Länge markieren: iOS schneidet ohne setSelectionRange ab.
+    area.setSelectionRange(0, text.length)
+    const copied = document.execCommand('copy')
+    document.body.removeChild(area)
+    return copied
+  } catch {
+    return false
+  }
 }
 
 export default function ExpenseSettlement({
@@ -163,6 +190,25 @@ export default function ExpenseSettlement({
     )
   }
 
+  /**
+   * Abrechnung als Text kopieren: Clipboard-API, sonst Textfeld-Fallback,
+   * sonst ehrlich sagen, dass von Hand markiert werden muss.
+   */
+  const handleCopySettlementText = async () => {
+    navigator.vibrate?.(8)
+    const text = settlementShareText({ proposals: settlementProposals, settlements: settledTxns })
+    try {
+      // `navigator.clipboard` ist undefined in unsicheren Kontexten und in
+      // älteren Android-WebViews — der optionale Aufruf fällt durchs catch.
+      if (!navigator.clipboard?.writeText) throw new Error('kein Clipboard-API')
+      await navigator.clipboard.writeText(text)
+      toast('Abrechnung kopiert.', 'success')
+    } catch {
+      if (copyViaTextarea(text)) toast('Abrechnung kopiert.', 'success')
+      else toast('Kopieren nicht möglich — bitte den Text markieren.', 'error')
+    }
+  }
+
   return (
     <div key="settlement">
       {/* Die Gesamtsumme steht schon im Hero — hier nur noch die Sicht-Auswahl. */}
@@ -226,9 +272,24 @@ export default function ExpenseSettlement({
           </div>
 
           {/* ── Open Settlement Transactions ── */}
-          <h3 className="expense-settlement-title">
-            <ArrowRight size={16} strokeWidth={2} /> Ausgleichszahlungen
-          </h3>
+          {/* Der Kopier-Knopf sitzt NICHT in der h3 — sonst liest der Screenreader
+              „Ausgleichszahlungen Kopieren“ als Überschrift. Der Wrapper teilt
+              die Zeile: Titel links, Knopf rechts. */}
+          <div className="expense-settlement-head">
+            <h3 className="expense-settlement-title">
+              <ArrowRight size={16} strokeWidth={2} /> Ausgleichszahlungen
+            </h3>
+            <button
+              type="button"
+              className="expense-copy-btn"
+              onClick={handleCopySettlementText}
+              aria-label="Abrechnung als Text kopieren"
+              title="Abrechnung als Text kopieren"
+            >
+              <Copy size={13} strokeWidth={2} aria-hidden="true" />
+              <span className="expense-copy-label">Kopieren</span>
+            </button>
+          </div>
           {settlementProposals.length === 0 ? (
             <p className="expense-settlement-empty">
               Alle ausgeglichen — nichts zu überweisen!
