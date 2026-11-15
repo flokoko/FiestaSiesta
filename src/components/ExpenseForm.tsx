@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { Trash2, Plus, Pencil } from 'lucide-react'
-import type { ExpenseSplit, ExpenseQuota, ItemCategory } from '../types'
+import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory } from '../types'
 import { expenseIcon } from '../lib/expenseIcons'
 import { supabase } from '../lib/supabase'
+import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { logError } from '../lib/logger'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../hooks/useCategories'
@@ -40,6 +41,8 @@ interface ExpenseFormProps {
   setExpenseCategory: (v: string) => void
   // Data helpers
   getSplitsForExpense: (expenseId: string) => ExpenseSplit[]
+  /** Offline-Pfad: legt Ausgabe + Splits SOFORT als Temp-Zeilen beim Elternteil an (Muster AddItemForm.onOptimisticAdd). */
+  onAddPendingExpense: (expense: Expense, splits: ExpenseSplit[]) => void
   // Callbacks
   onExpensesChange: () => void
   onCategoriesChange: () => void
@@ -74,11 +77,13 @@ export default function ExpenseForm({
   setExpenseNote,
   setExpenseCategory,
   getSplitsForExpense,
+  onAddPendingExpense,
   onExpensesChange,
   onCategoriesChange,
   resetForm,
 }: ExpenseFormProps) {
   const { toast, confirm } = useToast()
+  const { isOnline, enqueue } = useOfflineQueue()
   const { updateCategory, deleteCategory, addCategory } = useCategories(onCategoriesChange)
   const [catEditorOpen, setCatEditorOpen] = useState(false)
   const [catLocalNames, setCatLocalNames] = useState<Record<string, string>>({})
@@ -151,6 +156,12 @@ export default function ExpenseForm({
   // ── Save (insert or update) ──
   const handleSave = async () => {
     if (submittingRef.current) return
+    // Offline-EDITIEREN ist bewusst nicht Teil dieser Phase (5b deckt nur NEUE
+    // Ausgaben ab): kein halber Update-/Rollback-Pfad in der Queue.
+    if (!isOnline && editingId) {
+      toast('Ausgaben ändern braucht Netz.', 'error')
+      return
+    }
     const desc = description.trim()
     if (!desc || amountNum <= 0) return
     if (!hasQuotaConfig && (splitPeople.length === 0 || !exactSumOk)) return
@@ -254,6 +265,70 @@ export default function ExpenseForm({
         }
       }
     } else {
+      if (!isOnline) {
+        // ── OFFLINE (Muster AddItemForm): Temp-Zeile sofort sichtbar, Insert ─
+        // -Ops in die Queue. KEIN onExpensesChange (der Refetch fällt offline
+        // auf den Read-Cache zurück, der die neue Ausgabe nicht kennt) und
+        // KEIN Activity-Echo (Publishing braucht Netz).
+        const tempId = `temp-${crypto.randomUUID()}`
+        const nowIso = new Date().toISOString()
+        // UI-Zeile mit Temp-ID im id-Feld; der Queue-Payload entspricht wie der
+        // Online-Insert der DB-Zeile OHNE id — die echte UUID vergibt die DB
+        // (ein 'temp-…' würde an der uuid-Spalte scheitern, 22P02).
+        const expense: Expense = {
+          id: tempId,
+          list_id: listId,
+          description: desc,
+          amount: amountNum,
+          paid_by: paidBy,
+          split_mode: effectiveSplitMode,
+          expense_date: expenseDate,
+          note: expenseNote.trim() || null,
+          category: expenseCategory || null,
+          created_by: userName,
+          created_at: nowIso,
+        }
+        const splitRows: ExpenseSplit[] = shares.map((s) => ({
+          id: `temp-${crypto.randomUUID()}`,
+          expense_id: tempId,
+          person_name: s.person_name,
+          share_amount: s.share_amount,
+          created_at: nowIso,
+        }))
+        const insertPayload = {
+          list_id: listId,
+          description: desc,
+          amount: amountNum,
+          paid_by: paidBy,
+          split_mode: effectiveSplitMode,
+          expense_date: expenseDate,
+          note: expenseNote.trim() || null,
+          category: expenseCategory || null,
+          created_by: userName,
+        }
+        // Batch-Payload: die Temp-ID steckt hier nur im Feld `expense_id` —
+        // beim Flush schreibt remapTempId → remapOpPayload sie auf die echte
+        // UUID um (ein Request statt N Split-Inserts).
+        const splitsPayload = splitRows.map((s) => ({
+          expense_id: tempId,
+          person_name: s.person_name,
+          share_amount: s.share_amount,
+        }))
+        // Sofort sichtbar, DANN einreihen: erst der Expense-Insert (clientId =
+        // tempId für das Temp-ID-Mapping), DANACH der Split-Insert (FIFO — er
+        // braucht die echte UUID im Payload und hängt am Remap des ersten Ops).
+        onAddPendingExpense(expense, splitRows)
+        enqueue({ type: 'insert', table: 'expenses', payload: insertPayload, clientId: tempId })
+        enqueue({
+          type: 'insert',
+          table: 'expense_splits',
+          payload: splitsPayload as unknown as Record<string, unknown>,
+        })
+        navigator.vibrate?.(10)
+        resetForm()
+        toast('Offline gespeichert — wird synchronisiert.', 'success')
+        return
+      }
       const { data, error: insErr } = await supabase
         .from('expenses')
         .insert({

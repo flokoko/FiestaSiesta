@@ -16,14 +16,26 @@ vi.mock('../../lib/supabase', () => {
   // Einstellbares Insert-Ergebnis: die Dead-Letter-Tests zwingen die Queue
   // damit in einen echten Postgrest-Fehler (code + message).
   let insertResult: { data: unknown; error: unknown } = { data: null, error: null }
+  // `select()` verhält sich wie PostgREST: ohne maybeSingle() kommt die rohe
+  // Antwort (bei Batch-Inserts ein Array), mit maybeSingle() ist ein Array mit
+  // ≠ 1 Zeilen ein Fehler (PGRST116). Genau diese Unterscheidung ist der
+  // Regressionstest dafür, dass ein Batch-Insert NICHT als Fehler gilt.
+  const insertSelect = () => {
+    const many = Array.isArray(insertResult.data) && insertResult.data.length !== 1
+    return Object.assign(Promise.resolve(insertResult), {
+      maybeSingle: () => Promise.resolve(
+        many
+          ? { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } }
+          : insertResult,
+      ),
+    })
+  }
   return {
     supabase: {
       rpc: vi.fn(),
       from: vi.fn(() => ({
         insert: vi.fn(() => ({
-          select: () => ({
-            maybeSingle: () => Promise.resolve(insertResult),
-          }),
+          select: insertSelect,
         })),
         update: vi.fn(() => ({ eq: vi.fn(), in: vi.fn() })),
         delete: vi.fn(() => ({ eq: vi.fn(), in: vi.fn() })),
@@ -38,7 +50,7 @@ vi.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase'
 import {
-  clearFailedOps, isNetworkFailure, remapTempId, useOfflineQueue,
+  clearFailedOps, isNetworkFailure, remapOpPayload, remapTempId, useOfflineQueue,
   type DeadOp, type QueuedOp,
 } from '../useOfflineQueue'
 
@@ -172,8 +184,114 @@ describe('remapTempId — Temp-ID auf echte UUID umschreiben', () => {
     expect(after[2].filterValue).toEqual([realId, 'other'])
     // Mehrfache Vorkommen im selben Array: alle umgeschrieben
     expect(after[3].filterValue).toEqual(['other', realId, realId])
-    // Andere Tabelle unverändert
-    expect(after[4].filterValue).toBe('temp-1')
+    // TABELLENÜBERGREIFEND: Temp-IDs sind zufällig, Kollisionen über Tabellen
+    // praktisch ausgeschlossen — der expenses-Op mit derselben Temp-ID wird
+    // mitgeschrieben (nötig für Splits/Deletes auf der Ausgabe).
+    expect(after[4].filterValue).toBe(realId)
+  })
+
+  it('schreibt filterValue über Tabellen hinweg um (Split-Delete zeigt auf die Ausgabe)', () => {
+    const realId = 'c9a8b7c6-1234-4abc-8def-000000000002'
+    const queue: QueuedOp[] = [
+      { id: 'op-1', type: 'insert', table: 'expenses', payload: { description: 'Markt' }, clientId: 'temp-1', timestamp: 1 },
+      // Split-Delete mit der Temp-ID im filterValue — fremde Tabelle
+      { id: 'op-2', type: 'delete', table: 'expense_splits', payload: {}, filterColumn: 'expense_id', filterValue: 'temp-1', timestamp: 2 },
+      // Delete der Ausgabe selbst
+      { id: 'op-3', type: 'delete', table: 'expenses', payload: {}, filterColumn: 'id', filterValue: 'temp-1', timestamp: 3 },
+    ]
+    localStorage.setItem('offline_queue', JSON.stringify(queue))
+
+    // Vom Flush des Expense-Inserts aus aufgerufen (table = 'expenses'):
+    remapTempId('expenses', 'temp-1', realId)
+
+    const after = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    expect((after[0].payload as { description: string }).description).toBe('Markt')
+    expect(after[1].filterValue).toBe(realId)
+    expect(after[2].filterValue).toBe(realId)
+  })
+
+  it('schreibt den PAYLOAD eines Split-Inserts um (expense_id auf fremder Tabelle)', () => {
+    const realId = 'c9a8b7c6-1234-4abc-8def-000000000003'
+    const queue: QueuedOp[] = [
+      { id: 'op-1', type: 'insert', table: 'expenses', payload: { description: 'Markt' }, clientId: 'temp-1', timestamp: 1 },
+      { id: 'op-2', type: 'insert', table: 'expense_splits', payload: { expense_id: 'temp-1', person_name: 'Ben', share_amount: 12.5 }, timestamp: 2 },
+      { id: 'op-3', type: 'insert', table: 'expense_splits', payload: [
+        { expense_id: 'temp-1', person_name: 'Ada', share_amount: 5 },
+        { expense_id: 'other-row', person_name: 'Cy', share_amount: 7.5 },
+      ] as unknown as Record<string, unknown>, timestamp: 3 },
+    ]
+    localStorage.setItem('offline_queue', JSON.stringify(queue))
+
+    remapTempId('expenses', 'temp-1', realId)
+
+    const after = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    expect((after[1].payload as { expense_id: string }).expense_id).toBe(realId)
+    expect((after[1].payload as { person_name: string }).person_name).toBe('Ben')
+    const batch = after[2].payload as unknown as { expense_id: string }[]
+    expect(batch[0].expense_id).toBe(realId)
+    expect(batch[1].expense_id).toBe('other-row')
+  })
+})
+
+describe('remapOpPayload — reine Payload-Ersetzung (keine Mutation)', () => {
+  it('Objekt: exakte Strings ersetzt, Zahlen/Booleans/null unangetastet, Eingabe nicht verändert', () => {
+    const tempId = 'temp-abc-123'
+    const payload = {
+      expense_id: tempId,
+      amount: 42.5,
+      paid_by: tempId,
+      note: null,
+      active: false,
+      keep: `x${tempId}`, // Teil-String bleibt
+      nested: { ref: tempId, count: 3 },
+    }
+    const snapshot = JSON.stringify(payload)
+    const { payload: next, changed } = remapOpPayload(payload, tempId, 'real-uuid')
+
+    expect(changed).toBe(true)
+    expect((next as { expense_id: string }).expense_id).toBe('real-uuid')
+    expect((next as { paid_by: string }).paid_by).toBe('real-uuid')
+    expect((next as { keep: string }).keep).toBe(`x${tempId}`)
+    expect((next as { amount: number }).amount).toBe(42.5)
+    expect((next as { note: null }).note).toBeNull()
+    expect((next as { active: boolean }).active).toBe(false)
+    expect((next as { nested: { ref: string } }).nested.ref).toBe('real-uuid')
+    expect((next as { nested: { count: number } }).nested.count).toBe(3)
+    // Eingabe unverändert (reine Funktion — der Aufrufer speichert die Queue)
+    expect(JSON.stringify(payload)).toBe(snapshot)
+  })
+
+  it('Array von Objekten (Batch-Insert): jedes Element umgeschrieben', () => {
+    const tempId = 'temp-1'
+    const payload = [
+      { expense_id: tempId, person_name: 'Ada', share_amount: 5 },
+      { expense_id: 'real-row', person_name: 'Ben', share_amount: 7 },
+    ]
+    const { payload: next, changed } = remapOpPayload(payload, tempId, 'real-uuid')
+    expect(changed).toBe(true)
+    const batch = next as { expense_id: string }[]
+    expect(batch[0].expense_id).toBe('real-uuid')
+    expect(batch[1].expense_id).toBe('real-row')
+  })
+
+  it('Arrays von Strings (in.(…)-Werte) und verschachtelte Objekt-Ebenen', () => {
+    const tempId = 'temp-1'
+    const payload = {
+      ids: [tempId, 'other', tempId],
+      meta: { tags: ['a', tempId], owner: tempId },
+    }
+    const { payload: next, changed } = remapOpPayload(payload, tempId, 'real-uuid')
+    expect(changed).toBe(true)
+    expect((next as { ids: string[] }).ids).toEqual(['real-uuid', 'other', 'real-uuid'])
+    expect((next as { meta: { tags: string[]; owner: string } }).meta.tags).toEqual(['a', 'real-uuid'])
+    expect((next as { meta: { tags: string[]; owner: string } }).meta.owner).toBe('real-uuid')
+  })
+
+  it('Nichts trifft → changed false, Payload bleibt die Referenz', () => {
+    const payload = { name: 'Ausgabe', amount: 9.99 }
+    const { payload: next, changed } = remapOpPayload(payload, 'temp-1', 'real-uuid')
+    expect(changed).toBe(false)
+    expect(next).toBe(payload)
   })
 })
 
@@ -284,6 +402,42 @@ describe('Dead-Letter: endgültig gescheiterte Ops', () => {
     // Ein weiterer Flush hat nichts zu tun und parkt nichts weiter
     await flushTimed(result)
     expect(JSON.parse(localStorage.getItem('offline_queue_dead')!)).toHaveLength(1)
+  })
+
+  it('Batch-Insert (Array-Payload) gilt NICHT als Fehler — kein Dead-Letter, kein zweiter Versuch', async () => {
+    // Regression: executeOp nutzte .maybeSingle(). Ein Batch-Payload schreibt
+    // N Zeilen, maybeSingle() wirft danach PGRST116 — die Zeilen stehen aber
+    // schon in der DB. Der Flush hielt das für einen Fehler, versuchte es
+    // dreimal und schrieb die Anteile dreifach (live: 1 Ausgabe, 9 Anteile).
+    vi.useFakeTimers()
+    setInsertResult({
+      data: [{ id: 'aaa' }, { id: 'bbb' }, { id: 'ccc' }],
+      error: null,
+    })
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({
+        type: 'insert',
+        table: 'expense_splits',
+        payload: [
+          { expense_id: 'temp-1', person_name: 'Anna', share_amount: 10 },
+          { expense_id: 'temp-1', person_name: 'Ben', share_amount: 10 },
+          { expense_id: 'temp-1', person_name: 'Flo', share_amount: 10 },
+        ] as unknown as Record<string, unknown>,
+      })
+    })
+
+    await flushTimed(result)
+
+    // Queue leer, kein Dead-Letter, keine Retries
+    expect(JSON.parse(localStorage.getItem('offline_queue') ?? '[]')).toHaveLength(0)
+    expect(localStorage.getItem('offline_queue_dead')).toBeNull()
+    expect(result.current.failedCount).toBe(0)
+    // genau EIN Insert-Aufruf für dieses Op
+    const insertCalls = (supabase.from as unknown as ReturnType<typeof vi.fn>).mock.results
+      .map((r: { value?: { insert?: ReturnType<typeof vi.fn> } }) => r.value?.insert?.mock.calls.length ?? 0)
+      .reduce((a: number, b: number) => a + b, 0)
+    expect(insertCalls).toBe(1)
   })
 
   it('Dead-Letter fasst max. 20 Ops — die ältesten fliegen raus, clearFailedOps leert', async () => {

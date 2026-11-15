@@ -192,9 +192,16 @@ async function executeOp(op: QueuedOp): Promise<string | null> {
   } else if (op.type === 'insert') {
     // select('id') kostet nichts extra und liefert die echte UUID: Offline-Insert
     // und späteres Häkchen/Löschen auf dieselbe Zeile hängen daran.
-    const { data, error } = await supabase.from(op.table).insert(op.payload).select('id').maybeSingle()
+    //
+    // KEIN .maybeSingle(): ein Batch-Payload (Array, z. B. die Anteile einer
+    // Ausgabe) schreibt N Zeilen und liefert N ids. maybeSingle() wirft dann
+    // „multiple rows returned" — NACHDEM die Zeilen schon in der DB stehen.
+    // Der Flush hielt das für einen Fehler, versuchte es dreimal und schrieb
+    // die Anteile dreifach (live nachgewiesen: 1 Ausgabe, 9 Anteile).
+    const { data, error } = await supabase.from(op.table).insert(op.payload).select('id')
     if (error) throw error
-    const id = (data as { id?: string } | null)?.id
+    const rows = (Array.isArray(data) ? data : data ? [data] : []) as Array<{ id?: string }>
+    const id = rows.find((r) => typeof r?.id === 'string')?.id
     return typeof id === 'string' ? id : null
   } else if (op.type === 'update') {
     // filterValue als Array = Sammel-Update (eine Runde statt N): 30 abgehakte
@@ -215,25 +222,87 @@ async function executeOp(op: QueuedOp): Promise<string | null> {
 }
 
 /**
+ * Rein: ersetzt in einem Queue-Payload jeden String, der EXAKT der Temp-ID
+ * entspricht, durch die echte UUID — ohne Mutation (der Aufrufer speichert die
+ * Queue neu). Trifft auch Batch-Payloads (Array von Objekten), Arrays von
+ * Strings (`in.(…)`-Filterwerte) und genau ein verschachteltes Objekt-Level.
+ * Zahlen/Booleans/null werden nie angefasst, Teil-Strings („temp-1suffix“)
+ * bleiben unangetastet.
+ */
+export function remapOpPayload(
+  payload: unknown,
+  tempId: string,
+  realId: string,
+): { payload: unknown; changed: boolean } {
+  // Bewusste Tiefenbegrenzung: Payload der Ops sind flache DB-Zeilen, ggf. mit
+  // einer Batch-Ebene und einem verschachtelten Objekt-Level. Tiefer braucht es
+  // nicht zu gehen — das schützt vor zyklischen/alien Strukturen.
+  function remapValue(value: unknown, depth: number): { value: unknown; changed: boolean } {
+    if (depth > 3) return { value, changed: false }
+    if (Array.isArray(value)) {
+      let changed = false
+      const next = value.map((el) => {
+        const r = remapValue(el, depth + 1)
+        if (r.changed) changed = true
+        return r.value
+      })
+      return changed ? { value: next, changed: true } : { value, changed: false }
+    }
+    if (value && typeof value === 'object') {
+      let changed = false
+      const obj = value as Record<string, unknown>
+      const next: Record<string, unknown> = {}
+      for (const key of Object.keys(obj)) {
+        const r = remapValue(obj[key], depth + 1)
+        if (r.changed) changed = true
+        next[key] = r.value
+      }
+      return changed ? { value: next, changed: true } : { value, changed: false }
+    }
+    if (value === tempId) return { value: realId, changed: true }
+    return { value, changed: false }
+  }
+  const result = remapValue(payload, 0)
+  return { payload: result.value, changed: result.changed }
+}
+
+/**
  * Ersetzt in der Queue alle Verweise auf eine Temp-ID (`temp-…`) durch die
  * echte UUID, sobald der zugehörige Insert durch ist. Ohne das scheiterten
  * Häkchen und Löschen offline angelegter Zeilen an der uuid-Spalte (22P02).
+ *
+ * Absichtlich TABELLENÜBERGREIFEND: Temp-IDs werden pro Zeile zufällig erzeugt
+ * (`temp-` + UUID), eine Kollision über Tabellen ist praktisch ausgeschlossen.
+ * Der Ausgaben-Pfad braucht das zwingend — der Split-Insert
+ * (table: `expense_splits`) trägt die Temp-ID des Expense-Inserts im PAYLOAD
+ * (`expense_id`), also in einer fremden Tabelle; ebenso Delete-Ops, deren
+ * `filterValue` auf die frisch umgeschriebene Zeile zeigt.
  */
 export function remapTempId(table: string, tempId: string, realId: string): void {
+  // `table` bleibt nur aus API-Kompatibilität erhalten (Call-Sites rufen mit
+  // der Insert-Tabelle auf); die Ersetzung filtert bewusst NICHT mehr danach.
+  void table
   const queue = loadQueue()
   let changed = false
   const next = queue.map((q) => {
-    if (q.table !== table) return q
-    const values = Array.isArray(q.filterValue) ? q.filterValue : null
-    if (q.filterValue === tempId) {
+    let op = q
+    // (i) filterValue (skalar + Array): in JEDER Op-Reihe ersetzen, deren Wert
+    // exakt die Temp-ID ist — ohne Tabellenfilter.
+    const values = Array.isArray(op.filterValue) ? op.filterValue : null
+    if (op.filterValue === tempId) {
+      op = { ...op, filterValue: realId }
       changed = true
-      return { ...q, filterValue: realId }
-    }
-    if (values && values.includes(tempId)) {
+    } else if (values && values.includes(tempId)) {
       changed = true
-      return { ...q, filterValue: values.map(v => (v === tempId ? realId : v)) }
+      op = { ...op, filterValue: values.map(v => (v === tempId ? realId : v)) }
     }
-    return q
+    // (ii) Payload: Batch-Objekte, String-Arrays und verschachtelte Ebenen.
+    const remapped = remapOpPayload(op.payload, tempId, realId)
+    if (remapped.changed) {
+      changed = true
+      op = { ...op, payload: remapped.payload as Record<string, unknown> }
+    }
+    return op
   })
   if (changed) saveQueue(next)
 }

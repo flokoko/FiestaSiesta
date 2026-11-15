@@ -3,6 +3,7 @@ import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight
 import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory, Settlement } from '../types'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
+import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { usePersistedState } from '../hooks/usePersistedState'
 import {
   isEqualQuotaDistribution, computeBalances, computeOpenBalances,
@@ -28,6 +29,10 @@ interface ExpenseScreenProps {
   isLoading?: boolean
   isAdmin: boolean
   adminUnlocked: boolean
+  /** Offline-Pfad: hängende Ausgabe sofort anzeigen (reicht an ExpenseForm durch). */
+  onAddPendingExpense: (expense: Expense, splits: ExpenseSplit[]) => void
+  /** Offline gelöschte Ausgabe: Temp-Zeile rauswerfen bzw. echte Zeile tombstonen (useListData). */
+  removePendingExpense: (id: string) => void
   onExpensesChange: () => void
   onCategoriesChange: () => void
   onQuotasChange: () => void
@@ -46,6 +51,8 @@ export default function ExpenseScreen({
   isLoading,
   isAdmin,
   adminUnlocked,
+  onAddPendingExpense,
+  removePendingExpense,
   onExpensesChange,
   onCategoriesChange,
   onQuotasChange,
@@ -53,6 +60,10 @@ export default function ExpenseScreen({
   onSettlementsChange,
 }: ExpenseScreenProps) {
   const { toast, confirm } = useToast()
+  // Modul-Singleton (siehe AddItemForm): isOnline + enqueue für den Offline-
+  // Delete, ohne App-Screen-Verkabelung für einen Zustand, den hier ohnehin
+  // nur ein Zweig liest.
+  const { isOnline, enqueue } = useOfflineQueue()
   const [section, setSection] = usePersistedState<'expenses' | 'settlement' | 'matrix' | 'quotas'>(
     'fiesta_expense_section',
     'expenses',
@@ -179,6 +190,21 @@ export default function ExpenseScreen({
   // ── Delete ──
   const handleDelete = (expense: Expense) => {
     confirm(`„${expense.description}“ wirklich löschen?`, async () => {
+      if (!isOnline) {
+        // OFFLINE: Delete-Ops einreihen — zuerst die Splits, dann die Ausgabe
+        // (wie der Online-Lauf: Cascade entfernt die Splits ohnehin mit).
+        // Kein onExpensesChange: der offline-Refetch fällt auf den Read-Cache
+        // zurück und würde die gelöschte Zeile sofort zurückbringen — der
+        // Tombstone in useListData hält sie stattdessen unsichtbar.
+        enqueue({ type: 'delete', table: 'expense_splits', payload: {}, filterColumn: 'expense_id', filterValue: expense.id })
+        enqueue({ type: 'delete', table: 'expenses', payload: {}, filterColumn: 'id', filterValue: expense.id })
+        // temp-…-Zeile (offline erfasst, Insert noch in der Queue): sofort weg;
+        // beim Flush netzen sich ihre Insert-Ops und diese Deletes gegeneinander auf.
+        removePendingExpense(expense.id)
+        navigator.vibrate?.(10)
+        toast('Offline gelöscht — wird synchronisiert.', 'success')
+        return
+      }
       // Erst die Ausgabe selbst löschen — schlägt das fehl, bleibt der alte
       // Stand konsistent. (Die DB cascade't die Splits über ON DELETE CASCADE
       // mit; der Split-Delete danach ist Best-Effort für Schemas ohne Cascade.)
@@ -392,6 +418,7 @@ export default function ExpenseScreen({
               setExpenseNote={setExpenseNote}
               setExpenseCategory={setExpenseCategory}
               getSplitsForExpense={getSplitsForExpense}
+              onAddPendingExpense={onAddPendingExpense}
               onExpensesChange={onExpensesChange}
               onCategoriesChange={onCategoriesChange}
               resetForm={resetForm}

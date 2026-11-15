@@ -205,6 +205,7 @@ export default function App() {
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
     toggleShoppingItem, deleteShoppingItem, undoDelete, batchToggleShoppingItems, toggleBringItem, deleteBringItem, reorderItems, reorderNotes, toggleNoteFavorite,
     addPendingItem,
+    addPendingExpense, removePendingExpense,
     handleJoin, handleLeave, handleRename,
     undoState,
     settlements,
@@ -790,6 +791,8 @@ export default function App() {
               isLoading={isLoading}
               isAdmin={isAdmin}
               adminUnlocked={adminUnlocked}
+              onAddPendingExpense={addPendingExpense}
+              removePendingExpense={removePendingExpense}
               onExpensesChange={handleExpensesChange}
               onCategoriesChange={handleCategoriesChange}
               onQuotasChange={handleQuotasChange}

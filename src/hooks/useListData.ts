@@ -18,6 +18,7 @@ import { closeAllRealtimeChannels } from '../lib/realtimeBus'
 import { useToast } from '../context/ToastContext'
 import { logError } from '../lib/logger'
 import { readCache, writeCache, clearCacheForList } from '../lib/readCache'
+import { mergePending, dropRemoved, dropSplitsOfRemoved } from '../lib/expensePending'
 import {
   deriveCategoriesByType,
   deriveKnownPersons,
@@ -72,6 +73,15 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   // Refetch (setShoppingItems) würde sie sonst löschen, solange die Queue noch
   // nicht geflusht hat. Der Merge passiert erst am Rückgabe-Objekt.
   const [pendingItems, setPendingItems] = useState<ListItem[]>([])
+  // Offline erfasste Ausgaben: Temp-Zeilen (Muster wie pendingItems) — bewusst
+  // NICHT in expenses gemischt, ein elternseitiger Refetch (fetchExpenses und
+  // dessen Cache-Fallback) würde sie sonst wegnehmen.
+  const [pendingExpenses, setPendingExpenses] = useState<Expense[]>([])
+  const [pendingSplits, setPendingSplits] = useState<ExpenseSplit[]>([])
+  // Offline GELÖSCHTE echte Ausgaben (id-Tombstones): ein offline-Refetch
+  // fällt auf den Read-Cache zurück, der die gelöschte Zeile noch enthält —
+  // solange der Delete-Op in der Queue steht, darf sie nicht zurückkommen.
+  const [removedExpenseIds, setRemovedExpenseIds] = useState<Set<string>>(() => new Set())
   const [categories, setCategories] = useState<ItemCategory[]>([])
   const [notes, setNotes] = useState<QuickNote[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -999,14 +1009,27 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     [bringItems, pendingItems],
   )
 
+  // ── Ausgaben: gemischte Listen (echte + hängende, hängende vorne) ─────
+  // Muster wie visibleShoppingItems: die States bleiben frei von Temp-IDs und
+  // Tombstones, damit fetchExpenses (inkl. Cache-Fallback) sie nicht ersetzt.
+  // Der Merge passiert nur im Rückgabe-Objekt/über die abgeleiteten Werte.
+  const visibleExpenses = useMemo(
+    () => mergePending(dropRemoved(expenses, removedExpenseIds), pendingExpenses),
+    [expenses, pendingExpenses, removedExpenseIds],
+  )
+  const visibleExpenseSplits = useMemo(
+    () => dropSplitsOfRemoved(mergePending(expenseSplits, pendingSplits), removedExpenseIds),
+    [expenseSplits, pendingSplits, removedExpenseIds],
+  )
+
   const knownPersons = useMemo(() => deriveKnownPersons(userName, participants), [userName, participants])
 
   const userBalance = useMemo(
-    () => deriveUserBalance(expenses, expenseSplits, settlements, userName),
-    [expenses, expenseSplits, settlements, userName],
+    () => deriveUserBalance(visibleExpenses, visibleExpenseSplits, settlements, userName),
+    [visibleExpenses, visibleExpenseSplits, settlements, userName],
   )
 
-  const expenseTotal = useMemo(() => deriveExpenseTotal(expenses), [expenses])
+  const expenseTotal = useMemo(() => deriveExpenseTotal(visibleExpenses), [visibleExpenses])
 
   const isAdmin = useMemo(() => deriveIsAdmin(participants, userName), [participants, userName])
 
@@ -1037,6 +1060,22 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     return id
   }, [])
 
+  /** Offline erfasste Ausgabe: Temp-Zeile + Splits sofort sichtbar (siehe addPendingItem). */
+  const addPendingExpense = useCallback((expense: Expense, splits: ExpenseSplit[]) => {
+    setPendingExpenses((prev) => [...prev, expense])
+    setPendingSplits((prev) => [...prev, ...splits])
+  }, [])
+
+  /**
+   * Offline gelöschte Ausgabe: hängende Temp-Zeile (und ihre Splits) wegwerfen
+   * oder echte Zeile tombstonen — siehe removedExpenseIds.
+   */
+  const removePendingExpense = useCallback((id: string) => {
+    setPendingExpenses((prev) => prev.filter((e) => e.id !== id))
+    setPendingSplits((prev) => prev.filter((s) => s.expense_id !== id))
+    setRemovedExpenseIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)))
+  }, [])
+
   // Sobald die Queue von > 0 auf 0 fällt (Flush komplett), ersetzen die echten
   // Serverzeilen die Temp-Zeilen: Auffrischung für beide Listentypen. Das
   // prevQueueRef-Gerüst verhindert, dass der Effekt bei jedem Render feuert —
@@ -1045,11 +1084,17 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   useEffect(() => {
     if (prevQueueLengthRef.current > 0 && queueLength === 0 && list) {
       setPendingItems([])
+      // Ausgaben: hängende Temp-Zeilen und Lösch-Tombstones verwerfen, der
+      // Serverstand ist jetzt die Wahrheit.
+      setPendingExpenses([])
+      setPendingSplits([])
+      setRemovedExpenseIds(new Set())
       void fetchItems(list.id, 'shopping')
       void fetchItems(list.id, 'bring')
+      void fetchExpenses(list.id)
     }
     prevQueueLengthRef.current = queueLength
-  }, [queueLength, list, fetchItems])
+  }, [queueLength, list, fetchItems, fetchExpenses])
 
   // ── Join / Leave / Rename ──────────────────────────────────────────
   const handleJoin = useCallback(async (name: string, l: ShoppingList, pid: string) => {
@@ -1096,6 +1141,10 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     setShoppingItems([])
     setBringItems([])
     setPendingItems([])
+    // Hängende Ausgaben/Tombstones gehören zur verlassenen Liste
+    setPendingExpenses([])
+    setPendingSplits([])
+    setRemovedExpenseIds(new Set())
     setCategories([])
     setNotes([])
     setExpenses([])
@@ -1150,8 +1199,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     bringItems: visibleBringItems,
     categories,
     notes,
-    expenses,
-    expenseSplits,
+    /** Echte Zeilen + offline erfasste (vorne) − offline gelöschte (Tombstones) */
+    expenses: visibleExpenses,
+    expenseSplits: visibleExpenseSplits,
     expenseQuotas,
     settlements,
     participants,
@@ -1197,6 +1247,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     toggleNoteFavorite,
     // offline angelegte Artikel
     addPendingItem,
+    // offline erfasste/gelöschte Ausgaben
+    addPendingExpense,
+    removePendingExpense,
     // join/leave/rename
     handleJoin,
     handleLeave,
