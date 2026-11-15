@@ -80,6 +80,17 @@ export default function RecipesScreen({ listId, userName }: Props) {
         return
       }
 
+      // Bestehende Reihenfolge nicht überschreiben: aktuelles Maximum holen
+      // und dahinter anfügen — sonst landen neue Zutaten oben (sort_order 0,1,2 …).
+      const { data: last } = await supabase
+        .from('items')
+        .select('sort_order')
+        .eq('list_id', listId)
+        .eq('list_type', 'shopping')
+        .order('sort_order', { ascending: false })
+        .limit(1)
+      const maxOrder = Number((last as Array<{ sort_order: number | null }> | null)?.[0]?.sort_order ?? 0)
+
       const { error } = await supabase.from('items').insert(
         missing.map((ingredient, index) => ({
           list_id: listId,
@@ -88,7 +99,7 @@ export default function RecipesScreen({ listId, userName }: Props) {
           quantity: [ingredient.qty, unitLabel(ingredient.unit)].filter(Boolean).join(' '),
           list_type: 'shopping',
           created_by: userName,
-          sort_order: index,
+          sort_order: maxOrder + 1 + index,
           is_checked: false,
           is_brought: false,
         })),

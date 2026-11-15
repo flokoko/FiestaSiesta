@@ -71,38 +71,21 @@ export function computeOpenBalances(
 }
 
 /**
- * Settlement proposals that stay STABLE as payments are recorded.
+ * Settlement-Vorschläge — berechnet aus den OFFENEN Salden (Gesamt-Salden
+ * minus beglichener Zahlungen) mit derselben Greedy-Optimierung.
  *
- * The proposals are derived ONCE from the ORIGINAL balances (greedy,
- * minimized-transaction). Settled payments are then subtracted only from the
- * proposal that matches the same payer→payee pair. This means settling one
- * debt shrinks (or removes) exactly that proposal and leaves all OTHER
- * passengers' debts unchanged — unlike re-running the greedy algorithm on the
- * open balances, which would re-optimize and reshuffle every proposal.
+ * Korrektheit vor „stabiler" Paarung: Nach einer Teil-Begleichung kann eine
+ * neue Ausgabe die Paarung real ändern, weil sich die Schulden geändert haben.
+ * Würden die Vorschläge an der alten Paarung festgehalten und Zahlungen nur
+ * paarweise abgezogen, passte eine Zahlung nach dem Greedy-Neu-Mix keinem
+ * Vorschlag mehr und fiel still heraus — der Kopf zeigte dann andere
+ * Schuldner als computeOpenBalances.
  */
 export function computeSettlementProposals(
   balances: Record<string, number>,
   settlements: SettlementTxn[],
 ): SettlementTxn[] {
-  const proposals = computeSettlement(balances)
-
-  // Sum settled payments per payer→payee pair.
-  const settledByPair = new Map<string, number>()
-  for (const s of settlements) {
-    const key = `${s.from}\u0000${s.to}`
-    settledByPair.set(key, (settledByPair.get(key) ?? 0) + s.amount)
-  }
-
-  const result: SettlementTxn[] = []
-  for (const p of proposals) {
-    const key = `${p.from}\u0000${p.to}`
-    const paid = settledByPair.get(key) ?? 0
-    const remaining = roundCents(p.amount - paid)
-    if (remaining > 0.001) {
-      result.push({ from: p.from, to: p.to, amount: remaining })
-    }
-  }
-  return result
+  return computeSettlement(computeOpenBalances(balances, settlements))
 }
 
 /** Greedy minimized-transaction settlement from a balances map */

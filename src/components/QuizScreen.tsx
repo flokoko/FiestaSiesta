@@ -108,7 +108,8 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
     setBusy(true)
     setPending(null)
     try {
-      const data = await quizAnswer(runRef.current, userName, choice)
+      // p_step: der Server vergleicht die Stufe mit dem Lauf.
+      const data = await quizAnswer(runRef.current, userName, choice, question?.step ?? 0)
       // choice < 0 = die Uhr lief ab; der Server stempelt es ebenfalls als Zeitablauf.
       setReveal({ ...data, chosen: choice, timeout: data.timeout || choice < 0 })
       if (data.outcome !== 'playing') {
@@ -120,6 +121,15 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
       }
       setPhase('reveal')
     } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      // Stale-Antworten (RPC quiz_answer liefert {'error', 'stale', true}, hier
+      // als Text geworfen): Zweites Gerät oder Doppeltipp hat den Lauf weiter-
+      // geschoben. Nicht als Fehler zeigen — den Lauf über den Wiedereinstiegs-
+      // Pfad (quiz_current) still neu laden und normal rendern.
+      if (runRef.current && (msg === 'Veraltete Antwort' || msg === 'Bereits beantwortet')) {
+        await loadQuestion(runRef.current)
+        return
+      }
       // Bewusst KEIN automatischer Retry: die Uhr würde sonst im Zwei-Sekunden-
       // Takt weiterfeuern und den Nutzer mit Fehlertoasts zuschütten.
       setPending(choice)
@@ -127,7 +137,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
     } finally {
       setBusy(false)
     }
-  }, [toast, userName])
+  }, [loadQuestion, question, toast, userName])
 
   const retry = useCallback(() => {
     if (pending === null) return
@@ -422,7 +432,12 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
   const answered = phase === 'reveal'
   const reached = question.step - 1
   // Während der Auflösung ist question.step die GERADE beantwortete Stufe.
-  const safeHere = QUIZ_SAFE_STEPS.includes(answered ? question.step : reached)
+  // „Geld ist sicher" nur, wenn diese Stufe RICHTIG geschafft wurde — bei
+  // einer falschen Antwort fällt der Server auf die letzte Sicherheitsstufe
+  // zurück (0 € bzw. 500 €); die Meldung darf das nicht als sicher ausgeben.
+  const safeHere = answered
+    ? Boolean(reveal?.correct) && QUIZ_SAFE_STEPS.includes(question.step)
+    : QUIZ_SAFE_STEPS.includes(reached)
   const ratio = Math.max(0, Math.min(1, remaining / TIMER_SECONDS))
   const circumference = 2 * Math.PI * 15
   const locked = answered || busy || dialogOpen

@@ -4143,9 +4143,15 @@ body::before {
 
 /* ── Dark: Toast-Aktionsknöpfe (v0.34) ─────────────────────────────── */
 /* var(--accent) ist im Dunkeln #FF5B67 — weiß darauf ergibt ~3:1, AA verlangt
-   4,5:1 bei 13 px. Dunkle Schrift auf der hellen Akzentfläche. */
+   4,5:1 bei 13 px. Dunkle Schrift auf der hellen Akzentfläche. (--danger erbt
+   --accent, galt also auch für .toast-btn-confirm.) */
 :root[data-theme='dark'] #root .toast .toast-btn-undo,
-:root[data-theme='dark'] #root .toast .toast-btn-confirm,
+:root[data-theme='dark'] #root .toast .toast-btn-confirm {
+  background: #F2EEF6;
+  border-color: rgba(23, 20, 26, 0.08);
+  color: #17141A;
+}
+
 /* ── Kopf: Mini-Flagge (v0.34) ──────────────────────────────────────── */
 /* Das Markup rendert .header-flag-band red/yellow/red-bottom, gestylt waren nur
    die nie gerenderten .header-flag-bar.green/white/red — die Flagge blieb unsichtbar. */

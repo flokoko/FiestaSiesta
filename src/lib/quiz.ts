@@ -116,11 +116,14 @@ export function quizCurrent(runId: string, participant: string) {
   return call<QuizCurrent>('quiz_current', { p_run_id: runId, p_participant: participant })
 }
 
-export function quizAnswer(runId: string, participant: string, choice: number) {
+export function quizAnswer(runId: string, participant: string, choice: number, step: number) {
+  // p_step: der Server prüft die angezeigte Stufe gegen den Lauf — veraltete
+  // Antworten (z. B. Wiedereinstieg auf zweitem Gerät) fliegen mit 'stale' weg.
   return call<QuizReveal>('quiz_answer', {
     p_run_id: runId,
     p_participant: participant,
     p_choice: choice,
+    p_step: step,
   })
 }
 

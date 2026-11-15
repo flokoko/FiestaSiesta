@@ -141,6 +141,28 @@ describe('computeSettlementProposals', () => {
       { from: 'Bob', to: 'Alice', amount: 10 },
     ])
   })
+
+  it('rechnet aus den offenen Salden: neue Ausgabe darf die Paarung drehen', () => {
+    // Ausgangslage {A:40, B:-20, C:-20}, C hat 20€ an A beglichen, danach kam
+    // eine neue Ausgabe dazu → Gesamt-Salden {A:10, B:40, C:-50}.
+    // Offen: {A:-10, B:40, C:-30} — die alte Zahlung C→A existiert in der
+    // Greedy-Paarung der Gesamt-Salden nicht mehr und fiel zuvor still raus
+    // (falscher Vorschlag: C→B 40 statt korrekt C→B 30 + A→B 10).
+    const balances = { A: 10, B: 40, C: -50 }
+    const settled: SettlementTxn[] = [{ from: 'C', to: 'A', amount: 20 }]
+
+    const after = computeSettlementProposals(balances, settled)
+
+    // Als Menge vergleichen (nach `from` sortiert), damit der Test nicht an
+    // der Greedy-Reihenfolge hängt.
+    const sorted = [...after]
+      .map((t) => ({ from: t.from, to: t.to, amount: t.amount }))
+      .sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to))
+    expect(sorted).toEqual([
+      { from: 'A', to: 'B', amount: 10 },
+      { from: 'C', to: 'B', amount: 30 },
+    ])
+  })
 })
 
 describe('calculateQuotaShares', () => {
