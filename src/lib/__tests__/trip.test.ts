@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Sun, CloudRain, CloudLightning, CloudSnow, CloudSun, CloudFog } from 'lucide-react'
 import {
-  TRIP_LENGTH, daysUntilTrip, formatRange, tripDay, tripDays, tripDaysFrom, tripPhase,
+  TRIP_LENGTH, daysUntilTrip, formatDayShort, formatRange, tripDay, tripDays, tripDaysFrom, tripPhase,
 } from '../trip'
 import { isoDay } from '../tripPlan'
 import { weatherIconFor } from '../../components/WeatherGlyph'
@@ -59,6 +59,13 @@ describe('Reisephase', () => {
 
   it('formatiert den Zeitraum einheitlich', () => {
     expect(formatRange()).toBe('29.11. – 06.12.')
+  })
+})
+
+describe('formatDayShort', () => {
+  it('schreibt Tag und Monat mit führender Null — wie formatRange', () => {
+    expect(formatDayShort(new Date(2026, 10, 30))).toBe('Mo 30.11.')
+    expect(formatDayShort(new Date(2026, 11, 1))).toBe('Di 01.12.')
   })
 })
 

@@ -53,8 +53,10 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
   const runRef = useRef<string | null>(null)
   const startBusyRef = useRef(false)
   const jokerPendingRef = useRef(false)
-  // Solange der „aufhören?"-Dialog offen ist, pausiert die Uhr und das
-  // Spielfeld ist gesperrt — sonst antwortet man unter dem Dialog weiter.
+  // Der „aufhören?“-Dialog sperrt das Spielfeld, NICHT die Uhr: serverseitig
+  // läuft sie weiter (shown_at + 34 s), wer im Dialog zu lange überlegt,
+  // verliert den Lauf. Nur die Anzeige friert ein — der Tick unten setzt
+  // `remaining` nicht zurück, solange der Dialog offen ist.
   const dialogRef = useRef(false)
   const nextRef = useRef<HTMLButtonElement | null>(null)
 
@@ -150,7 +152,9 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
     if (phase !== 'playing') return
     const tick = () => {
       const left = (deadlineRef.current - clockOffsetRef.current - Date.now()) / 1000
-      setRemaining(Math.max(0, left))
+      // Anzeige im „Aufhören?“-Dialog einfrieren — die Server-Deadline läuft
+      // weiter, nur der Ring zählt nicht unter dem Dialog rüber.
+      if (!dialogRef.current) setRemaining(Math.max(0, left))
       if (left <= 0 && !answeredRef.current && !dialogRef.current && !timeoutFiredRef.current) {
         timeoutFiredRef.current = true
         void submit(-1)
@@ -209,7 +213,7 @@ export default function QuizScreen({ userName }: QuizScreenProps) {
     dialogRef.current = true
     setDialogOpen(true)
     confirm(
-      `Für ${euro(win)} aufhören?`,
+      `Für ${euro(win)} aufhören?\nDie Uhr läuft weiter — nach 30 Sekunden ist der Lauf verloren.`,
       async () => {
         dialogRef.current = false
         setDialogOpen(false)

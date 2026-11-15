@@ -291,7 +291,9 @@ export default function DayScreen({
         <TodayWeather
           data={isToday ? liveWeather : null}
           forecast={isToday ? null : wx ?? null}
-          emptyHint="Vorhersage folgt 16 Tage vorher"
+          // Heute zeigt den Lade-Hinweis der Karte; der 16-Tage-Satz gehört nur
+          // zu Reisetagen außerhalb der Vorhersage-Reichweite.
+          emptyHint={isToday ? null : 'Vorhersage folgt 16 Tage vorher'}
           onOpen={() => onNavigate('weather')}
         />
       </section>

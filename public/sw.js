@@ -1,6 +1,6 @@
 // IMPORTANT: Bump this version when deploying changes.
 // Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.63.7';
+const CACHE_NAME = 'fiesta-siesta-v0.63.8';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -17,16 +17,25 @@ self.addEventListener('install', (e) => {
       .then((files) => {
         const urls = [...new Set([INDEX_URL, '/FiestaSiesta/index.html', ...files])];
         // Einzeln laden statt cache.addAll: addAll ist alles-oder-nichts, ein einziger
-        // 404 (z. B. eine Datei, die gerade nicht ausgeliefert wird) ließ bisher nur
-        // index.html im Cache zurück — die App startete offline dann in einen
-        // ewigen Boot-Splash, ohne dass der Browser die Installation wiederholte.
+        // 404 ließ bisher nur index.html im Cache zurück. ABER: JS-/CSS-Chunks sind
+        // Pflicht — fehlt ein Chunk, startet die App offline in den ewigen Boot-Splash
+        // und der Browser wiederholte die Installation nicht, weil sie „erfolgreich“
+        // schien. Deshalb scheitert die Installation sofort, wenn eine .js/.css-Datei
+        // fehlt; die Toleranz unten gilt nur für NON-Code (Bilder, Icons, Manifest).
         return caches.open(CACHE_NAME).then(async (cache) => {
           const results = await Promise.allSettled(urls.map((url) => cache.add(url)));
-          const failed = results.filter((r) => r.status === 'rejected').length;
-          // Nur ein kleiner Schwund ist tolerabel; sonst Installation scheitern lassen,
-          // damit der Browser es beim nächsten Update-Versuch erneut probiert.
-          if (failed > Math.max(2, Math.floor(urls.length * 0.2))) {
-            throw new Error(`precache incomplete: ${failed}/${urls.length}`);
+          const rejected = urls.filter((_, i) => results[i].status === 'rejected');
+          const missingCode = rejected.filter((url) =>
+            /\.(js|css)(\?|#|$)/.test(new URL(url, self.location.origin).pathname)
+          );
+          if (missingCode.length > 0) {
+            throw new Error(`precache missing code assets: ${missingCode.join(', ')}`);
+          }
+          // Nur begrenzter Schwund bei Bildern/Icons/Manifest ist tolerabel;
+          // sonst Installation scheitern lassen, damit der Browser es beim
+          // nächsten Update-Versuch erneut probiert.
+          if (rejected.length > Math.max(2, Math.floor(urls.length * 0.2))) {
+            throw new Error(`precache incomplete: ${rejected.length}/${urls.length}`);
           }
         });
       })

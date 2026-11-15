@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
 // Mock supabase before importing useOfflineQueue
@@ -13,20 +13,34 @@ vi.mock('../../lib/supabase', () => {
       }),
     }),
   })
+  // Einstellbares Insert-Ergebnis: die Dead-Letter-Tests zwingen die Queue
+  // damit in einen echten Postgrest-Fehler (code + message).
+  let insertResult: { data: unknown; error: unknown } = { data: null, error: null }
   return {
     supabase: {
       rpc: vi.fn(),
       from: vi.fn(() => ({
-        insert: vi.fn(),
-        update: vi.fn(() => ({ eq: vi.fn() })),
-        delete: vi.fn(() => ({ eq: vi.fn() })),
+        insert: vi.fn(() => ({
+          select: () => ({
+            maybeSingle: () => Promise.resolve(insertResult),
+          }),
+        })),
+        update: vi.fn(() => ({ eq: vi.fn(), in: vi.fn() })),
+        delete: vi.fn(() => ({ eq: vi.fn(), in: vi.fn() })),
         select: selectChain,
       })),
+      __setInsertResult: (next: { data: unknown; error: unknown }) => {
+        insertResult = next
+      },
     },
   }
 })
 
-import { isNetworkFailure, remapTempId, useOfflineQueue, type QueuedOp } from '../useOfflineQueue'
+import { supabase } from '../../lib/supabase'
+import {
+  clearFailedOps, isNetworkFailure, remapTempId, useOfflineQueue,
+  type DeadOp, type QueuedOp,
+} from '../useOfflineQueue'
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -197,5 +211,109 @@ describe('enqueue — Dedup und FIFO', () => {
     const queue = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
     expect(queue.map((q) => (q.payload as { name: string }).name)).toEqual(['A', 'B'])
     expect(queue[0].timestamp).toBeLessThanOrEqual(queue[1].timestamp)
+  })
+})
+
+describe('Dead-Letter: endgültig gescheiterte Ops', () => {
+  /** Dem Mock-Insert ein Ergebnis unterjubeln. */
+  const setInsertResult = (next: { data: unknown; error: unknown }) => {
+    (supabase as unknown as {
+      __setInsertResult: (r: { data: unknown; error: unknown }) => void
+    }).__setInsertResult(next)
+  }
+
+  function seedDeadOps(count: number): void {
+    const entries: DeadOp[] = Array.from({ length: count }, (_, i) => ({
+      id: `old-${i}`,
+      type: 'update',
+      table: 'items',
+      payload: {},
+      filterColumn: 'id',
+      filterValue: `old-${i}`,
+      timestamp: i,
+      failedAt: i,
+      error: `Fehler alt-${i}`,
+    }))
+    localStorage.setItem('offline_queue_dead', JSON.stringify(entries))
+  }
+
+  beforeEach(() => {
+    localStorageMock.clear()
+    vi.clearAllMocks()
+    setInsertResult({ data: null, error: null })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** Flush starten, die 1 s + 2 s Retry-Runde mit Fake-Timern abspülen, Flush abwarten. */
+  async function flushTimed(result: { current: { flushQueue: () => Promise<unknown> } }): Promise<void> {
+    await act(async () => {
+      const flushing = result.current.flushQueue()
+      await vi.advanceTimersByTimeAsync(4_000)
+      await flushing
+    })
+  }
+
+  it('parkt ein Op nach dreifachem Serverfehler und leert die Queue', async () => {
+    vi.useFakeTimers()
+    setInsertResult({
+      data: null,
+      error: {
+        code: '23514',
+        message: 'Diese Zahlung wurde gerade eben schon erfasst — bitte die Liste neu laden.',
+      },
+    })
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'Ausgabe' }, clientId: 'temp-1' })
+    })
+    expect(result.current.queueLength).toBe(1)
+
+    await flushTimed(result)
+
+    const dead = JSON.parse(localStorage.getItem('offline_queue_dead')!)
+    expect(dead).toHaveLength(1)
+    expect(dead[0].error).toBe('Diese Zahlung wurde gerade eben schon erfasst — bitte die Liste neu laden.')
+    expect(dead[0].clientId).toBe('temp-1')
+    // Nicht mehr in der Queue
+    expect(JSON.parse(localStorage.getItem('offline_queue') ?? '[]')).toHaveLength(0)
+    expect(result.current.failedCount).toBe(1)
+
+    // Ein weiterer Flush hat nichts zu tun und parkt nichts weiter
+    await flushTimed(result)
+    expect(JSON.parse(localStorage.getItem('offline_queue_dead')!)).toHaveLength(1)
+  })
+
+  it('Dead-Letter fasst max. 20 Ops — die ältesten fliegen raus, clearFailedOps leert', async () => {
+    vi.useFakeTimers()
+    seedDeadOps(20)
+    setInsertResult({
+      data: null,
+      error: {
+        code: '23514',
+        message: 'Diese Zahlung wurde gerade eben schon erfasst — bitte die Liste neu laden.',
+      },
+    })
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'Wasser' } })
+    })
+
+    await flushTimed(result)
+
+    const dead = JSON.parse(localStorage.getItem('offline_queue_dead')!) as DeadOp[]
+    expect(dead).toHaveLength(20)
+    // Jüngst gescheitertes Op landet hinten, der älteste Vorbestand ist raus
+    expect(dead[dead.length - 1].error).toContain('Diese Zahlung')
+    expect(dead.map((d) => d.id)).not.toContain('old-0')
+    expect(dead[0].id).toBe('old-1')
+    // clearFailedOps räumt die Ablage komplett ab (inkl. Hook-Frischzelle)
+    act(() => {
+      clearFailedOps()
+    })
+    expect(localStorage.getItem('offline_queue_dead')).toBe('[]')
+    expect(result.current.failedCount).toBe(0)
   })
 })

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logError } from '../lib/logger'
+import { readCache, writeCache } from '../lib/readCache'
 import { useToast } from '../context/ToastContext'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -50,8 +51,16 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
   const { toast, confirm } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
 
-  const [entries, setEntries] = useState<BristolEntry[]>([])
-  const [loadingEntries, setLoadingEntries] = useState(true)
+  // Bristol hängt im Read-Cache (readCache.ts führt 'bristol_entries'), damit
+  // nach einem Kaltstart ohne Netz die letzten Einträge nicht verschwinden.
+  // Beim Mount zuerst den Cache legen, erst dann laden — offline endet der
+  // Fetch ohnehin im Fehler-Zweig.
+  const [entries, setEntries] = useState<BristolEntry[]>(
+    () => readCache<BristolEntry[]>(listId, 'bristol_entries') ?? [],
+  )
+  const [loadingEntries, setLoadingEntries] = useState(
+    () => readCache<BristolEntry[]>(listId, 'bristol_entries') === null,
+  )
   const [submitting, setSubmitting] = useState(false)
   // Ref-Guard, nicht State: drei Tipps im selben Tick sehen alle noch
   // `submitting === false` und legen drei Einträge an (State wird erst beim
@@ -87,13 +96,27 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
       .order('created_at', { ascending: false })
     if (error) {
       logError('fetchEntries error:', error)
+      // Offline/Serverfehler: letzten Stand aus dem Lesecache zeigen und den
+      // Ladezustand beenden — sonst lädt die Karte ewig mit leerem State.
+      const cached = readCache<BristolEntry[]>(listId, 'bristol_entries')
+      if (cached && cached.length > 0) setEntries(cached)
+      setLoadingEntries(false)
       return
     }
-    setEntries(data as BristolEntry[] ?? [])
+    const rows = data as BristolEntry[] ?? []
+    setEntries(rows)
     setLoadingEntries(false)
+    writeCache(listId, 'bristol_entries', rows)
   }, [listId])
 
   useSheetFocus(statsModalRef, showStatsInfo, () => setShowStatsInfo(false))
+
+  // Beim Listenwechsel greift der State-Initialwert nicht mehr: ohne diesen
+  // Schritt stünden die Einträge der vorigen Liste im Screen (und blieben dort,
+  // wenn der folgende Fetch offline scheitert).
+  useEffect(() => {
+    setEntries(readCache<BristolEntry[]>(listId, 'bristol_entries') ?? [])
+  }, [listId])
 
   useEffect(() => {
     fetchEntries()

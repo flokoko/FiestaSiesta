@@ -50,28 +50,34 @@ export function guessCategory(name: string): string {
 }
 
 /**
- * Eine Zeile → Zutat. Erkennt "500 g Kartoffeln", "2 Zwiebeln", "1/2 Zitrone",
- * "1 Bund Petersilie" und "Salz". Was nicht passt, wird komplett zum Namen.
+ * Eine Zeile → Zutat. Erkennt "500 g Kartoffeln", "2-3 Zwiebeln", "1 1/2
+ * Zitrone", "1/2 Zitrone", "1 Bund Petersilie" und "Salz". Was nicht passt,
+ * wird komplett zum Namen.
  */
 export function parseIngredientLine(line: string): RecipeIngredient | null {
   const raw = line.trim().replace(/^[-•*]\s*/, '')
   if (!raw) return null
 
+  // Reihenfolge zählt: gemischter Bruch, Bereich, reiner Bruch, Einzelzahl —
+  // sonst frisst die Einzelzahl von "1 1/2" nur die 1 und "2-3" nur die 2.
   const match = raw.match(
-    /^(\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?)\s*([A-Za-zÄÖÜäöüß.]{0,12})?\s*(.*)$/,
+    /^(\d+\s+\d+\/\d+|\d+\s?[-–]\s?\d+|\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?)\s*([A-Za-zÄÖÜäöüß.]{0,12})?\s*(.*)$/,
   )
   if (!match) {
     return { name: raw, qty: '', unit: '', category: guessCategory(raw) }
   }
 
   const [, qty, maybeUnit = '', rest = ''] = match
+  // Mengen bleiben Anzeigetext: "2-3", "1 1/2" — aber Leerraum am Bruchstrich
+  // ("1 / 2") wird zur "1/2" zusammengezogen, wie es die Anzeige erwartet.
+  const qtyTrimmed = qty.includes('/') ? qty.replace(/\s*\/\s*/g, '/') : qty.replace(/\s+/g, '')
   const unit = maybeUnit.toLowerCase().replace(/\.$/, '')
   const isUnit = UNITS.includes(unit)
   const name = (isUnit ? rest : `${maybeUnit} ${rest}`).trim() || raw
 
   return {
     name: name.charAt(0).toUpperCase() + name.slice(1),
-    qty: qty.replace(/\s+/g, ''),
+    qty: qtyTrimmed,
     unit: isUnit ? unit : '',
     category: guessCategory(name),
   }

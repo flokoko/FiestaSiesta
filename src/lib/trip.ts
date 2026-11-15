@@ -87,9 +87,10 @@ const LONG_DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'F
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August',
   'September', 'Oktober', 'November', 'Dezember'] as const
 
-/** 'Mo 30.11.' */
+/** 'Mo 30.11.' — mit führenden Nullen, wie es die Reichweiten-Zeile daneben
+ *  schon schreibt: Tages-Chips und Reichweite zeigen dann dasselbe Format. */
 export function formatDayShort(date: Date): string {
-  return `${WEEKDAYS[date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}.`
+  return `${WEEKDAYS[date.getDay()]} ${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.`
 }
 
 /** 'Montag, 1. Dezember' */

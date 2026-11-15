@@ -156,6 +156,9 @@
 .toast.toast-confirm .toast-message {
   flex: 1 1 auto;
   min-width: 0;
+  /* Zweizeilige Bestätigungen (Quiz: Bank-Frage + ruhiger Uhren-Hinweis)
+     als echte Zeilen statt \n-Klump. */
+  white-space: pre-line;
 }
 
 .toast.toast-confirm .toast-actions {

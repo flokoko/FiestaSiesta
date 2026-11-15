@@ -44,6 +44,38 @@ describe('Zutatenzeilen lesen', () => {
   })
 })
 
+describe('Mengenbereiche und gemischte Brüche', () => {
+  it('Bereiche bleiben als Text vor dem Namen', () => {
+    const z = parseIngredientLine('2-3 Zwiebeln')
+    expect(z?.qty).toBe('2-3')
+    expect(z?.name).toBe('Zwiebeln')
+    // mit Leerzeichen und Gedankenstrich (–) → Anzeigetext ohne Polster
+    expect(parseIngredientLine('10 – 15 Tomaten')?.qty).toBe('10–15')
+  })
+
+  it('Gemischter Bruch: ganze Zahl und Bruch gehören zusammen', () => {
+    const z = parseIngredientLine('1 1/2 Zitrone')
+    expect(z?.qty).toBe('1 1/2')
+    expect(z?.name).toBe('Zitrone')
+  })
+
+  it('Bruch mit Einheit', () => {
+    const t = parseIngredientLine('1/2 TL Salz')
+    expect(t?.qty).toBe('1/2')
+    expect(t?.unit).toBe('tl')
+    expect(t?.name).toBe('Salz')
+  })
+
+  it('Dezimal/Komma und fehlende Menge', () => {
+    expect(parseIngredientLine('2,5 kg Kartoffeln')).toEqual({
+      name: 'Kartoffeln', qty: '2,5', unit: 'kg', category: 'Gemüse & Kräuter',
+    })
+    const salz = parseIngredientLine('Salz')
+    expect(salz?.qty).toBe('')
+    expect(salz?.name).toBe('Salz')
+  })
+})
+
 describe('Kategorien raten', () => {
   it('trifft die Einkaufskategorien', () => {
     expect(guessCategory('Hähnchenbrust')).toBe('Fleisch & Fisch')

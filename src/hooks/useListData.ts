@@ -1074,6 +1074,12 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       realtimeDebounceRef.current = null
     }
     pendingRealtimeTablesRef.current.clear()
+    // Alle Seq-Slots verwerfen: ein Fetch der alten Liste, dessen Antwort noch
+    // unterwegs ist (Seq schon gezogen), läuft sonst durch den Race-Guard und
+    // schreibt mit writeCache(oldListId, …) genau den eben gelöschten Cache
+    // wieder und füllt den State mit Daten der verlassenen Liste. Ohne die
+    // aktuelle Seq passt keine alte Antwort mehr in die Guards.
+    fetchSeqsRef.current = {}
     // Ohne Reset bleibt ein evtl. noch laufender Fetch als „läuft" markiert und
     // der nächste Join lädt gar nicht erst.
     isFetchingRef.current = false

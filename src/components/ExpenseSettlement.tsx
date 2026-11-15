@@ -118,7 +118,15 @@ export default function ExpenseSettlement({
         created_by: userName,
       })
       if (error) {
-        toast(`Fehler beim Speichern: ${error.message}`, 'error')
+        // Der Doppelzahlungs-Trigger (sql/310) antwortet in Klartext, z. B.
+        // „Diese Zahlung wurde gerade eben schon erfasst — bitte die Liste neu
+        // laden.“ Diese Meldung zeigen, die Salden frisch ziehen und das
+        // Formular schließen — sonst bliebe es mit alten Beträgen stumm offen.
+        toast(error.message, 'error')
+        setSettlingIdx(null)
+        setSettleAmount('')
+        onSettlementsChange()
+        onExpensesChange()
         return
       }
       navigator.vibrate?.(10)
