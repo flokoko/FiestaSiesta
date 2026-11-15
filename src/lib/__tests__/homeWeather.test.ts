@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchHomeWeather, readHomePlace, writeHomePlace, type HomePlace } from '../homeWeather'
+import {
+  defaultHomePlace,
+  effectiveHomePlace,
+  fetchHomeWeather,
+  geocodeHomePlace,
+  readHomePlace,
+  writeHomePlace,
+  type HomePlace,
+} from '../homeWeather'
 
 // jsdom-Testumgebung: In-Memory-Web-Storage nachlegen (Muster wie in den
 // bestehenden readCache-Tests).
@@ -23,6 +31,59 @@ afterEach(() => {
 })
 
 const BONN: HomePlace = { lat: 50.7374, lon: 7.0982, name: 'Bonn' }
+
+describe('Standard-Heimatorte je Teilnehmer', () => {
+  it('Floko und Peter wohnen in München, Andrésito in Landshut', () => {
+    expect(defaultHomePlace('Floko')?.name).toBe('München')
+    expect(defaultHomePlace('Peter')?.name).toBe('München')
+    expect(defaultHomePlace('Andrésito')?.name).toBe('Landshut')
+  })
+
+  it('ignoriert Groß-/Kleinschreibung und Leerzeichen', () => {
+    expect(defaultHomePlace('  pEtEr  ')?.name).toBe('München')
+    expect(defaultHomePlace('ANDRÉSITO')?.name).toBe('Landshut')
+  })
+
+  it('kennt keinen Standard für unbekannte Namen oder leere Eingabe', () => {
+    expect(defaultHomePlace('Anna')).toBeNull()
+    expect(defaultHomePlace('')).toBeNull()
+  })
+
+  it('eigene Geräteeinstellung schlägt den Standard', () => {
+    expect(effectiveHomePlace('Floko')?.name).toBe('München') // Standard
+    writeHomePlace(BONN)
+    expect(effectiveHomePlace('Floko')).toEqual(BONN)
+    // Und nach dem Entfernen greift der Standard wieder
+    writeHomePlace(null)
+    expect(effectiveHomePlace('Floko')?.name).toBe('München')
+    expect(effectiveHomePlace('Anna')).toBeNull()
+  })
+})
+
+describe('geocodeHomePlace', () => {
+  it('nimmt den ersten Treffer weltweit — deutsche Orte funktionieren', async () => {
+    // Regression: der Screen nutzte geocodePlace() aus poiCoords, das nur
+    // Treffer in Spanien nahe Temisas akzeptiert und für „Landshut" null lieferte.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        results: [{ name: 'Landshut', latitude: 48.52961, longitude: 12.16179, country_code: 'DE' }],
+      }),
+    })))
+    await expect(geocodeHomePlace('Landshut')).resolves.toEqual({
+      lat: 48.52961, lon: 12.16179, name: 'Landshut',
+    })
+  })
+
+  it('liefert null ohne Treffer und bei zu kurzer Eingabe', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    })))
+    await expect(geocodeHomePlace('Xyzzyxstadt')).resolves.toBeNull()
+    await expect(geocodeHomePlace('ab')).resolves.toBeNull()
+  })
+})
 
 describe('readHomePlace / writeHomePlace', () => {
   it('liest einen gültigen Eintrag unverändert zurück', () => {

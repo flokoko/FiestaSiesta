@@ -68,6 +68,87 @@ export function writeHomePlace(place: HomePlace | null): void {
     localStorage.setItem(HOME_KEY, JSON.stringify(next))
   } catch {
     // Voll oder gesperrt — die Einstellung ist nur für dieses Gerät.
+  } finally {
+    // Der Tag-Screen bleibt als Pane gemountet: ohne dieses Signal sähe er
+    // eine Änderung aus den Einstellungen erst beim nächsten Sichtbarwerden.
+    notifyHomeChange()
+  }
+}
+
+/** Ereignis, auf das `useHomeWeather` hört (gleiche Idee wie ein Store-Event). */
+export const HOME_CHANGE_EVENT = 'fiesta-home-change'
+
+function notifyHomeChange(): void {
+  try {
+    window.dispatchEvent(new Event(HOME_CHANGE_EVENT))
+  } catch {
+    // Kein window (Node-Tests) — dann gibt es auch keine Zuhörer.
+  }
+}
+
+/**
+ * Standard-Heimatorte je Teilnehmer. Die drei Mitreisenden wohnen nicht am
+ * selben Ort — ohne diese Zuordnung müsste jeder seinen Ort selbst eintragen,
+ * bevor die Vergleichszeile zum ersten Mal erscheint.
+ *
+ * Koordinaten einmalig über Open-Meteo-Geocoding geholt (Stadtmitte).
+ */
+const HOME_DEFAULTS: Record<string, HomePlace> = {
+  floko: { name: 'München', lat: 48.13743, lon: 11.57549 },
+  peter: { name: 'München', lat: 48.13743, lon: 11.57549 },
+  andrésito: { name: 'Landshut', lat: 48.52961, lon: 12.16179 },
+}
+
+/** Namensschlüssel: getrimmt, klein, NFC — „Andrésito" und „andresito" sind nicht dasselbe, aber Leerzeichen und Groß-/Kleinschreibung sollen egal sein. */
+function nameKey(value: string): string {
+  return value.trim().toLowerCase().normalize('NFC')
+}
+
+/** Standard-Heimatort zur Teilnehmer-Name — null, wenn keiner hinterlegt ist. */
+export function defaultHomePlace(userName: string): HomePlace | null {
+  if (!userName) return null
+  return HOME_DEFAULTS[nameKey(userName)] ?? null
+}
+
+/**
+ * Effektiver Heimatort: eine eigene Einstellung auf dem Gerät gewinnt, sonst
+ * der Standard des Namens. So funktioniert die Zeile ab dem ersten Login, und
+ * wer umzieht oder woanders wohnt, überschreibt sie einmal in den Einstellungen.
+ */
+export function effectiveHomePlace(userName: string): HomePlace | null {
+  return readHomePlace() ?? defaultHomePlace(userName)
+}
+
+/**
+ * Ortsname → Koordinaten für den Heimatort.
+ *
+ * NICHT `geocodePlace` aus lib/poiCoords: das ist auf Gran Canaria geeicht
+ * (nur Treffer in Spanien innerhalb ~170 km um Temisas) und liefert für
+ * „Landshut" oder „München" immer null. Hier zählt der erste plausible Treffer
+ * weltweit — der Heimatort liegt in Deutschland, nicht auf der Insel.
+ */
+export async function geocodeHomePlace(name: string): Promise<HomePlace | null> {
+  const query = name.trim()
+  if (query.length < 3) return null
+  const url =
+    'https://geocoding-api.open-meteo.com/v1/search'
+    + `?name=${encodeURIComponent(query)}&count=1&language=de&format=json`
+  try {
+    const res = await fetchWithTimeout(url, TIMEOUT_MS)
+    if (!res.ok) return null
+    const data = (await res.json()) as {
+      results?: Array<{ name?: string; latitude?: number; longitude?: number }>
+    }
+    const hit = data.results?.[0]
+    if (!hit || typeof hit.latitude !== 'number' || typeof hit.longitude !== 'number') return null
+    if (!Number.isFinite(hit.latitude) || !Number.isFinite(hit.longitude)) return null
+    return {
+      lat: hit.latitude,
+      lon: hit.longitude,
+      name: (hit.name || query).trim(),
+    }
+  } catch {
+    return null
   }
 }
 

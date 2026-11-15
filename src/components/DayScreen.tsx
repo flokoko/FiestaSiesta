@@ -114,7 +114,7 @@ export default function DayScreen({
 
   // Heimat-Vergleich („Zu Hause 4° · Regen 20 %“): leise Zeile vor den Zielen.
   // Ohne gesetzten Heimatort fehlt die Zeile — kein Platzhalter, kein Wachstum.
-  const { home, weather: homeWx } = useHomeWeather()
+  const { home, weather: homeWx } = useHomeWeather(userName)
   const homeLine = home && homeWx ? (
     <span className="day-home" title={home.name}>
       <Home size={12} strokeWidth={2} aria-hidden="true" />

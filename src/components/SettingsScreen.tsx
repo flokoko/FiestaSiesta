@@ -10,8 +10,7 @@ import { LEAD_OPTIONS, readDefaultLead, writeDefaultLead } from '../lib/wake'
 import { isIos, isStandalone } from '../lib/platform'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
-import { geocodePlace } from '../lib/poiCoords'
-import { readHomePlace, writeHomePlace, type HomePlace } from '../lib/homeWeather'
+import { defaultHomePlace, geocodeHomePlace, readHomePlace, writeHomePlace, type HomePlace } from '../lib/homeWeather'
 import {
   isPushSupported,
   isPushConfigured,
@@ -100,8 +99,10 @@ export default function SettingsScreen({
   const [catsOpen, setCatsOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   // Heimatort: Vergleichszeile „Zu Hause …°" auf dem Tag-Screen. Der Ort gilt
-  // für dieses Gerät, deshalb localStorage statt Supabase.
+  // für dieses Gerät, deshalb localStorage statt Supabase. Ohne eigene
+  // Einstellung greift der Standard des Namens (München/Landshut).
   const [homePlace, setHomePlace] = useState<HomePlace | null>(() => readHomePlace())
+  const effectiveHomePlace = homePlace ?? defaultHomePlace(userName)
   const [showHomePlaceForm, setShowHomePlaceForm] = useState(false)
   const [homePlaceInput, setHomePlaceInput] = useState('')
   const [homePlaceBusy, setHomePlaceBusy] = useState(false)
@@ -188,12 +189,12 @@ export default function SettingsScreen({
     if (!name) return
     setHomePlaceBusy(true)
     try {
-      const coords = await geocodePlace(name)
+      const coords = await geocodeHomePlace(name)
       if (!coords) {
         toast('Ort nicht gefunden.', 'error')
         return
       }
-      const next: HomePlace = { lat: coords.lat, lon: coords.lon, name }
+      const next: HomePlace = { lat: coords.lat, lon: coords.lon, name: coords.name }
       writeHomePlace(next)
       setHomePlace(next)
       navigator.vibrate?.(10)
@@ -506,11 +507,14 @@ export default function SettingsScreen({
           <div className="set-row">
             <Home size={17} strokeWidth={2} className="set-icon" />
             <span className="set-label">Heimatort</span>
-            <span className="set-value">{homePlace ? homePlace.name : 'nicht gesetzt'}</span>
+            <span className="set-value">
+              {effectiveHomePlace ? effectiveHomePlace.name : 'nicht gesetzt'}
+              {!homePlace && effectiveHomePlace && <span className="set-value-note"> · Standard</span>}
+            </span>
             <button
               type="button"
               className="set-mini-btn"
-              onClick={() => { setHomePlaceInput(homePlace?.name ?? ''); setShowHomePlaceForm((open) => !open) }}
+              onClick={() => { setHomePlaceInput(effectiveHomePlace?.name ?? ''); setShowHomePlaceForm((open) => !open) }}
               aria-label="Heimatort ändern"
             >
               <Pencil size={15} strokeWidth={2} />
@@ -558,6 +562,7 @@ export default function SettingsScreen({
           )}
           <p className="set-hint">
             Für die Vergleichszeile „Zu Hause …“ auf dem Tag-Screen — Wetter am Heimatort statt nur vor Ort.
+            Ohne eigene Angabe gilt der Standard deines Namens (München bzw. Landshut).
           </p>
         </div>
       </section>
