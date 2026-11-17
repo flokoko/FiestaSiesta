@@ -1,36 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
-  CalendarPlus, Sunrise, Sunset, Home, CloudRain, ShoppingCart, Backpack, Wallet, Activity,
+  CalendarPlus, Sunset, CloudRain, Activity,
 } from 'lucide-react'
 import type { TabView } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
 import type { TripForecast } from '../lib/tripWeather'
 import { SLOTS, isoDay } from '../lib/tripPlan'
-import { sunClock } from '../lib/tripWeather'
-import { pointKey } from '../lib/poiWeather'
 import { sunWarning } from '../lib/sunWarning'
-import { usePoiWeather } from '../hooks/usePoiWeather'
 import { useLiveWeather } from '../hooks/useLiveWeather'
-import { useHomeWeather } from '../hooks/useHomeWeather'
 import { useCanaryClock } from '../hooks/useCanaryClock'
 import { hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import SlotIcon from './SlotIcon'
-import WeatherGlyph from './WeatherGlyph'
 import TodayWeather from './TodayWeather'
 import './DayScreen.css'
 import { TRIP, TRIP_START, TRIP_LENGTH, formatDayLong, formatDayShort, formatRange, tripDay, tripDays, tripPhase, daysUntilTrip } from '../lib/trip'
 
 interface DayScreenProps {
-  userName: string
   participantCount: number
   shoppingCount: number
   shoppingChecked: number
   bringCount: number
   expenseTotal: number
   userBalance: number
-  bristolEnabled: boolean
   notesCount: number
   proposalCount: number
   /** gilt der Plan pro Tag (aus useTripPlan in App.tsx) */
@@ -55,8 +48,8 @@ function euro(value: number): string {
  * Reiseplan nicht mehr zwei Taps tief liegt.
  */
 export default function DayScreen({
-  userName, participantCount, shoppingCount, shoppingChecked, bringCount,
-  expenseTotal, userBalance, bristolEnabled, notesCount, proposalCount,
+  participantCount, shoppingCount, shoppingChecked, bringCount,
+  expenseTotal, userBalance, notesCount, proposalCount,
   plan, weather, dayIso, onPickDay, onNavigate, onEmergency,
 }: DayScreenProps) {
   const today = new Date()
@@ -112,19 +105,9 @@ export default function DayScreen({
   const open = Math.max(0, shoppingCount - shoppingChecked)
   const decidedSlots = Object.values(plan).reduce((n, d) => n + Object.keys(d).length, 0)
 
-  // Heimat-Vergleich („Zu Hause 4° · Regen 20 %“): leise Zeile vor den Zielen.
-  // Ohne gesetzten Heimatort fehlt die Zeile — kein Platzhalter, kein Wachstum.
-  const { home, weather: homeWx } = useHomeWeather(userName)
-  const homeLine = home && homeWx ? (
-    <span className="day-home" title={home.name}>
-      <Home size={12} strokeWidth={2} aria-hidden="true" />
-      <span>Zu Hause {Math.round(homeWx.temp)}° · Regen {Math.round(homeWx.rain)} %</span>
-    </span>
-  ) : null
-
   // Rückweg im Dunkeln? Nur der letzte Punkt des Tages mit Koordinaten zählt,
   // und nur wenn die Heimfahrt eine Bergstraße ist (≥ 20 Min) und nach dem
-  // Sonnenuntergang ankommt. Der Hinweis steht unter der Sonnenzeiten-Zeile.
+  // Sonnenuntergang ankommt. Der Hinweis steht als Badge in der Plan-Sektion.
   const sunWarn = useMemo(
     () => (dayPlan ? sunWarning({ sunsetIso: wx?.sunset ?? null, plan: dayPlan, day: selectedIso }) : null),
     [dayPlan, selectedIso, wx?.sunset],
@@ -137,47 +120,6 @@ export default function DayScreen({
       : phase === 'after'
         ? 'Reise vorbei'
         : `Tag ${selectedIndex + 1} von ${TRIP_LENGTH}`
-
-  const remaining = day !== null ? TRIP_LENGTH - day : null
-  const metaRight = isToday && remaining !== null
-    ? remaining === 0 ? 'Abreisetag' : `noch ${remaining} ${remaining === 1 ? 'Tag' : 'Tage'}`
-    : phase === 'before'
-      ? `ab ${formatDayShort(TRIP_START)}`
-      : null
-
-  // Ziel-Wetter nur für den gewählten Tag — vorher lud der Reise-Tab alle Tage.
-  const poiTargets = useMemo(() => {
-    if (!dayPlan) return []
-    const out: Array<{ day: string; lat: number; lon: number; id: string; label: string }> = []
-    for (const slot of SLOTS) {
-      const p = dayPlan[slot.key]
-      if (!p || typeof p.place_lat !== 'number' || typeof p.place_lon !== 'number') continue
-      out.push({
-        day: selectedIso,
-        lat: p.place_lat,
-        lon: p.place_lon,
-        id: p.id,
-        label: p.place?.split('·')[0].trim() || p.title,
-      })
-    }
-    return out
-  }, [dayPlan, selectedIso])
-
-  const poiForecast = usePoiWeather(
-    useMemo(() => poiTargets.map((t) => ({ day: t.day, lat: t.lat, lon: t.lon })), [poiTargets]),
-  )
-
-  const poiLines = poiTargets
-    .map((t) => {
-      const key = pointKey(t.lat, t.lon)
-      const entry = poiForecast[key]
-      const pointWeather = entry?.days[selectedIso]
-      if (!pointWeather) return null
-      return { id: t.id, label: t.label, elevation: entry?.elevation ?? null, weather: pointWeather }
-    })
-    .filter((line): line is NonNullable<typeof line> => line !== null)
-    .sort((a, b) => (b.elevation ?? 0) - (a.elevation ?? 0))
-    .slice(0, 2)
 
   // Regen-Hinweis nur für morgen, gleiche Schwelle wie der Push-Alarm (50 %).
   const tomorrowWx = useMemo(() => {
@@ -200,20 +142,15 @@ export default function DayScreen({
     ? 'Öffne den Reiseplan und schlag etwas für heute vor.'
     : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
-  const quickTiles: Array<{ key: TabView; label: string; hint: string; icon: typeof ShoppingCart }> = [
-    { key: 'list', label: 'Einkaufen', hint: `${open} offen`, icon: ShoppingCart },
-    { key: 'bring', label: 'Mitbringen', hint: `${bringCount} Sachen`, icon: Backpack },
-    { key: 'expenses', label: 'Ausgabe', hint: 'eintragen', icon: Wallet },
-    // Bristol bleibt fester Bestandteil des Cockpits (Flo-Entscheid).
-    { key: 'bristol', label: 'Bristol', hint: bristolEnabled ? 'Eintrag' : 'einschalten', icon: Activity },
-  ]
-
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
     { label: 'Karte', icon: Map, onClick: () => onNavigate('karte') },
-    { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
     { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
+    { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
     { label: 'Offen jetzt', icon: Clock, onClick: () => onNavigate('offen') },
+    // Bristol bleibt fester Bestandteil des Cockpits (Flo-Entscheid): ohne
+    // Modus zeigt der Bristol-Tab wie bisher das Gate.
+    { label: 'Bristol', icon: Activity, onClick: () => onNavigate('bristol') },
     { label: 'Notfall', icon: ShieldAlert, onClick: onEmergency },
   ]
 
@@ -291,10 +228,8 @@ export default function DayScreen({
           </span>
         </div>
         <h1 className="today-date">{formatDayLong(selectedDate)}</h1>
-        <div className="today-sub">{TRIP.name} · {TRIP.place}</div>
-        <div className="today-sub today-sub-soft">
-          {formatRange()} · {participantCount === 1 ? 'du allein' : `${participantCount} dabei`}
-          {metaRight ? ` · ${metaRight}` : ''}
+        <div className="today-sub">
+          {TRIP.place} · {formatRange()} · {participantCount === 1 ? 'du allein' : `${participantCount} dabei`}
         </div>
         <div className="today-progress" aria-hidden="true">
           {days.map((date, index) => {
@@ -382,6 +317,17 @@ export default function DayScreen({
             : `${TRIP_LENGTH} Tage · noch nichts festgelegt`}
         </p>
 
+        {sunWarn && (
+          <p className="day-plan-warn">
+            <Sunset size={12} strokeWidth={2} aria-hidden="true" />
+            {/* Icon und Text als EIN Span: Flex soll den Satz in sich
+                umbrechen, nicht auf zwei Spalten verteilen. */}
+            <span>
+              Rückweg von {sunWarn.place} im Dunkeln — Sonnenuntergang {sunWarn.sunsetClock}, {sunWarn.minutes} Min. Fahrt.
+            </span>
+          </p>
+        )}
+
         {slots.length > 0 ? (
           <button type="button" className="today-plan" onClick={() => onNavigate('plan')}>
             {slots.map((slot) => {
@@ -416,45 +362,6 @@ export default function DayScreen({
         )}
       </section>
 
-      {(poiLines.length > 0 || (wx?.sunrise && wx?.sunset) || homeLine || sunWarn) && (
-        <div className="day-meta">
-          {homeLine}
-          {poiLines.map((line) => (
-            <span className="day-poi-row" key={line.id}>
-              <WeatherGlyph code={line.weather.code} size={12} className="day-poi-icon" />
-              <span className="day-poi-name">{line.label}</span>
-              <span
-                className="day-poi-value"
-                title={line.elevation !== null ? 'Höhe aus dem Geländemodell (Open-Meteo) — Näherung' : undefined}
-              >
-                {line.elevation !== null ? `≈${Math.round(line.elevation / 10) * 10} m · ` : ''}
-                {Math.round(line.weather.tMax)}°
-                {line.weather.wind >= 40 ? ` · ${Math.round(line.weather.wind)} km/h` : ''}
-              </span>
-            </span>
-          ))}
-          {wx?.sunrise && wx?.sunset && (
-            <span className="day-sun">
-              <Sunrise size={12} strokeWidth={2} aria-hidden="true" />
-              <span>{sunClock(wx.sunrise)}</span>
-              <span className="day-sun-sep">·</span>
-              <Sunset size={12} strokeWidth={2} aria-hidden="true" />
-              <span>{sunClock(wx.sunset)}</span>
-            </span>
-          )}
-          {sunWarn && (
-            <span className="day-sun-warn">
-              <Sunset size={12} strokeWidth={2} aria-hidden="true" />
-              {/* Icon und Text als EIN Span: Flex soll den Satz in sich
-                  umbrechen, nicht auf zwei Spalten verteilen. */}
-              <span>
-                Rückweg von {sunWarn.place} im Dunkeln — Sonnenuntergang {sunWarn.sunsetClock}, {sunWarn.minutes} Min. Fahrt.
-              </span>
-            </span>
-          )}
-        </div>
-      )}
-
       {tomorrowWx && (
         <p className="day-rain">
           <CloudRain size={13} strokeWidth={2} aria-hidden="true" />
@@ -463,22 +370,6 @@ export default function DayScreen({
           </span>
         </p>
       )}
-
-      <section className="today-section">
-        <div className="today-section-head">
-          <h2>Schnellzugriff</h2>
-          <span className="today-hint">Hallo {userName}</span>
-        </div>
-        <div className="today-tiles">
-          {quickTiles.map(({ key, label, hint, icon: Icon }) => (
-            <button key={key} type="button" className="today-tile" onClick={() => onNavigate(key)}>
-              <span className="today-tile-icon"><Icon size={17} strokeWidth={2} /></span>
-              <span className="today-tile-label">{label}</span>
-              <span className="today-tile-hint">{hint}</span>
-            </button>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

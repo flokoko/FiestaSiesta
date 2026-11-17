@@ -635,14 +635,12 @@ export default function App() {
           {visited.has('home') && (
             <ScreenPane id="home" active={tab === 'home'} direction={screenDir}>
           <MemoDay
-            userName={userName}
             participantCount={participants.length}
             shoppingCount={shoppingItems.length}
             shoppingChecked={checkedCount}
             bringCount={bringItems.length}
             expenseTotal={expenseTotal}
             userBalance={userBalance}
-            bristolEnabled={bristolEnabled}
             notesCount={notes.length}
             proposalCount={tripProposalCount}
             plan={tripPlan}
@@ -827,7 +825,7 @@ export default function App() {
             <ScreenPane id="weather" active={tab === 'weather'} direction={screenDir}>
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <MemoWeather />
+            <MemoWeather userName={userName} dayIso={dayIso} plan={tripPlan} />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>

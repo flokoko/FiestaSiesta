@@ -4,6 +4,12 @@ import { MoreHorizontal, MapPin, Radar } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName } from '../lib/weather'
 import { useSheetFocus } from '../hooks/useSheetFocus'
+import { useHomeWeather } from '../hooks/useHomeWeather'
+import { usePoiWeather } from '../hooks/usePoiWeather'
+import { SLOTS } from '../lib/tripPlan'
+import { pointKey } from '../lib/poiWeather'
+import { formatDayShort } from '../lib/trip'
+import type { TripPlanMap } from '../hooks/useTripPlan'
 import 'leaflet/dist/leaflet.css'
 import './WeatherScreen.css'
 
@@ -141,7 +147,13 @@ function MapUpdater({ lat, lon }: { lat: number; lon: number }) {
   return null
 }
 
-export default function WeatherScreen() {
+interface WeatherScreenProps {
+  userName: string
+  dayIso: string
+  plan: TripPlanMap
+}
+
+export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenProps) {
   const isDark = useIsDark()
   const [weather, setWeather] = useState<WeatherData | null>(() => readStoredWeather()?.data ?? null)
   const [loading, setLoading] = useState(false)
@@ -407,6 +419,49 @@ export default function WeatherScreen() {
     return () => fetchAbortRef.current?.abort()
   }, [])
 
+  // ── Heimat & Ziele des gewählten Tages (UI-Stufe 1) ──────────────────
+  // Alles hier MUSS vor dem frühen return („Ort festlegen") stehen: Rules
+  // of Hooks — React kennt die Reihenfolge, kein Hook darf übersprungen
+  // werden, sonst springt der Screen beim ersten Render aus der Taktik.
+  const { home, weather: homeWx } = useHomeWeather(userName)
+
+  // Ziele nur mit Koordinaten — ohne die gibt es kein Ziel-Wetter.
+  const poiTargets = useMemo(() => {
+    const dayPlan = plan[dayIso]
+    if (!dayPlan) return []
+    const out: Array<{ day: string; lat: number; lon: number; id: string; label: string }> = []
+    for (const slot of SLOTS) {
+      const p = dayPlan[slot.key]
+      if (!p || typeof p.place_lat !== 'number' || typeof p.place_lon !== 'number') continue
+      out.push({
+        day: dayIso,
+        lat: p.place_lat,
+        lon: p.place_lon,
+        id: p.id,
+        label: p.place?.split('·')[0].trim() || p.title,
+      })
+    }
+    return out
+  }, [plan, dayIso])
+
+  const poiForecast = usePoiWeather(poiTargets)
+
+  // Zeilen zum Rendern: Tageswerte am Ziel, max. 3, höchstgelegene zuerst.
+  const poiLines = useMemo(
+    () =>
+      poiTargets
+        .map((t) => {
+          const entry = poiForecast[pointKey(t.lat, t.lon)]
+          const pointWeather = entry?.days[dayIso]
+          if (!pointWeather) return null
+          return { id: t.id, label: t.label, elevation: entry?.elevation ?? null, weather: pointWeather }
+        })
+        .filter((line): line is NonNullable<typeof line> => line !== null)
+        .sort((a, b) => (b.elevation ?? 0) - (a.elevation ?? 0))
+        .slice(0, 3),
+    [poiTargets, poiForecast, dayIso],
+  )
+
   // ── No location set: prompt ──
   if (!storedLocation && !showLocationInput) {
     return (
@@ -530,6 +585,18 @@ export default function WeatherScreen() {
             <span className="wx-now-time">{fmtTime(weather.current.time)}</span>
           </div>
 
+          {home && homeWx && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">Zu Hause</h2>
+              <div className="wx-rows">
+                <div className="wx-row">
+                  <span>{getWeatherInfo(homeWx.code).emoji} {home.name}</span>
+                  <b>{Math.round(homeWx.temp)}° · Regen {Math.round(homeWx.rain)} %</b>
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="wx-group">
             <h2 className="wx-group-title">Stündlich</h2>
             <div className="weather-hourly-scroll">
@@ -573,9 +640,35 @@ export default function WeatherScreen() {
             </div>
           </section>
 
+          {poiLines.length > 0 && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">
+                Ziele · {formatDayShort(new Date(`${dayIso}T12:00:00`))}
+              </h2>
+              <div className="wx-rows">
+                {poiLines.map((line) => (
+                  <div key={line.id} className="wx-row">
+                    <span>{getWeatherInfo(line.weather.code).emoji} {line.label}</span>
+                    <b>
+                      {line.elevation !== null ? `≈${Math.round(line.elevation / 10) * 10} m · ` : ''}
+                      {Math.round(line.weather.tMax)}°
+                      {line.weather.wind >= 40 ? ` · ${Math.round(line.weather.wind)} km/h` : ''}
+                    </b>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="wx-group">
             <h2 className="wx-group-title">Details</h2>
             <div className="wx-rows">
+              {weather.daily.sunrise[0] && (
+                <div className="wx-row"><span>Sonnenaufgang</span><b>{fmtTime(weather.daily.sunrise[0])}</b></div>
+              )}
+              {weather.daily.sunset[0] && (
+                <div className="wx-row"><span>Sonnenuntergang</span><b>{fmtTime(weather.daily.sunset[0])}</b></div>
+              )}
               <div className="wx-row"><span>Luftfeuchtigkeit</span><b>{weather.current.humidity}%</b></div>
               <div className="wx-row"><span>Wind</span><b>{Math.round(weather.current.windSpeed)} km/h</b></div>
               <div className="wx-row"><span>UV-Index</span><b>{weather.current.uvIndex.toFixed(1)} · {uvDesc}</b></div>
