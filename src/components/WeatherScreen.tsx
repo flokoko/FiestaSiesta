@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import { MoreHorizontal, MapPin, Radar } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
-import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName } from '../lib/weather'
+import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName, dailyIndexFor } from '../lib/weather'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { useHomeWeather } from '../hooks/useHomeWeather'
 import { usePoiWeather } from '../hooks/usePoiWeather'
@@ -106,9 +106,18 @@ function fmtHour(dateStr: string) {
   return `${String(d.getHours()).padStart(2, '0')}:00`
 }
 
+// Radar-Frames tragen Unix-Sekunden (UTC). Ohne timeZone würde der Formatter
+// in der GERAETE-Zeit rendern (Zuhause UTC+1) — der Radarkopf lag genau 1 h
+// neben den open-meteo-Zeiten, die als Ortszeit erscheinen (Atlantic/Canary,
+// Konvention wie canaryClock in lib/liveWeather.ts).
+const radarTimeFmt = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Atlantic/Canary',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 function fmtRadarTime(ts: number) {
-  const d = new Date(ts * 1000)
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  return radarTimeFmt.format(new Date(ts * 1000))
 }
 
 /** Tracks the resolved theme ('light' | 'dark'), reacting to both the manual
@@ -462,6 +471,15 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
     [poiTargets, poiForecast, dayIso],
   )
 
+  // ── Details: Sonnenzeiten des GEWÄHLTEN Reisetags ──
+  // daily.sunrise[0] wäre „heute am Ort"; die Ziele-Sektion darüber und die
+  // Sonnenuntergangs-Warnung des Tag-Screens meinen aber den gewählten Tag —
+  // beide Zahlen müssen zum selben Tag gehören.
+  const sunIdx = weather ? dailyIndexFor(dayIso, weather.daily.time) : 0
+  const sunDaySuffix = weather && sunIdx !== 0
+    ? ` · ${formatDayShort(new Date(`${dayIso}T12:00:00`))}`
+    : ''
+
   // ── No location set: prompt ──
   if (!storedLocation && !showLocationInput) {
     return (
@@ -572,7 +590,9 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
         </div>
       )}
 
-      {weather && currentInfo && !showLocationInput && (
+      {/* Das Ortsformular sitzt im Fluss oben — der Screen-Inhalt bleibt
+          beim Tippen sichtbar und der Screen wirkt nicht wie kaputt. */}
+      {weather && currentInfo && (
         <>
           <div className="wx-now">
             <span className="wx-now-emoji">{currentInfo.emoji}</span>
@@ -663,11 +683,11 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
           <section className="wx-group">
             <h2 className="wx-group-title">Details</h2>
             <div className="wx-rows">
-              {weather.daily.sunrise[0] && (
-                <div className="wx-row"><span>Sonnenaufgang</span><b>{fmtTime(weather.daily.sunrise[0])}</b></div>
+              {weather.daily.sunrise[sunIdx] && (
+                <div className="wx-row"><span>Sonnenaufgang{sunDaySuffix}</span><b>{fmtTime(weather.daily.sunrise[sunIdx])}</b></div>
               )}
-              {weather.daily.sunset[0] && (
-                <div className="wx-row"><span>Sonnenuntergang</span><b>{fmtTime(weather.daily.sunset[0])}</b></div>
+              {weather.daily.sunset[sunIdx] && (
+                <div className="wx-row"><span>Sonnenuntergang{sunDaySuffix}</span><b>{fmtTime(weather.daily.sunset[sunIdx])}</b></div>
               )}
               <div className="wx-row"><span>Luftfeuchtigkeit</span><b>{weather.current.humidity}%</b></div>
               <div className="wx-row"><span>Wind</span><b>{Math.round(weather.current.windSpeed)} km/h</b></div>

@@ -605,10 +605,12 @@
 }
 
 /* ── „Mehr"-Blatt ────────────────────────────────────────────────── */
+/* 120: über der Kopfzeile (100), damit sie beim offenen Blatt mit abge-
+   dunkelt wird und nicht mehr klickbar ist; unter dem Toast (9999). */
 .more-scrim {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 120;
   background: rgba(44, 26, 24, 0.34);
   display: flex;
   align-items: flex-end;
@@ -868,10 +870,11 @@
   cursor: pointer;
 }
 
+/* 120 wie .more-scrim: über der Kopfzeile (100), unter Toast (9999). */
 .list-menu-scrim {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 120;
   display: flex;
   align-items: flex-end;
   background: rgba(44, 26, 24, 0.34);

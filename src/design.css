@@ -3742,6 +3742,29 @@ body::before {
   #root .bring-drag-handle {
     margin: -8px -4px;
   }
+
+  /* Runde/kleine Icon-Knöpfe; sichtbar bleiben sie 34 px (bzw. ~28×30) —
+     min-width/min-height würde den Knopf sichtbar auf 44 px aufblähen.
+     Stattdessen vergrößert ein transparentes ::after die Trefferfläche,
+     ohne den Knopf zu zeigen (Muster .expense-copy-btn). */
+  #root .weather-radar-play-btn,
+  #root .weather-screen-geo-cancel,
+  #root .em-close {
+    position: relative;
+  }
+
+  #root .weather-radar-play-btn::after,
+  #root .em-close::after {
+    content: '';
+    position: absolute;
+    inset: -5px; /* 34 px + 2×5 = 44 px */
+  }
+
+  #root .weather-screen-geo-cancel::after {
+    content: '';
+    position: absolute;
+    inset: -7px -8px; /* ~28×30 gemessen */
+  }
 }
 
 /* Toast-Typ-Streifen: Toast.css setzt border-left, aber der Kurzschluss

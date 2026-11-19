@@ -62,3 +62,10 @@ export async function geocodeCity(query: string): Promise<GeoResult> {
 export function formatLocationName(result: GeoResult): string {
   return result.country ? `${result.name}, ${result.country}` : result.name
 }
+
+/** Index des gewählten Reisetags in den daily.time-Strings (ISO 'YYYY-MM-DD')
+ *  von open-meteo; 0 (= heute am Ort) als Fallback, wenn der Tag fehlt. */
+export function dailyIndexFor(dayIso: string, times: readonly string[]): number {
+  const idx = times.indexOf(dayIso)
+  return idx >= 0 ? idx : 0
+}
