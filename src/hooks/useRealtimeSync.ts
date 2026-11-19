@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { subscribeList } from '../lib/realtimeBus'
 
-type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes' | 'trip_comments' | 'packlist_items'
+// 'recipes' ist bewusst NICHT in DEFAULT_TABLES: Rezept-Events sollen nur den
+// Küchen-Screen wecken, nicht jeden anderen Abonnenten der Liste.
+type TableName = 'items' | 'categories' | 'notes' | 'expenses' | 'expense_splits' | 'expense_quotas' | 'participants' | 'bristol_entries' | 'settlements' | 'trip_proposals' | 'trip_votes' | 'trip_comments' | 'packlist_items' | 'recipes'
 
 interface UseRealtimeSyncOptions {
   listId: string | null

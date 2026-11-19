@@ -232,6 +232,59 @@ describe('calculateQuotaShares', () => {
     expect(Math.round(total * 100)).toBe(100000)
     expect(Math.max(...shares.map(s => s.share_amount)) - Math.min(...shares.map(s => s.share_amount))).toBeLessThanOrEqual(0.01)
   })
+
+  it('gewichtet Quoten relativ: 40/30 auf 100 € → 57,14/42,86', () => {
+    // Quotensumme 70 ≠ 100: die Prozente sind Verhältnis, nicht absolute
+    // Anteile — 10000 Cent geteilt durch 70: raw 5714,29 / 4285,71, der Rest-
+    // Cent (größter Bruchteil-Verlust) geht an Bob → 4286.
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 40), makeQuota('Bob', 30)],
+      ['Alice', 'Bob'],
+      100,
+    )
+    expect(shares).toEqual([
+      { person_name: 'Alice', share_amount: 57.14 },
+      { person_name: 'Bob', share_amount: 42.86 },
+    ])
+  })
+
+  it('gleiche Quoten 60/60 auf 90 € bleiben exakter Equal-Split (45/45)', () => {
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 60), makeQuota('Bob', 60)],
+      ['Alice', 'Bob'],
+      90,
+    )
+    expect(shares).toEqual([
+      { person_name: 'Alice', share_amount: 45 },
+      { person_name: 'Bob', share_amount: 45 },
+    ])
+  })
+
+  it('bleibt bei Quotensumme 100 bitgenau unverändert (60/30/10 auf 100 €)', () => {
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 60), makeQuota('Bob', 30), makeQuota('Carol', 10)],
+      ['Alice', 'Bob', 'Carol'],
+      100,
+    )
+    expect(shares).toEqual([
+      { person_name: 'Alice', share_amount: 60 },
+      { person_name: 'Bob', share_amount: 30 },
+      { person_name: 'Carol', share_amount: 10 },
+    ])
+  })
+
+  it('teilt 0,01 € bei 40/30 exakt auf, ohne negative Anteile', () => {
+    // 1 Cent, pctSumme 70: raw 0,57 / 0,43 → beide floored auf 0, der eine
+    // Cent geht nach Bruchteil-Verlust an Alice (40/70 > 30/70).
+    const shares = calculateQuotaShares(
+      [makeQuota('Alice', 40), makeQuota('Bob', 30)],
+      ['Alice', 'Bob'],
+      0.01,
+    )
+    const total = shares.reduce((s, r) => s + r.share_amount, 0)
+    expect(Math.round(total * 100)).toBe(1)
+    expect(shares.every(s => s.share_amount >= 0)).toBe(true)
+  })
 })
 
 describe('roundCents', () => {

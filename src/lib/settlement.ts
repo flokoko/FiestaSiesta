@@ -266,10 +266,16 @@ export function calculateShareAmounts(
 
 /**
  * Calculate share amounts from quota percentages.
- * Same rounding logic as calculateShareAmounts: floor to cents. Rest-Cents
- * verteilen sich zuerst nach dem größten Bruchteil-Verlust, danach reihum an
- * die Personen mit Quote > 0 — die Shares summieren sich IMMER exakt auf
- * den Betrag (auch bei Quotensumme ≠ 100 %; kein stiller Centverlust).
+ * Quoten sind RELATIVE GEWICHTE: der Nenner ist die Summe der beteiligten
+ * Quoten (pctSumme), nicht fix 100 — eine Zeile 40/30 (Alt-Stand, direkter
+ * Insert, künftige UI-Änderung) meint das Verhältnis 40:30, also 57,14 € /
+ * 42,86 € bei 100 €, nicht 55/45 mit Reihum-Rest. Bei pctSumme = 100 ist die
+ * Normalisierung divisionstechnisch wirkungslos, das Ergebnis bleibt bitgenau
+ * gleich.
+ * Cent-Exaktheit wie in calculateShareAmounts: floor auf Cent, Rest-Cents
+ * zuerst nach dem größten Bruchteil-Verlust, als letzte Sicherung reihum —
+ * die Shares summieren sich IMMER exakt auf den Betrag (kein stiller
+ * Centverlust, keine negativen Anteile).
  */
 export function calculateQuotaShares(
   quotas: ExpenseQuota[],
@@ -309,10 +315,15 @@ export function calculateQuotaShares(
     }))
   }
 
+  // Quoten normalisieren — relative Gewichte: Anteil und Bruchteil-Verlust
+  // teilen sich denselben Nenner (Summe der beteiligten Quoten). Bei pctSumme
+  // = 100 divisionstechnisch identisch zum bisherigen totalCents * pct / 100.
+  const pctSumme = participants.reduce((sum, p) => sum + (percentMap.get(p) ?? 0), 0)
+
   // Calculate raw cents per person (floored)
   const rawCents = participants.map(p => {
     const pct = percentMap.get(p) ?? 0
-    return { person_name: p, cents: Math.floor((totalCents * pct) / 100) }
+    return { person_name: p, cents: Math.floor((totalCents * pct) / pctSumme) }
   })
 
   // Remainder: distribute to those with the highest fractional part
@@ -326,7 +337,7 @@ export function calculateQuotaShares(
     //    bekommt sie zuerst.
     const fractionalLoss = participants.map((p, i) => {
       const pct = percentMap.get(p) ?? 0
-      const raw = (totalCents * pct) / 100
+      const raw = (totalCents * pct) / pctSumme
       return { person_name: p, loss: raw - rawCents[i].cents, idx: i }
     })
     fractionalLoss.sort((a, b) => b.loss - a.loss)
@@ -335,9 +346,11 @@ export function calculateQuotaShares(
       rawCents[f.idx].cents += 1
       remainder -= 1
     }
-    // 2. Falls dann noch Rest übrig ist (Quotensumme < 100 %, alle Bruchteile
-    //    schon verteilt): reihum an die Personen mit Quote > 0 — kein stiller
-    //    Cent-Verlust, die Shares summieren sich exakt auf den Betrag.
+    // 2. Nur noch Rettungsnetz (z. B. Float-Ausnahme): Nach der Normalisierung
+    //    ist der Rest auf Bruchteil-Verluste begrenzt (< Teilnehmerzahl) und
+    //    Schritt 1 verteilt mehr als genug — reihum an die Personen mit Quote
+    //    > 0. Kein stiller Cent-Verlust, die Shares summieren sich exakt auf
+    //    den Betrag.
     let turn = 0
     while (remainder > 0) {
       rawCents[turn % rawCents.length].cents += 1
@@ -345,7 +358,9 @@ export function calculateQuotaShares(
       remainder -= 1
     }
   } else if (remainder < 0) {
-    // Quotensumme > 100 %: Überschuss reihum abziehen, keine Person unter 0.
+    // Nach der Normalisierung (Nenner = Quotensumme) kann kaum noch ein
+    // Überschuss entstehen — der Zweig bleibt als Float-Sicherung: Überschuss
+    // reihum abziehen, keine Person unter 0.
     // distributed > totalCents ⇒ mindestens eine Person hat Cent → terminiert.
     let turn = 0
     while (remainder < 0 && rawCents.some(r => r.cents > 0)) {

@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { readCache, writeCache } from '../lib/readCache'
 import { supabase } from '../lib/supabase'
+import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { useToast } from '../context/ToastContext'
 import {
   formatIngredient, parseIngredients, parseSteps, recipeMeta, unitLabel,
@@ -25,6 +26,12 @@ export default function RecipesScreen({ listId, userName }: Props) {
   const [open, setOpen] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Synchroner Doppeltap-Schutz: `busy` (State) kommt zu spät — zwei Taps im
+  // selben Tick sehen beide `false` und legen die Zutaten doppelt an (kein
+  // Unique-Index auf items). Der Ref wird vor dem ersten `await` gesetzt.
+  const busyRef = useRef(false)
+  // Realtime-Debounce-Timer (400 ms) — Cleanup im Unmount-Effekt unten.
+  const realtimeTimerRef = useRef<number | null>(null)
 
   const load = useCallback(async () => {
     // Erst der letzte Stand aus dem Gerät — so steht die Küche sofort, auch offline.
@@ -41,6 +48,8 @@ export default function RecipesScreen({ listId, userName }: Props) {
       .order('created_at', { ascending: true })
 
     if (error || !data) {
+      // Realtime-Reload fehlgeschlagen: die bereits sichtbaren Rezepte stehen
+      // lassen — nur offline/loading setzen, KEIN setRecipes.
       setOffline(true)
       setLoading(false)
       return
@@ -55,10 +64,34 @@ export default function RecipesScreen({ listId, userName }: Props) {
     void load()
   }, [load])
 
+  useRealtimeSync({
+    listId,
+    // Kein DEFAULT_TABLES-Eintrag (`'recipes'` ist bewusst opt-in), inline statt
+    // pro Render zusammengesetzt — der Hook stabilisiert das Abo über
+    // `tablesKey`, kein Abo-Churn.
+    tables: ['recipes'],
+    // Debounce wie in TripPlanScreen: ein Speicherlauf kann mehrere Zeilen je
+    // Event feuern — ein Refetch je Flut genügt. `load()` setzt bei gefülltem
+    // State direkt den Netzstand, ein Fehlschlag lässt das Sichtbare stehen.
+    onTableChange: () => {
+      if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+      realtimeTimerRef.current = window.setTimeout(() => {
+        realtimeTimerRef.current = null
+        void load()
+      }, 400)
+    },
+  })
+
+  // Hängenden Debounce-Timer beim Unmount abräumen.
+  useEffect(() => () => {
+    if (realtimeTimerRef.current) window.clearTimeout(realtimeTimerRef.current)
+  }, [])
+
   /** Zutaten, die noch nicht auf der Einkaufsliste stehen, in einem Rutsch anlegen. */
   const addToShopping = async (recipe: Recipe) => {
-    if (busy) return
+    if (busy || busyRef.current) return
     setBusy(true)
+    busyRef.current = true
     try {
       const { data: existing } = await supabase
         .from('items')
@@ -111,6 +144,7 @@ export default function RecipesScreen({ listId, userName }: Props) {
         'success',
       )
     } finally {
+      busyRef.current = false
       setBusy(false)
     }
   }
