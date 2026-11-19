@@ -77,4 +77,27 @@ describe('clearCacheForList', () => {
     clearCacheForList('list-c')
     expect(readCache('list-c', 'bristol_entries')).toBeNull()
   })
+
+  it('entfernt auch trip_plan und recipes (Plan und Küche haben eigene Slots)', () => {
+    writeCache('list-c', 'trip_plan', { plan: {}, count: 3 })
+    writeCache('list-c', 'recipes', [{ id: 'r1' }])
+    clearCacheForList('list-c')
+    expect(readCache('list-c', 'trip_plan')).toBeNull()
+    expect(readCache('list-c', 'recipes')).toBeNull()
+  })
+
+  it('writeCache schreibt nach clear identische Daten wieder (lastWritten-Diff geworfen)', () => {
+    // Genau der Bug: clearCacheForList räumte nur localStorage, der Speicher-
+    // Diff in writeCache sah die alten Nutzdaten weiter — identische Daten
+    // wurden nicht (erneut) geschrieben und der Offline-Start zeigte nichts.
+    const data = [{ id: 'n1', text: 'Karte an die Oma' }]
+    writeCache('list-a', 'notes', data)
+    clearCacheForList('list-a')
+    expect(readCache('list-a', 'notes')).toBeNull()
+    // IDENTISCHE Daten nochmal schreiben — der Cache darf nicht leer bleiben
+    writeCache('list-a', 'notes', [{ id: 'n1', text: 'Karte an die Oma' }])
+    expect(readCache('list-a', 'notes')).toEqual([{ id: 'n1', text: 'Karte an die Oma' }])
+    const raw = JSON.parse(localStorage.getItem('fs_cache_list-a_notes') ?? '{}') as { v?: string }
+    expect(raw.v).toBe(SCHEMA)
+  })
 })

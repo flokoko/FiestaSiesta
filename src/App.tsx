@@ -617,7 +617,7 @@ export default function App() {
 
       {!isOnline && (
         <div className="offline-banner" role="status">
-          <WifiOff size={16} strokeWidth={2} /> Du bist offline — {queueLength > 0 ? `${queueLength} ${queueLength === 1 ? 'Änderung wird' : 'Änderungen werden'} synchronisiert` : 'Listen-Änderungen werden zwischengespeichert, Geld und Plan brauchen Netz'}.
+          <WifiOff size={16} strokeWidth={2} /> Du bist offline — {queueLength > 0 ? `${queueLength} ${queueLength === 1 ? 'Änderung wird' : 'Änderungen werden'} synchronisiert` : 'Änderungen werden zwischengespeichert und später gesendet; Abstimmen im Reiseplan braucht Netz'}.
         </div>
       )}
 

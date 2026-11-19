@@ -34,6 +34,8 @@ const DEAD_MAX = 20
 const PING_INTERVAL_MS = 60_000
 /** Gültigkeit des Cross-Tab-Flush-Locks; abgelaufene Locks werden ignoriert */
 const LOCK_TTL_MS = 20_000
+/** Mindestabstand zwischen zwei Ping-getriggerten Retry-Flushes (pingConnectivity) */
+const FLUSH_RETRY_MIN_MS = 30_000
 
 function loadQueue(): QueuedOp[] {
   try {
@@ -126,6 +128,16 @@ let isOnlineState = navigator.onLine
 let queueLengthState = loadQueue().length
 let failedCountState = loadDeadOps().length
 let isFlushing = false
+/**
+ * Ergebnis-Promise eines LAUFENDEN Flushs (null = keiner). flushQueue reicht
+ * es an parallele Aufrufer durch, statt sie mit { success: 0, failed: 0 }
+ * abzuwürgen — App.tsx bekam sonst beim Reconnect immer 0/0, weil der
+ * Modul-Auto-Flush (applyConnectivity) schon lief, und der
+ * „Synchronisiert!“-Toast feuerte nie.
+ */
+let inFlightFlush: Promise<{ success: number; failed: number }> | null = null
+/** Timestamp des letzten per Ping ausgelösten Retry-Flushes (Drossel) */
+let lastFlushAttemptTs = 0
 let opIdCounter = 0
 /** Einziger Ping-Timer des Tabs (wird beim ersten Abonnenten gestartet) */
 let connectionInterval: ReturnType<typeof setInterval> | null = null
@@ -183,6 +195,54 @@ export function isNetworkFailure(e: unknown): boolean {
   return /network|failed to fetch|load failed|timeout|zeitlimit|abort/i.test(msg)
 }
 
+/**
+ * Versieht Insert-Payloads mit einer clientseitigen UUID als `id`: beim
+ * Objekt-Payload genau eine, beim Batch-Payload (Array, z. B. die
+ * expense_splits einer Ausgabe) je Zeile eine. Zeilen MIT eigener `id`
+ * (z. B. der Undo-Insert eines gelöschten Artikels, useListData.ts) bleiben
+ * unangetastet.
+ *
+ * Warum (Idempotenz): der Server committet die Zeile, die Antwort geht aber
+ * verloren (Timeout, „halb offenes Netz“) — der Op bleibt in der Queue und
+ * wird erneut ausgeführt. Würde jeder Versuch eine frische UUID würfeln,
+ * schriebe der zweite Versuch die Zeile DOPPELT (bei Ausgaben samt Anteilen:
+ * ein echtes Datenproblem beim Geld). Mit der EINMAL erzeugten id läuft der
+ * zweite Versuch auf 23505 (Unique-Verstoß), und executeOp behandelt genau
+ * diesen Fall als Erfolg und gibt die id zurück.
+ */
+function withRowIds(payload: Record<string, unknown>): {
+  payload: Record<string, unknown>
+  ids: string[]
+  changed: boolean
+} {
+  const existingId = (row: unknown): string | null => {
+    const id = (row as { id?: unknown } | null | undefined)?.id
+    return typeof id === 'string' ? id : null
+  }
+
+  if (Array.isArray(payload)) {
+    const ids: string[] = []
+    let changed = false
+    const rows = payload.map((row) => {
+      const existing = existingId(row)
+      if (existing !== null) {
+        ids.push(existing)
+        return row as Record<string, unknown>
+      }
+      changed = true
+      const id = crypto.randomUUID()
+      ids.push(id)
+      return { id, ...(row as Record<string, unknown>) }
+    })
+    return { payload: rows as unknown as Record<string, unknown>, ids, changed }
+  }
+
+  const existing = existingId(payload)
+  if (existing !== null) return { payload, ids: [existing], changed: false }
+  const id = crypto.randomUUID()
+  return { payload: { id, ...payload }, ids: [id], changed: true }
+}
+
 /** Ausführen eines Ops; Inserts geben die neue Zeilen-id zurück (Temp-ID-Mapping). */
 async function executeOp(op: QueuedOp): Promise<string | null> {
   if (op.type === 'rpc') {
@@ -198,11 +258,38 @@ async function executeOp(op: QueuedOp): Promise<string | null> {
     // „multiple rows returned" — NACHDEM die Zeilen schon in der DB stehen.
     // Der Flush hielt das für einen Fehler, versuchte es dreimal und schrieb
     // die Anteile dreifach (live nachgewiesen: 1 Ausgabe, 9 Anteile).
-    const { data, error } = await supabase.from(op.table).insert(op.payload).select('id')
-    if (error) throw error
+    //
+    // IDEMPOTENZ — „Server committet, Antwort verloren“: die client-UUID je
+    // Zeile (enqueueOp erzeugt sie einmalig via withRowIds; hier nochmals
+    // angewandt, um nachgerüstet für Ops aus älteren App-Versionen ohne id).
+    // Schlägt der Flush fehl, OBWOHL der Server die Zeile längst committet
+    // hat, läuft der wiederholte Insert auf denselben id-Wert → 23505 →
+    // unten bewusst als ERFOLG gewertet, statt die Zeile doppelt zu schreiben.
+    const prepared = withRowIds(op.payload)
+    if (prepared.changed) {
+      // Nachtrag (nur Ops ohne id, z. B. aus einer älteren App-Version): die
+      // erzeugte UUID sofort in den gespeicherten Op zurückschreiben — jeder
+      // weitere Versuch (Retry wie späterer Flush) schickt dann dieselbe id.
+      const stored = loadQueue()
+      const idx = stored.findIndex((q) => q.id === op.id)
+      if (idx !== -1) {
+        stored[idx] = { ...stored[idx], payload: prepared.payload }
+        saveQueue(stored)
+      }
+    }
+    const { data, error } = await supabase.from(op.table).insert(prepared.payload).select('id')
+    if (error) {
+      // 23505 = Unique-Verstoß auf der client-UUID: genau DAS ist der
+      // Wiederholungsversuch nach verlorenem Response — der Server committet
+      // die Zeile bereits, nur die Antwort ging verloren. Kein Werfen (der
+      // Flush würde sonst den Op parken/beibehalten), sondern als Erfolg
+      // behandeln und die zuvor erzeugte id zurückgeben.
+      if (error.code === '23505') return prepared.ids[0] ?? null
+      throw error
+    }
     const rows = (Array.isArray(data) ? data : data ? [data] : []) as Array<{ id?: string }>
     const id = rows.find((r) => typeof r?.id === 'string')?.id
-    return typeof id === 'string' ? id : null
+    return typeof id === 'string' ? id : (prepared.ids[0] ?? null)
   } else if (op.type === 'update') {
     // filterValue als Array = Sammel-Update (eine Runde statt N): 30 abgehakte
     // Gruppen-Artikel waren vorher 30 Requests à ≥1 RTT.
@@ -345,11 +432,12 @@ function releaseFlushLock(): void {
 }
 
 /**
- * Queue abarbeiten. Läuft höchstens einmal gleichzeitig pro Tab (isFlushing)
- * und höchstens einmal tab-übergreifend (localStorage-Lock). Parallele
- * Aufrufe werden sofort mit { success: 0, failed: 0 } quittiert.
+ * Queue abarbeiten (interner Lauf; der öffentliche Einstieg ist `flushQueue`
+ * unten, das ein laufendes Flush-Promise teilt). Läuft höchstens einmal
+ * gleichzeitig pro Tab (isFlushing) und höchstens einmal tab-übergreifend
+ * (localStorage-Lock).
  */
-async function flushQueue(): Promise<{ success: number; failed: number }> {
+async function runFlush(): Promise<{ success: number; failed: number }> {
   if (isFlushing) return { success: 0, failed: 0 }
   if (loadQueue().length === 0) return { success: 0, failed: 0 }
   if (!acquireFlushLock()) return { success: 0, failed: 0 }
@@ -456,12 +544,35 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
 }
 
 /**
+ * Öffentlicher Einstieg: teilt das PROMISE eines laufenden Flushs, statt
+ * parallele Aufrufer mit { success: 0, failed: 0 } abzuwürgen — der Toast-
+ * Flush aus App.tsx bekam sonst beim Reconnect immer 0/0 (der Modul-Auto-
+ * Flush aus applyConnectivity lief schon) und der Toast „Synchronisiert!“
+ * feuerte nie. Der Lauf selbst startet unverändert höchstens einmal
+ * (isFlushing + Cross-Tab-Lock im runFlush); hier unten wird die Referenz im
+ * finally freigegeben, auch wenn der Lauf abgelehnt wird.
+ */
+function flushQueue(): Promise<{ success: number; failed: number }> {
+  if (inFlightFlush) return inFlightFlush
+  inFlightFlush = runFlush().finally(() => {
+    inFlightFlush = null
+  })
+  return inFlightFlush
+}
+
+/**
  * Op in die localStorage-Queue schreiben und ALLE Abonnenten informieren,
  * damit queueLength überall (auch im Offline-Banner) identisch ist.
  */
 function enqueueOp(op: Omit<QueuedOp, 'id' | 'timestamp'>): void {
+  // Inserts: die client-UUID(en) GENAU HIER erzeugen und in der gespeicherten
+  // Payload festnageln — ein Op kann mehrfach ausgeführt werden (Retries,
+  // verlorene Antworten), und NUR dieselbe id macht den wiederholten Insert
+  // zum harmlosen 23505-Doppelversuch (siehe executeOp) statt zur Doppelzeile.
+  const payload = op.type === 'insert' ? withRowIds(op.payload).payload : op.payload
   const fullOp: QueuedOp = {
     ...op,
+    payload,
     id: `op-${++opIdCounter}-${Date.now()}`,
     timestamp: Date.now(),
   }
@@ -503,6 +614,24 @@ function applyConnectivity(connected: boolean): void {
 async function pingConnectivity(): Promise<void> {
   const connected = await checkConnectivity()
   applyConnectivity(connected)
+  // Der 60-s-Ping ist der Retry-Pfad für „online laut navigator, aber der
+  // Request läuft in den Timeout“: flushQueue läuft sonst NUR beim Übergang
+  // offline→online, ein einzelner Timeout-Op läge dann stur, bis zur nächsten
+  // echten Umschlag (Banner weg, Queue voll). Drossel per Modul-Variable:
+  // höchstens alle 30 s ein Retry-Flush; keine Schleife, weil flushQueue bei
+  // Netzfehler weiterhin nach dem ersten Op abbricht.
+  if (
+    connected &&
+    !isFlushing &&
+    loadQueue().length > 0 &&
+    Date.now() - lastFlushAttemptTs > FLUSH_RETRY_MIN_MS
+  ) {
+    lastFlushAttemptTs = Date.now()
+    void flushQueue().catch(() => {
+      // Auto-Flush-Fehler bewusst ignorieren — der nächste Ping versucht es
+      // erneut; verlorene Rejections vermeiden, da fire-and-forget.
+    })
+  }
 }
 
 // ── Ein Verbindungswatch für den ganzen Tab ────────────────────────

@@ -71,12 +71,24 @@ const KNOWN_CACHE_TABLES = [
   'expense_quotas',
   'settlements',
   'bristol_entries',
+  // Wird ebenfalls pro Liste gecacht (useTripPlan.ts: gewählter Tag) — ohne
+  // Eintrag überlebt der alte Plan den Listenwechsel.
+  'trip_plan',
+  // RecipesScreen.tsx hält Rezepte im Read-Cache — sonst überleben alte
+  // Rezepte den Listenwechsel.
+  'recipes',
 ]
 
 export function clearCacheForList(listId: string): void {
   try {
     for (const table of KNOWN_CACHE_TABLES) {
-      localStorage.removeItem(cacheKey(listId, table))
+      const key = cacheKey(listId, table)
+      localStorage.removeItem(key)
+      // Auch den Speicher-Diff-Zustand des writeCache werfen: bleibt
+      // lastWritten stehen, matcht der Diff für identische Daten und das
+      // (nun fehlende) Schreiben wird übersprungen — nach Verlassen und
+      // Wiedereintritt blieb der Cache leer, Offline-Start zeigte nichts.
+      lastWritten.delete(key)
     }
   } catch {
     // localStorage unavailable — nothing to clear

@@ -244,9 +244,18 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Nichts zugestellt? Claim zurücknehmen, damit der nächste Lauf es erneut
-      // versucht (innerhalb der Karenz). Kein stiller Totalverlust.
-      if (sentForItem === 0) {
+      // Nicht ALLE Geräte bedient? Claim zurücknehmen, damit der nächste Lauf
+      // (innerhalb der Karenz) erneut sendet. Vorher blieb der Claim schon bei
+      // EINEM erfolgreichen Gerät stehen — ein flüchtiger 500er bei Peters
+      // Endpoint bedeutete dann, dass genau er den Wecker nie bekam, obwohl
+      // der nächste 5-Minuten-Lauf ihn problemlos erreicht hätte.
+      //
+      // Die bereits bediente Runde bekommt dadurch eine zweite Zustellung; das
+      // ist gewollt harmlos: der Tag im Payload ist `fiesta-wake-<proposal_id>`,
+      // und sw.js prüft vor dem Anzeigen `getNotifications({ tag })` und setzt
+      // bei Treffer `silent: true` — kein zweites Klingeln.
+      const totalSubs = (subs ?? []).length
+      if (sentForItem === 0 || sentForItem < totalSubs) {
         await supabase.from('reminder_log').delete()
           .eq('proposal_id', item.id).eq('day', item.day)
       }

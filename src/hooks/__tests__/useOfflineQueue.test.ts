@@ -471,3 +471,169 @@ describe('Dead-Letter: endgültig gescheiterte Ops', () => {
     expect(result.current.failedCount).toBe(0)
   })
 })
+
+describe('Insert-Idempotenz: client-UUID, 23505 als Erfolg, geteilter Flush', () => {
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  const setInsertResult = (next: { data: unknown; error: unknown }) => {
+    (supabase as unknown as {
+      __setInsertResult: (r: { data: unknown; error: unknown }) => void
+    }).__setInsertResult(next)
+  }
+
+  /** Insert-Payloads aller from()-Aufrufe seit clearAllMocks einsammeln. */
+  const collectInsertPayloads = (): unknown[] => {
+    const fromMock = supabase.from as unknown as {
+      mock: { results: Array<{ value?: { insert?: { mock?: { calls: Array<unknown[]> } } } }> }
+    }
+    const payloads: unknown[] = []
+    for (const result of fromMock.mock.results) {
+      for (const call of result.value?.insert?.mock?.calls ?? []) payloads.push(call[0])
+    }
+    return payloads
+  }
+
+  beforeEach(() => {
+    localStorageMock.clear()
+    vi.clearAllMocks()
+    setInsertResult({ data: null, error: null })
+  })
+
+  it('Einzel-Insert bekommt eine gültige client-UUID als `id`', async () => {
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'Wasser' } })
+    })
+    await act(async () => {
+      const outcome = await result.current.flushQueue()
+      expect(outcome).toEqual({ success: 1, failed: 0 })
+    })
+    const payloads = collectInsertPayloads()
+    expect(payloads).toHaveLength(1)
+    const row = payloads[0] as { id?: string; name?: string }
+    expect(typeof row.id).toBe('string')
+    expect(row.id).toMatch(UUID_RE)
+    expect(row.name).toBe('Wasser')
+    expect(result.current.queueLength).toBe(0)
+  })
+
+  it('Bereits vorhandene `id` bleibt unangetastet (Undo-Insert eines gelöschten Artikels)', async () => {
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({
+        type: 'insert',
+        table: 'items',
+        payload: { id: 'undo-row-1', name: 'Wasser' },
+      })
+    })
+    await act(async () => {
+      await result.current.flushQueue()
+    })
+    const payloads = collectInsertPayloads()
+    expect(payloads).toHaveLength(1)
+    const row = payloads[0] as { id?: string; name?: string }
+    // Genau DIESE id geht raus, nichts Neues hinzugefügt
+    expect(Object.keys(row)).toEqual(['id', 'name'])
+    expect(row.id).toBe('undo-row-1')
+    expect(row.name).toBe('Wasser')
+  })
+
+  it('Batch-Insert bekommt je Zeile eine eigene UUID', async () => {
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({
+        type: 'insert',
+        table: 'expense_splits',
+        payload: [
+          { expense_id: 'temp-1', person_name: 'Anna', share_amount: 10 },
+          { expense_id: 'temp-1', person_name: 'Ben', share_amount: 10 },
+        ] as unknown as Record<string, unknown>,
+      })
+    })
+    await act(async () => {
+      await result.current.flushQueue()
+    })
+    const payloads = collectInsertPayloads()
+    expect(payloads).toHaveLength(1)
+    const batch = payloads[0] as Array<{ id?: string; person_name?: string }>
+    expect(batch).toHaveLength(2)
+    expect(batch[0].id).toMatch(UUID_RE)
+    expect(batch[1].id).toMatch(UUID_RE)
+    // Je Zeile eine EIGENE — nicht dieselbe für alle
+    expect(batch[0].id).not.toBe(batch[1].id)
+    // Restliche Felder unverändert
+    expect(batch[0].person_name).toBe('Anna')
+    expect(batch[1].person_name).toBe('Ben')
+  })
+
+  it('23505 gilt als Erfolg: Op verlässt die Queue, kein Dead-Letter, kein Retry', async () => {
+    // Genau der Fall „Server committet, Antwort verloren": dieselbe client-UUID
+    // zum zweiten Mal (Wiederholungsversuch nach verlorenem Response) →
+    // Unique-Verstoß — der Op darf nicht als Fehler parken oder liegen bleiben.
+    const storedId = 'aaaa1111-2222-4abc-8def-000000000099'
+    setInsertResult({
+      data: null,
+      error: {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint "items_pkey"',
+      },
+    })
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      // Die id sitzt (wie nach einem verlorenen Erstversuch) im Payload.
+      result.current.enqueue({
+        type: 'insert',
+        table: 'items',
+        payload: { id: storedId, name: 'Ausgabe' },
+      })
+    })
+    expect(result.current.queueLength).toBe(1)
+
+    await act(async () => {
+      const outcome = await result.current.flushQueue()
+      expect(outcome).toEqual({ success: 1, failed: 0 })
+    })
+
+    // Op raus aus der Queue, kein Dead-Letter-Eintrag
+    expect(JSON.parse(localStorage.getItem('offline_queue') ?? '[]')).toHaveLength(0)
+    expect(localStorage.getItem('offline_queue_dead')).toBeNull()
+    expect(result.current.failedCount).toBe(0)
+    // Genau EIN Insert-Versuch: 23505 ist Erfolg, also KEINE Backoff-Runde
+    expect(collectInsertPayloads()).toHaveLength(1)
+    // Und rausgegangen ist genau die zuvor erzeugte id
+    expect((collectInsertPayloads()[0] as { id?: string }).id).toBe(storedId)
+  })
+
+  it('zwei parallele flushQueue()-Aufrufe teilen dasselbe Ergebnis statt 0/0', async () => {
+    // Der erste Lauf hängt bis zum release — er läuft garantiert noch, wenn
+    // der zweite flushQueue()-Aufruf startet.
+    let release!: (value: { data: null; error: null }) => void
+    const gate = new Promise<{ data: null; error: null }>((resolve) => { release = resolve })
+    // insertSelect tut Promise.resolve(insertResult) — ein Promise wird
+    // übernommen (adoption), das await hängt also bis zum release.
+    setInsertResult(gate as unknown as { data: unknown; error: unknown })
+
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({ type: 'insert', table: 'items', payload: { name: 'Markt' } })
+    })
+    expect(result.current.queueLength).toBe(1)
+
+    let firstResult: { success: number; failed: number } | null = null
+    let secondResult: { success: number; failed: number } | null = null
+    await act(async () => {
+      const p1 = result.current.flushQueue()
+      const p2 = result.current.flushQueue()
+      // Dasselbe Promise weitergegeben, nicht { success: 0, failed: 0 }
+      expect(p2).toBe(p1)
+      release({ data: null, error: null })
+      const [r1, r2] = await Promise.all([p1, p2])
+      firstResult = r1
+      secondResult = r2
+    })
+    expect(firstResult).toEqual({ success: 1, failed: 0 })
+    expect(secondResult).toEqual({ success: 1, failed: 0 })
+    expect(result.current.queueLength).toBe(0)
+    // Der zweite Aufruf hat KEINEN zweiten Lauf gestartet: 1 Insert-Versuch
+    expect(collectInsertPayloads()).toHaveLength(1)
+  })
+})
