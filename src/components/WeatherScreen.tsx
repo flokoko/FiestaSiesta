@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
-import { MoreHorizontal, MapPin, Radar } from 'lucide-react'
+import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName, dailyIndexFor } from '../lib/weather'
+import { fetchAirNow, cachedAirNow, dustLevel, type AirNow } from '../lib/airQuality'
+import { fetchSeaNow, cachedSeaNow, waveLevel, type SeaNow } from '../lib/sea'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { useHomeWeather } from '../hooks/useHomeWeather'
 import { usePoiWeather } from '../hooks/usePoiWeather'
@@ -120,6 +122,11 @@ function fmtRadarTime(ts: number) {
   return radarTimeFmt.format(new Date(ts * 1000))
 }
 
+// Deutsche Zahlen für die Live-Lage (Luft/Meer): Werte mit einer Nachkomma-
+// stelle wie „3,9" und „23,6", Staub ganzzahlig.
+const ONE_DECIMAL_FMT = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+const INTEGER_FMT = new Intl.NumberFormat('de-DE')
+
 /** Tracks the resolved theme ('light' | 'dark'), reacting to both the manual
  *  toggle (data-theme on <html>) and system colour-scheme changes in auto mode. */
 function useIsDark(): boolean {
@@ -197,6 +204,12 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
   // Radar-Zentrum und der 10-Minuten-Refresh weiter den alten Ort (der Pane
   // bleibt gemountet, das Memo lief nie wieder).
   const [storedLocation, setStoredLocationState] = useState(() => getStoredLocation())
+
+  // ── Live-Lage: Luft (Staub/UV) & Meer — schlüsselloses Beiwerk ──
+  // Die lib-Module halten 60 Minuten Frische und geben bei Fehlern den letzten
+  // Stand zurück; hier wird nur der Anfangsstand aus dem Cache vorbelegt.
+  const [air, setAir] = useState<AirNow | null>(() => cachedAirNow())
+  const [sea, setSea] = useState<SeaNow | null>(() => cachedSeaNow())
 
   // ── Fetch weather data (rich API for screen) ──
   const fetchWeather = useCallback(async (lat: number, lon: number, name: string) => {
@@ -426,6 +439,17 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
   // Laufenden Wetterabruf beim Ausbau des Screens abbrechen
   useEffect(() => {
     return () => fetchAbortRef.current?.abort()
+  }, [])
+
+  // ── Live-Lage: Luft & Meer nachziehen ────────────────────────────────
+  // cancelled-Flag wie oben; schlüsselloses Beiwerk, das den Screen niemals
+  // blockiert. Solange nichts da ist, rendert die Gruppe nicht — kein
+  // Platzhalter, kein Spinner.
+  useEffect(() => {
+    let cancelled = false
+    void fetchAirNow().then((next) => { if (!cancelled && next) setAir(next) })
+    void fetchSeaNow().then((next) => { if (!cancelled && next) setSea(next) })
+    return () => { cancelled = true }
   }, [])
 
   // ── Heimat & Ziele des gewählten Tages (UI-Stufe 1) ──────────────────
@@ -696,6 +720,68 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
               <div className="wx-row"><span>Luftdruck</span><b>{Math.round(weather.current.pressure)} hPa</b></div>
             </div>
           </section>
+
+          {air && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">Luft</h2>
+              <div className="wx-rows">
+                <div className="wx-row">
+                  <span>
+                    <Wind size={13} strokeWidth={2} aria-hidden="true" /> Feinstaub
+                  </span>
+                  <b>{INTEGER_FMT.format(Math.round(air.pm10))} µg/m³</b>
+                </div>
+                <div className="wx-row">
+                  <span>
+                    <Wind size={13} strokeWidth={2} aria-hidden="true" /> Staub
+                  </span>
+                  <b>
+                    {INTEGER_FMT.format(Math.round(air.dust))} µg/m³ · {dustLevel(air.dust)}
+                    {air.dust >= 50 ? ' · Saharastaub — Sicht trüb, Bergtag verschieben' : ''}
+                  </b>
+                </div>
+                {air.dustNext24 >= 50 && (
+                  <div className="wx-row">
+                    <span>
+                      <Wind size={13} strokeWidth={2} aria-hidden="true" /> max. Staub 24 h
+                    </span>
+                    <b>morgen Calima möglich</b>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {sea && (
+            <section className="wx-group">
+              <h2 className="wx-group-title">Meer (Südküste)</h2>
+              <div className="wx-rows">
+                <div className="wx-row">
+                  <span>
+                    <Waves size={13} strokeWidth={2} aria-hidden="true" /> Wellen
+                  </span>
+                  <b>{ONE_DECIMAL_FMT.format(sea.wave)} m · {waveLevel(sea.wave)}</b>
+                </div>
+                <div className="wx-row">
+                  <span>
+                    <Droplets size={13} strokeWidth={2} aria-hidden="true" /> Wasser
+                  </span>
+                  <b>{ONE_DECIMAL_FMT.format(sea.water)} °C</b>
+                </div>
+                {/* Zwei einzelne Zeilen statt einer: „Hochwasser 22:00 ·
+                    Niedrigwasser 04:00" bricht auf 390 px um und schiebt das
+                    Label unter den Wert. */}
+                {sea.tide.map((t) => (
+                  <div className="wx-row" key={t.label + t.clock}>
+                    <span>
+                      <Clock size={13} strokeWidth={2} aria-hidden="true" /> {t.label}
+                    </span>
+                    <b>{t.clock}</b>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {radarOpen && storedLocation && radarError && (
             <section className="wx-group">

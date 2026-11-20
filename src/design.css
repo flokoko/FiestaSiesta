@@ -4611,3 +4611,63 @@ body::before {
 #root .wx-radar-basemap.is-dark {
   filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.7) contrast(0.95);
 }
+
+/* ── Phase 5: „Am Weg" — Wikipedia-Orte unter der Tageskarte ───────────
+   Tageskarte rendert zuerst, dieser Abschnitt erscheint nach. Als Rahmen
+   dient .day-map-hint; hier nur die Abweichungen (Akzent statt Gold,
+   Link-Grundlagen, Titelzeile). */
+#root .day-map-wiki {
+  margin-top: 12px;
+}
+
+#root .day-map-wiki-head {
+  margin: 0 2px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+#root .day-map-wiki-row {
+  margin-top: 8px;
+  text-decoration: none;
+  color: inherit;
+  border-color: color-mix(in srgb, var(--accent) 26%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+#root .day-map-wiki-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#root .day-map-wiki-row svg {
+  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+}
+
+#root .day-map-wiki-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#root .day-map-wiki-line strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+#root .day-map-wiki-line em {
+  font-style: normal;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}

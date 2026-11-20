@@ -9,8 +9,12 @@ import {
 } from '../lib/dayRoute'
 import { hhmm } from '../lib/wake'
 import { SLOTS, isoDay } from '../lib/tripPlan'
+import { fetchGeoWiki, type WikiPlace } from '../lib/geoWiki'
 import { formatDayLong, formatDayShort, tripDay, tripDays } from '../lib/trip'
 import './DayMapScreen.css'
+
+/** Entfernungen der Wikipedia-Orte: eine Nachkommastelle, deutsches Komma. */
+const KM_FMT = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 interface DayMapScreenProps {
   dayIso: string
@@ -133,6 +137,27 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
     [points],
   )
 
+  // ── Wikipedia am Weg — schlüsselloses Beiwerk ──
+  // Der Abruf hängt am Inhalts-Schlüssel (Stopps wechseln alle 90 s ihre
+  // Objektidentität) und läuft mit cancelled-Flag: die Karte rendert sofort,
+  // der Abschnitt erscheint, wenn die Zusammenfassungen da sind.
+  const [wiki, setWiki] = useState<WikiPlace[]>([])
+  const wikiKey = useMemo(
+    () => stops.map((s) => `${s.lat.toFixed(4)},${s.lon.toFixed(4)}`).join('|'),
+    [stops],
+  )
+  useEffect(() => {
+    if (stopsRef.current.length === 0) {
+      setWiki([])
+      return
+    }
+    let cancelled = false
+    void fetchGeoWiki(dayIso, stopsRef.current).then((places) => {
+      if (!cancelled) setWiki(places)
+    })
+    return () => { cancelled = true }
+  }, [wikiKey, dayIso])
+
   return (
     <div className="day-map-screen">
       <header className="list-head">
@@ -250,6 +275,30 @@ export default function DayMapScreen({ dayIso, plan }: DayMapScreenProps) {
                 Mit Netz wird die echte Strecke nachgerechnet.
               </span>
             </p>
+          )}
+
+          {wiki.length > 0 && (
+            <section className="day-map-wiki">
+              <p className="day-map-wiki-head">Am Weg</p>
+              {wiki.map((place) => (
+                <a
+                  className="day-map-hint day-map-wiki-row"
+                  key={place.title}
+                  href={place.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Info size={13} strokeWidth={2} aria-hidden="true" />
+                  <span>
+                    <span className="day-map-wiki-line">
+                      <strong>{place.title}</strong>
+                      <em>{KM_FMT.format(place.km)} km</em>
+                    </span>
+                    {place.extract}
+                  </span>
+                </a>
+              ))}
+            </section>
           )}
         </>
       )}
