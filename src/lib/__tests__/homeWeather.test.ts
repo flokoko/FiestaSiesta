@@ -44,6 +44,15 @@ describe('Standard-Heimatorte je Teilnehmer', () => {
     expect(defaultHomePlace('ANDRÉSITO')?.name).toBe('Landshut')
   })
 
+  it('findet den Standard auch ohne Akzent (NFC allein entfernt keinen Akzent)', () => {
+    // Regression: der HOME_DEFAULTS-Schlüssel trug den Akzent, der Teilnehmer
+    // hieß in participants „Andresito“ — die Heimatzeile fehlte still.
+    expect(defaultHomePlace('Andresito')?.name).toBe('Landshut')
+    expect(defaultHomePlace('ANDRÉSITO')?.name).toBe('Landshut')
+    expect(defaultHomePlace('Floko')?.name).toBe('München')
+    expect(defaultHomePlace('Unbekannter')).toBeNull()
+  })
+
   it('kennt keinen Standard für unbekannte Namen oder leere Eingabe', () => {
     expect(defaultHomePlace('Anna')).toBeNull()
     expect(defaultHomePlace('')).toBeNull()

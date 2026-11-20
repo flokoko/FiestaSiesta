@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, Palette, Sun, Moon, Pencil, Crown, Lock, KeyRound, Bell, BellOff, Loader2,
-  MoreHorizontal, X, Settings2, Info, LogOut, Copy, Activity, Plus, Home,
+  MoreHorizontal, X, Settings2, Info, LogOut, Copy, Activity, Plus, RotateCcw, Home,
 } from 'lucide-react'
 import type { ItemCategory, ListType, Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
@@ -20,6 +20,14 @@ import {
   syncRotatedSubscription,
 } from '../lib/push'
 import { useToast } from '../context/ToastContext'
+import {
+  useOfflineQueue,
+  getFailedOps,
+  retryFailedOp,
+  clearFailedOp,
+  clearFailedOps,
+  type DeadOp,
+} from '../hooks/useOfflineQueue'
 import { useCategories } from '../hooks/useCategories'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { useSheetFocus } from '../hooks/useSheetFocus'
@@ -27,6 +35,18 @@ import { APP_VERSION } from '../version'
 import { spanishMotto } from '../lib/espanaFlair'
 
 import './SettingsScreen.css'
+
+/** Tabellenname in Alltagssprache — ohne Eintrag bleibt der Rohname stehen. */
+const TABLE_LABELS: Record<string, string> = {
+  items: 'Artikel',
+  notes: 'Notiz',
+  expenses: 'Ausgabe',
+  expense_splits: 'Aufteilung',
+  categories: 'Kategorie',
+  recipes: 'Rezept',
+  bristol_entries: 'Bristol',
+  settlements: 'Zahlung',
+}
 
 interface SettingsScreenProps {
   userName: string
@@ -66,6 +86,15 @@ export default function SettingsScreen({
   onChangeAdminPassword,
 }: SettingsScreenProps) {
   const { toast, confirm } = useToast()
+  const { flushQueue, failedCount } = useOfflineQueue()
+  // Nicht gesendetes (Dead Letter): lokal gespiegelt; nach jeder Aktion wird
+  // frisch aus dem Store gelesen — die Quelle ist localStorage.
+  const [failedOps, setFailedOps] = useState<DeadOp[]>(() => getFailedOps())
+  // Der Pane bleibt gemountet: ein Fehlschlag, der NACH dem Öffnen passiert,
+  // muss die Liste trotzdem aktualisieren — failedCount kommt aus dem Store.
+  useEffect(() => {
+    setFailedOps(getFailedOps())
+  }, [failedCount])
   const [theme, setThemeState] = useState<ThemeMode>('auto')
   const [editingName, setEditingName] = useState(false)
   const [newName, setNewName] = useState(userName)
@@ -212,6 +241,43 @@ export default function SettingsScreen({
     setHomePlaceInput('')
     setShowHomePlaceForm(false)
     navigator.vibrate?.(6)
+  }
+
+  // ── Nicht gesendetes: gescheiterte Änderungen erneut senden oder verwerfen ──
+  const handleRetryFailedOp = (op: DeadOp) => {
+    if (!retryFailedOp(op.id)) return
+    setFailedOps(getFailedOps())
+    toast('Änderung wird erneut gesendet …', 'info')
+    void flushQueue()
+  }
+
+  const handleDiscardFailedOp = (op: DeadOp) => {
+    confirm(
+      `Die nicht gesendete ${TABLE_LABELS[op.table] ?? op.table}-Änderung wirklich verwerfen?`,
+      () => {
+        clearFailedOp(op.id)
+        setFailedOps(getFailedOps())
+        toast('Änderung verworfen.', 'success')
+      },
+      undefined,
+      'Verwerfen',
+    )
+  }
+
+  const handleDiscardAllFailed = () => {
+    const count = failedOps.length
+    confirm(
+      count === 1
+        ? 'Die nicht gesendete Änderung wirklich verwerfen?'
+        : `Alle ${count} nicht gesendeten Änderungen wirklich verwerfen?`,
+      () => {
+        clearFailedOps()
+        setFailedOps(getFailedOps())
+        toast('Alle nicht gesendeten Änderungen verworfen.', 'success')
+      },
+      undefined,
+      'Alle verwerfen',
+    )
   }
 
   const MAX_PARTICIPANTS = 3
@@ -447,6 +513,53 @@ export default function SettingsScreen({
             </button>
           </div>
         </div>
+      )}
+
+      {failedOps.length > 0 && (
+        <section className="set-group">
+          <h2 className="set-group-title">Nicht gesendetes</h2>
+          <div className="set-rows">
+            {failedOps.map((op) => (
+              <div key={op.id} className="set-row">
+                <span className="set-label">{TABLE_LABELS[op.table] ?? op.table}</span>
+                <span className="set-value">
+                  {new Date(op.failedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                </span>
+                <button
+                  type="button"
+                  className="set-mini-btn"
+                  onClick={() => handleRetryFailedOp(op)}
+                  aria-label="Änderung erneut senden"
+                >
+                  <RotateCcw size={15} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  className="set-mini-btn danger"
+                  onClick={() => handleDiscardFailedOp(op)}
+                  aria-label="Änderung verwerfen"
+                >
+                  <Trash2 size={15} strokeWidth={2} />
+                </button>
+              </div>
+            ))}
+            <div className="set-row">
+              <span className="set-label">Alle verwerfen</span>
+              <button
+                type="button"
+                className="set-mini-btn danger"
+                onClick={handleDiscardAllFailed}
+                aria-label="Alle nicht gesendeten Änderungen verwerfen"
+              >
+                <Trash2 size={15} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+          <p className="set-hint">
+            Diese Änderungen konnten endgültig nicht gesendet werden — hier erneut
+            versuchen oder löschen.
+          </p>
+        </section>
       )}
 
       <section className="set-group">

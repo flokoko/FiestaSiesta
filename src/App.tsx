@@ -419,7 +419,14 @@ export default function App() {
   // (Dead Letter aus einer früheren Sitzung) — mit der Möglichkeit, sie zu verwerfen.
   const failedHintShownRef = useRef(false)
   useEffect(() => {
-    if (failedCount <= 0 || failedHintShownRef.current) return
+    if (failedCount <= 0) {
+      // Wieder auf 0 (verworfen oder erneut in die Queue): den Hinweis neu
+      // scharf stellen — sonst bliebe eine spätere Fehlschlag-Welle derselben
+      // Sitzung stumm.
+      failedHintShownRef.current = false
+      return
+    }
+    if (failedHintShownRef.current) return
     failedHintShownRef.current = true
     toast(
       `${failedCount} frühere ${failedCount === 1 ? 'Änderung wurde' : 'Änderungen wurden'} nicht gesendet.`,

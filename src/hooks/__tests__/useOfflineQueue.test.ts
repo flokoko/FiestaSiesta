@@ -50,7 +50,8 @@ vi.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase'
 import {
-  clearFailedOps, isNetworkFailure, remapOpPayload, remapTempId, useOfflineQueue,
+  clearFailedOp, clearFailedOps, isNetworkFailure, remapOpPayload, remapTempId,
+  retryFailedOp, useOfflineQueue,
   type DeadOp, type QueuedOp,
 } from '../useOfflineQueue'
 
@@ -469,6 +470,52 @@ describe('Dead-Letter: endgültig gescheiterte Ops', () => {
     })
     expect(localStorage.getItem('offline_queue_dead')).toBe('[]')
     expect(result.current.failedCount).toBe(0)
+  })
+
+  it('retryFailedOp holt den Op zurück: weg aus der Ablage, VORNE in die Queue', () => {
+    seedDeadOps(2) // old-0 (älter), old-1 (jünger)
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      result.current.enqueue({
+        type: 'update', table: 'items', payload: { name: 'A' }, filterColumn: 'id', filterValue: 'a',
+      })
+      result.current.enqueue({
+        type: 'update', table: 'items', payload: { name: 'B' }, filterColumn: 'id', filterValue: 'b',
+      })
+    })
+    act(() => {
+      expect(retryFailedOp('old-0')).toBe(true)
+    })
+    // VOR die schon eingereihten Ops (FIFO: er gehört zeitlich vor A und B) …
+    const queue = JSON.parse(localStorage.getItem('offline_queue')!) as QueuedOp[]
+    expect(queue).toHaveLength(3)
+    expect(queue[0].id).toBe('old-0')
+    expect(queue.map((q) => (q.payload as { name?: string }).name)).toEqual([undefined, 'A', 'B'])
+    // … und raus aus der Ablage (Reihenfolge der übrigen Dead-Ops erhalten),
+    // beide Counts vom Store frisch gelesen.
+    const dead = JSON.parse(localStorage.getItem('offline_queue_dead')!) as DeadOp[]
+    expect(dead.map((d) => d.id)).toEqual(['old-1'])
+    expect(result.current.queueLength).toBe(3)
+    expect(result.current.failedCount).toBe(1)
+    // Unbekannte id: false, nichts verändert
+    act(() => {
+      expect(retryFailedOp('fehlt')).toBe(false)
+    })
+    expect(JSON.parse(localStorage.getItem('offline_queue')!)).toHaveLength(3)
+    expect(JSON.parse(localStorage.getItem('offline_queue_dead')!)).toHaveLength(1)
+  })
+
+  it('clearFailedOp verwirft genau einen Op und führt den Count nach', () => {
+    seedDeadOps(2)
+    const { result } = renderHook(() => useOfflineQueue())
+    act(() => {
+      expect(clearFailedOp('old-0')).toBe(true)
+      expect(clearFailedOp('fehlt')).toBe(false)
+    })
+    const dead = JSON.parse(localStorage.getItem('offline_queue_dead')!) as DeadOp[]
+    expect(dead.map((d) => d.id)).toEqual(['old-1'])
+    expect(result.current.failedCount).toBe(1)
+    expect(result.current.queueLength).toBe(0)
   })
 })
 

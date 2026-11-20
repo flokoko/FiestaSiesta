@@ -41,6 +41,33 @@ describe('Zeitrechnung', () => {
   })
 })
 
+describe('Zeitrechnung — Offset am Zielzeitpunkt statt bei „jetzt“ (DST-Regression)', () => {
+  const winterRef = new Date('2026-12-01T12:00:00Z') // „jetzt“ im Winter
+  const summerRef = new Date('2026-07-01T12:00:00Z') // „jetzt“ im Sommer
+
+  it('Wintertag: 09:00 Ortszeit sind 09:00 UTC', () => {
+    expect(canaryWallToDate('2026-12-02', '09:00', winterRef).toISOString())
+      .toBe('2026-12-02T09:00:00.000Z')
+  })
+
+  it('Sommertag: 09:00 Ortszeit sind 08:00 UTC', () => {
+    expect(canaryWallToDate('2026-07-15', '09:00', summerRef).toISOString())
+      .toBe('2026-07-15T08:00:00.000Z')
+  })
+
+  it('ref im Winter, Ziel im Sommer: der Winter-Offset wird NICHT auf den Zielzeitpunkt übertragen', () => {
+    // Alt (Fehlverhalten): Offset(jetzt, Winter) = 0 → 09:00Z. Richtig: 08:00Z.
+    expect(canaryWallToDate('2026-07-15', '09:00', winterRef).toISOString())
+      .toBe('2026-07-15T08:00:00.000Z')
+  })
+
+  it('ref im Sommer, Ziel im Winter: der Sommer-Offset wird NICHT auf den Zielzeitpunkt übertragen', () => {
+    // Alt (Fehlverhalten): Offset(jetzt, Sommer) = +60 → 08:00Z. Richtig: 09:00Z.
+    expect(canaryWallToDate('2026-12-02', '09:00', summerRef).toISOString())
+      .toBe('2026-12-02T09:00:00.000Z')
+  })
+})
+
 describe('Wecker-Auswahl', () => {
   const now = new Date('2026-12-02T06:00:00Z')
 

@@ -2147,6 +2147,14 @@ body::before {
   padding: 7px;
 }
 
+/* Destruktive Mini-Aktion („Verwerfen" bei nicht gesendeten Änderungen):
+   die Screen-Regel `.set-mini-btn.danger` (0,2,0) verliert gegen
+   `#root .set-mini-btn` (1,1,0) — die Farbe muss hier mit gleicher
+   Spezifität gesetzt werden, sonst sehen „Erneut" und „Verwerfen" gleich aus. */
+#root .set-mini-btn.danger {
+  color: var(--accent);
+}
+
 #root .set-inline {
   border: none;
   padding: 10px 0;

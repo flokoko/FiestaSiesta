@@ -96,12 +96,17 @@ function notifyHomeChange(): void {
 const HOME_DEFAULTS: Record<string, HomePlace> = {
   floko: { name: 'München', lat: 48.13743, lon: 11.57549 },
   peter: { name: 'München', lat: 48.13743, lon: 11.57549 },
-  andrésito: { name: 'Landshut', lat: 48.52961, lon: 12.16179 },
+  andresito: { name: 'Landshut', lat: 48.52961, lon: 12.16179 },
 }
 
-/** Namensschlüssel: getrimmt, klein, NFC — „Andrésito" und „andresito" sind nicht dasselbe, aber Leerzeichen und Groß-/Kleinschreibung sollen egal sein. */
+/** Namensschlüssel: getrimmt, klein, ohne Diakritika — „Andrésito", „Andresito" und „ANDRÉSITO" landen auf demselben Schlüssel. NFC allein normalisiert nur die Unicode-Form, es entfernt KEINEN Akzent — deshalb NFD + Diacritic-Strip, danach zurück nach NFC. */
 function nameKey(value: string): string {
-  return value.trim().toLowerCase().normalize('NFC')
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .normalize('NFC')
 }
 
 /** Standard-Heimatort zur Teilnehmer-Name — null, wenn keiner hinterlegt ist. */

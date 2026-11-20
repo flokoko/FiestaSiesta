@@ -42,9 +42,19 @@ export function setStoredLocation(lat: number, lon: number, name: string): void 
  * Returns the first match or throws an Error if nothing is found.
  */
 export async function geocodeCity(query: string): Promise<GeoResult> {
-  const res = await fetch(
-    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`,
-  )
+  let res: Response
+  try {
+    // Zeitlimit (Muster lib/poiWeather): als einziger Netzpfad ohne Limit hing
+    // der Spinner bei halb offenem Netz endlos.
+    res = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`,
+      { signal: AbortSignal.timeout(10_000) },
+    )
+  } catch {
+    // Abbruch nach 10 s (oder weggerissene Verbindung) → sprechende Meldung,
+    // der Screen zeigt sie im bestehenden catch.
+    throw new Error('Zeitüberschreitung — kein Netz?')
+  }
   if (!res.ok) throw new Error('Ort nicht gefunden')
   const data = await res.json()
   if (!data.results || data.results.length === 0) {

@@ -104,6 +104,37 @@ export function clearFailedOps(): void {
   notifyListeners()
 }
 
+/** Öffentlich: EINEN gescheiterten Op verwerfen (Einstellungen, je Zeile). */
+export function clearFailedOp(id: string): boolean {
+  const dead = loadDeadOps()
+  const idx = dead.findIndex((op) => op.id === id)
+  if (idx === -1) return false
+  dead.splice(idx, 1)
+  saveDeadOps(dead)
+  refreshFailedCount()
+  return true
+}
+
+/**
+ * Gescheiterten Op zurück in die Queue holen. VORNE eingereiht, denn er gehört
+ * zeitlich vor alle späteren Änderungen und der Flush arbeitet strikt FIFO —
+ * hinten würde ein nachgelagerter update/delete auf einer Zeile landen, die
+ * dieser Op erst wieder anlegen müsste.
+ */
+export function retryFailedOp(id: string): boolean {
+  const dead = loadDeadOps()
+  const idx = dead.findIndex((op) => op.id === id)
+  if (idx === -1) return false
+  const [op] = dead.splice(idx, 1)
+  saveDeadOps(dead)
+  const queue = loadQueue()
+  queue.unshift(op)
+  saveQueue(queue)
+  refreshQueueLength()
+  refreshFailedCount()
+  return true
+}
+
 /**
  * Ping Supabase to verify real connectivity.
  * Returns true if the server responds, false otherwise.

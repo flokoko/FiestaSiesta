@@ -89,12 +89,18 @@ function shiftDay(day: string, delta: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-/** Kanarische Wanduhr-Zeit → absoluter Zeitpunkt. */
+/** Kanarische Wanduhr-Zeit → absoluter Zeitpunkt. Der Offset gehört zum
+ *  ZIELTAG (Sommer/Winter), nicht zu „jetzt" — sonst läge ein im Winter
+ *  berechneter Sommerwecker (und umgekehrt) 1 h daneben. Zwei Durchläufe:
+ *  `ref` liefert nur die Startschaetzung, der zweite Lauf korrigiert einmal auf
+ *  den Offset am Zielzeitpunkt (Kanaren springen nur UTC ↕ UTC+1 — eine
+ *  Korrektur genügt immer). */
 export function canaryWallToDate(day: string, clock: string, ref: Date = new Date()): Date {
   const [y, mo, d] = day.split('-').map(Number)
   const [h, mi] = clock.split(':').map(Number)
-  const offset = canaryOffsetMinutes(ref)
-  return new Date(Date.UTC(y, (mo || 1) - 1, d || 1, h || 0, mi || 0) - offset * 60000)
+  const dayUtc = Date.UTC(y, (mo || 1) - 1, d || 1, h || 0, mi || 0)
+  const candidate = new Date(dayUtc - canaryOffsetMinutes(ref) * 60000)
+  return new Date(dayUtc - canaryOffsetMinutes(candidate) * 60000)
 }
 
 export interface WakeSlot {
