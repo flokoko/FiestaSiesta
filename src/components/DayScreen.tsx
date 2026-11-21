@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
-  CalendarPlus, Sunset, CloudRain, Activity,
+  CalendarPlus, Sunset, CloudRain, Activity, Bell,
 } from 'lucide-react'
 import type { TabView } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
@@ -37,8 +37,9 @@ interface DayScreenProps {
   onEmergency: () => void
 }
 
-function euro(value: number): string {
-  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+/** Beträge in der Kennzahlen-Leiste: ganze Euro. Cents sind dort Rauschen. */
+function euro0(value: number): string {
+  return `${new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }).format(value)} €`
 }
 
 /**
@@ -132,7 +133,7 @@ export default function DayScreen({
 
   const icsEvents = useMemo(() => eventsFromPlan(plan), [plan])
 
-  const planTitle = isToday ? 'Heute geplant' : `Tag ${selectedIndex + 1} · ${formatDayShort(selectedDate)}`
+  const planTitle = isToday ? 'Heute geplant' : 'Programm'
   const emptyTitle = isToday
     ? 'Für heute steht nichts im Plan'
     : phase === 'before'
@@ -140,7 +141,9 @@ export default function DayScreen({
       : 'Kein Plan für diesen Tag'
   const emptyHint = isToday
     ? 'Öffne den Reiseplan und schlag etwas für heute vor.'
-    : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
+    : proposalCount > 0
+      ? `${proposalCount} ${proposalCount === 1 ? 'Vorschlag wartet' : 'Vorschläge warten'} auf eine Entscheidung.`
+      : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
@@ -253,6 +256,10 @@ export default function DayScreen({
         />
       </section>
 
+      {/* Kennzahlen in EINER Leiste (4. Segment = eigener Saldo). Vorher lagen
+          hier drei Karten plus eine eigene goldene Saldo-Platte: dieselbe
+          Aussage auf doppelter Fläche. Beträge gerundet — der Cent steht im
+          Geld-Screen, hier ist er Rauschen. */}
       <div className="today-chips">
         <button type="button" className="today-chip" onClick={() => onNavigate('list')}>
           <span className="today-chip-num">{open}</span>
@@ -263,26 +270,17 @@ export default function DayScreen({
           <span className="today-chip-label">mitbringen</span>
         </button>
         <button type="button" className="today-chip is-warm" onClick={() => onNavigate('expenses')}>
-          <span className="today-chip-num">{euro(expenseTotal)}</span>
-          <span className="today-chip-label">ausgaben €</span>
+          <span className="today-chip-num">{euro0(expenseTotal)}</span>
+          <span className="today-chip-label">ausgaben</span>
         </button>
-      </div>
-
-      {expenseTotal > 0 && (
-        <div className="today-balance">
-          {userBalance >= 0
-            ? `Dir stehen ${euro(userBalance)} € zu`
-            : `Du schuldest ${euro(Math.abs(userBalance))} €`}
-        </div>
-      )}
-
-      <div className="day-hub">
-        {hub.map(({ label, icon: Icon, onClick }) => (
-          <button key={label} type="button" className="day-hub-chip" onClick={onClick}>
-            <Icon size={14} strokeWidth={2} aria-hidden="true" />
-            <span>{label}</span>
+        {expenseTotal > 0 && (
+          <button type="button" className="today-chip is-balance" onClick={() => onNavigate('expenses')}>
+            <span className="today-chip-num">
+              {userBalance >= 0 ? '+' : '−'}{euro0(Math.abs(userBalance))}
+            </span>
+            <span className="today-chip-label">{userBalance >= 0 ? 'guthaben' : 'schulden'}</span>
           </button>
-        ))}
+        )}
       </div>
 
       <section className="today-section">
@@ -313,7 +311,7 @@ export default function DayScreen({
         </div>
         <p className="day-plan-hint">
           {decidedSlots > 0
-            ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten fest · ${proposalCount} ${proposalCount === 1 ? 'Vorschlag' : 'Vorschläge'}`
+            ? `${decidedSlots} von ${TRIP_LENGTH * 3} Zeiten fest`
             : `${TRIP_LENGTH} Tage · noch nichts festgelegt`}
         </p>
 
@@ -343,7 +341,11 @@ export default function DayScreen({
                     <span className="day-plan-time">
                       {hhmm(p.starts_at)}
                       {p.remind_enabled && (
-                        <span className="day-plan-alarm" title="Wecker aktiv">
+                        <span
+                          className="day-plan-alarm"
+                          title={`Wecker ${reminderClock(p.starts_at, p.remind_before ?? readDefaultLead())}`}
+                        >
+                          <Bell size={11} strokeWidth={2} aria-hidden="true" />
                           {reminderClock(p.starts_at, p.remind_before ?? readDefaultLead())}
                         </span>
                       )}
@@ -361,6 +363,17 @@ export default function DayScreen({
           </button>
         )}
       </section>
+
+      {/* Werkzeuge unter dem Inhalt: früher standen sie über der Plan-Sektion
+          und schoben den Tagesablauf aus dem ersten Blickfeld. */}
+      <div className="day-hub">
+        {hub.map(({ label, icon: Icon, onClick }) => (
+          <button key={label} type="button" className="day-hub-chip" onClick={onClick}>
+            <Icon size={14} strokeWidth={2} aria-hidden="true" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
 
       {tomorrowWx && (
         <p className="day-rain">

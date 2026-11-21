@@ -17,10 +17,10 @@ interface ExpenseListProps {
   onDelete: (expense: Expense) => void
 }
 
-/** "1. Dez" — das Datum ist Kontext, keine Überschrift. */
+/** "01.12." — kurz, damit „Peter hat bezahlt · …" neben „Anteil 20,80 €" passt. */
 function shortDate(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`)
-  return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
 }
 
 /** "Dezember 2026" als ruhige Gruppenüberschrift. */
@@ -100,6 +100,10 @@ export default function ExpenseList({
               const Icon = expenseIcon(expense.category)
               const splits = expenseSplits.filter((s) => s.expense_id === expense.id)
               const mySplit = splits.find((s) => s.person_name === userName)
+              // Anteil nur zeigen, wenn er vom gleichteiligen Betrag abweicht —
+              // bei „durch drei" stand dieselbe Zahl dreimal in der Zeile.
+              const shareIsNotable = !!mySplit && splits.length > 0
+                && Math.abs(mySplit.share_amount - expense.amount / splits.length) > 0.02
               // Die Kategorie steckt schon im Icon — in der Zeile zählt, wer
               // gezahlt hat und wann. Sonst wird die Meta-Zeile abgeschnitten.
               const meta = `${payerLabel(expense.paid_by, userName)} · ${shortDate(expense.expense_date)}`
@@ -120,7 +124,9 @@ export default function ExpenseList({
                     </span>
                     <span className="xp-row-right">
                       <span className="xp-row-amount">{fmtEUR(expense.amount)}</span>
-                      {mySplit && <span className="xp-row-share">Anteil {fmtEUR(mySplit.share_amount)}</span>}
+                      {mySplit && shareIsNotable && (
+                        <span className="xp-row-share">Anteil {fmtEUR(mySplit.share_amount)}</span>
+                      )}
                     </span>
                   </button>
                   <button

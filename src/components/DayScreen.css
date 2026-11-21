@@ -55,43 +55,40 @@
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
 }
 
-/* ── Hub: Reiseplan, Notizen, Küche, Offen, Notfall ─────────────────── */
+/* ── Hub: Reiseplan, Karte, Küche, Notizen, Offen, Bristol, Notfall ────
+   Zwei Reihen à vier statt eines Scrollbands: das Band zeigte bei 362 px
+   Sicht nur 4 von 7 Pillen und schnitt die fünfte mitten im Wort ab.
+   Ikone ÜBER dem Label, weil nebeneinander kein Vierer-Raster passt —
+   „Offen jetzt" allein ist 95 px breit, vier Spalten geben 85. */
 #root .day-hub {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  padding: 2px 2px 6px;
-  margin: 4px -2px 2px;
-}
-
-#root .day-hub::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 18px 0 0;
+  padding: 0;
 }
 
 #root .day-hub-chip {
-  flex: none;
+  flex: 1 1 calc(25% - 5px);
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 3px;
+  min-height: 48px;
+  padding: 6px 4px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--ink-2);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 10.5px;
   font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
   white-space: nowrap;
   cursor: pointer;
   transition: transform 0.12s ease, background 0.15s ease;
-}
-
-#root .day-hub-chip:active {
-  transform: scale(0.97);
-  background: var(--surface-2);
 }
 
 /* ── Plan-Kopf ──────────────────────────────────────────────────────── */
@@ -133,13 +130,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Wecker: Uhrzeit plus Glocke in gedämpfter Farbe. Ein gefülltes rotes Badge
+   neben der Los-Zeit sah wie eine zweite, konkurrierende Uhrzeit aus. */
 #root .day-plan-alarm {
-  padding: 1px 5px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: color-mix(in srgb, var(--accent) 80%, var(--ink-2));
-  font-size: 9.5px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+#root .day-plan-alarm svg {
+  opacity: 0.75;
 }
 
 /* Sonnenuntergangs-Warnung als Badge in der Plan-Sektion: eine Zeile, Icon
@@ -190,7 +196,9 @@
 /* Touch: 44-px-Ziele für die Hub-Pillen (Regel wie im Rest der App). */
 @media (hover: none), (pointer: coarse) {
   #root .day-hub-chip {
-    min-height: 44px;
+    /* zwei Reihen à vier: 48 px ist hier schon das Touch-Ziel, die
+       generische 44-px-Regel würde die Kacheln nur kleiner machen. */
+    min-height: 48px;
   }
 
   #root .day-ics {

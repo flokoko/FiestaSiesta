@@ -261,34 +261,9 @@ export default function ExpenseScreen({
         </div>
       </section>
 
-      {allPersons.length > 0 && expenses.length > 0 && (
-        <div className="xp-balances">
-          {[...allPersons]
-            .sort((a, b) => (a === userName ? -1 : b === userName ? 1 : a.localeCompare(b)))
-            .map((person) => {
-            const value = Math.round((openBalances[person] ?? 0) * 100) / 100
-            const positive = value > 0.005
-            const negative = value < -0.005
-            return (
-              <div
-                key={person}
-                className={`xp-bal${positive ? ' is-plus' : ''}${negative ? ' is-minus' : ''}`}
-              >
-                <span className="xp-bal-avatar" aria-hidden="true">
-                  {person.slice(0, 2).toUpperCase()}
-                </span>
-                <span className="xp-bal-body">
-                  <span className="xp-bal-name">{person === userName ? 'Du' : person.split(' ')[0]}</span>
-                  <span className="xp-bal-value">
-                    {positive ? '+' : ''}
-                    {fmtEUR(value)}
-                  </span>
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {/* Die Personenchips (+181 / −97 / −84) standen hier als dritte Fassung
+          derselben Zahlen: der Hero nennt den eigenen Saldo, die Zeilen unter
+          „Offen zwischen euch" den Weg dorthin. Raus. */}
 
       <section className="money-debts">
         <div className="money-debts-head">
