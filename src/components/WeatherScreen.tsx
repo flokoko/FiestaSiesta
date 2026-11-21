@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy } from 'react'
 import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock, Pencil, Loader2 } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName, dailyIndexFor } from '../lib/weather'
@@ -14,8 +13,12 @@ import { SLOTS } from '../lib/tripPlan'
 import { pointKey } from '../lib/poiWeather'
 import { formatDayShort } from '../lib/trip'
 import type { TripPlanMap } from '../hooks/useTripPlan'
-import 'leaflet/dist/leaflet.css'
 import './WeatherScreen.css'
+
+// Karte erst dynamisch laden, wenn sie wirklich gerendert wird (React.lazy
+// importiert beim ersten Suspense-Render) — sonst zieht der Screen immer den
+// ~150-kB-Leaflet-Chunk hinter sich her, auch wenn das Radar niemand öffnet.
+const WeatherMap = lazy(() => import('./WeatherMap'))
 
 interface WeatherData {
   current: {
@@ -154,15 +157,6 @@ function useIsDark(): boolean {
   }, [])
 
   return isDark
-}
-
-/** Component that updates the map view when coordinates change */
-function MapUpdater({ lat, lon }: { lat: number; lon: number }) {
-  const map = useMap()
-  useEffect(() => {
-    map.setView([lat, lon], 7)
-  }, [map, lat, lon])
-  return null
 }
 
 interface WeatherScreenProps {
@@ -879,42 +873,15 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
                 </span>
               </h2>
               <div className="weather-radar-map">
-                <MapContainer
-                  center={[storedLocation.lat, storedLocation.lon]}
-                  zoom={7}
-                  maxZoom={7}
-                  style={{ height: '100%', width: '100%' }}
-                  zoomControl={true}
-                  scrollWheelZoom={true}
-                  dragging={true}
-                >
-                  {/* Basiskarte bewusst keyless: CARTO verlangt seit 2026 einen
-                      API-Key und liefert sonst Kacheln mit „API KEY REQUIRED"
-                      als Hintergrund (am 26.10.2026 geprüft). OpenStreetMap
-                      braucht keinen Key; für den Dunkelmodus wird dieselbe
-                      Kachel per CSS invertiert, damit es EINEN Anbieter gibt. */}
-                  <TileLayer
-                    key={isDark ? 'base-dark' : 'base-light'}
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'
-                    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    className={isDark ? 'wx-radar-basemap is-dark' : 'wx-radar-basemap'}
-                    maxNativeZoom={7}
+                <Suspense fallback={<div className="wx-radar-map-ph" />}>
+                  <WeatherMap
+                    lat={storedLocation.lat}
+                    lon={storedLocation.lon}
+                    isDark={isDark}
+                    radarHost={radarHost}
+                    framePath={radarFrames[radarIndex]?.path ?? ''}
                   />
-                  {radarHost && radarFrames[radarIndex] && (
-                    <TileLayer
-                      key={`${radarFrames[radarIndex].path}-${isDark ? 'd' : 'l'}`}
-                      url={`${radarHost}${radarFrames[radarIndex].path}/256/{z}/{x}/{y}/2/1.png`}
-                      opacity={isDark ? 0.55 : 0.65}
-                      maxNativeZoom={7}
-                    />
-                  )}
-                  <CircleMarker
-                    center={[storedLocation.lat, storedLocation.lon]}
-                    radius={10}
-                    pathOptions={{ color: '#F39C12', fillColor: '#F39C12', fillOpacity: 0.8, weight: 2 }}
-                  />
-                  <MapUpdater lat={storedLocation.lat} lon={storedLocation.lon} />
-                </MapContainer>
+                </Suspense>
               </div>
               <div className="weather-radar-timeline">
                 <input

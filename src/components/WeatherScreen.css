@@ -337,6 +337,16 @@
   margin-bottom: 0.5rem;
 }
 
+/* Ladeplatzhalter für das lazy geladene Kartenmodul (React.lazy) — exakt die
+   Höhe der Karte, damit beim Nachladen kein Layoutsprung entsteht. */
+#root .wx-radar-map-ph {
+  height: 350px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-2);
+  margin-bottom: 0.5rem;
+}
+
 .weather-radar-map .leaflet-container {
   background: #e8eaf0;
   border-radius: 12px;
