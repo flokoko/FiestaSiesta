@@ -28,7 +28,7 @@ import {
   type DeadOp,
 } from '../hooks/useOfflineQueue'
 import { useSheetFocus } from '../hooks/useSheetFocus'
-import { APP_VERSION } from '../version'
+import { APP_VERSION, BUILD_ID } from '../version'
 import { spanishMotto } from '../lib/espanaFlair'
 
 import './SettingsScreen.css'
@@ -846,7 +846,7 @@ export default function SettingsScreen({
       )}
 
       <footer className="set-footer">
-        Fiesta Siesta · v{APP_VERSION}
+        Fiesta Siesta · v{APP_VERSION} · {BUILD_ID}
       </footer>
     </div>
   )

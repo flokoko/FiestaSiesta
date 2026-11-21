@@ -1,6 +1,9 @@
-// IMPORTANT: Bump this version when deploying changes.
-// Keep in sync with APP_VERSION in src/version.ts
-const CACHE_NAME = 'fiesta-siesta-v0.74.0';
+// CACHE_NAME ist ein Platzhalter und wird beim Build ersetzt — siehe
+// build-version-plugin in vite.config.ts: dort wird über die Build-Dateinamen
+// ein 8-Zeichen-Hash (sha256) gebildet und in diese Zeile eingesetzt.
+// Eine Codeänderung ergibt andere Chunk-Dateinamen, also einen neuen Hash —
+// kein manuelles Bumpen der Version mehr nötig.
+const CACHE_NAME = '__CACHE_NAME__';
 
 const INDEX_URL = '/FiestaSiesta/';
 
@@ -60,13 +63,18 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(async (keys) => {
       const keep = new Set([CACHE_NAME]);
+      // Seit dem Build-Hash ist der Cache-Name 'fiesta-siesta-<hash>' statt
+      // 'fiesta-siesta-v0.74.0' — beide Formen hier erfassen, damit die alten
+      // Versions-Caches beim Übergang aufgeräumt werden. Die Sortierung liefert
+      // bei den alten v-Name noch die echte Reihenfolge (numerisch); bei Hashes
+      // ist sie beliebig, aber stabil — als „vorherige Generation" genügt das:
+      // der Fetch-Handler matcht über ALLE Generationen hinweg.
       const generations = keys
-        .filter((k) => k.startsWith('fiesta-siesta-v'))
-        // numerisch, nicht lexikalisch: sonst gilt v0.9.0 als neuer als v0.31.0
+        .filter((k) => k.startsWith('fiesta-siesta-'))
         .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
       const previous = generations.filter((k) => k !== CACHE_NAME).pop();
       if (previous) keep.add(previous);
-      const toDelete = keys.filter((k) => k.startsWith('fiesta-siesta-v') && !keep.has(k));
+      const toDelete = keys.filter((k) => k.startsWith('fiesta-siesta-') && !keep.has(k));
       await Promise.all(toDelete.map((k) => caches.delete(k)));
       await self.clients.claim();
     })
