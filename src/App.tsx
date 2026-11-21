@@ -534,6 +534,10 @@ export default function App() {
   const handleOpenMore = useCallback(() => setMoreOpen(true), [])
   const handleCloseMore = useCallback(() => setMoreOpen(false), [])
   const handleOpenEmergency = useCallback(() => setEmergencyOpen(true), [])
+  // Stabile Callbacks für memo(ListScreen)/Lazy-Screens: ein Inline-Lambda im
+  // JSX würde die Memoisierung jedes Mal aushebeln.
+  const openKitchen = useCallback(() => setTab('recipes'), [setTab])
+  const openShopping = useCallback(() => setTab('list'), [setTab])
   const handleCloseEmergency = useCallback(() => setEmergencyOpen(false), [])
   // ── Zurück-Taste (Android/Browser) ─────────────────────────────────
   // Statt die PWA zu schließen: einen Screen zurück, offene Blätter zuerst zu.
@@ -697,7 +701,7 @@ export default function App() {
             <ScreenPane id="recipes" active={tab === 'recipes'} direction={screenDir}>
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <RecipesScreen listId={list.id} userName={userName} />
+            <RecipesScreen listId={list.id} userName={userName} onOpenShopping={openShopping} />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>
@@ -756,6 +760,7 @@ export default function App() {
               // Callback ist ein useCallback mit stabilen Deps — MemoList
               // rendert dadurch nicht öfter neu.
               onOptimisticAdd={addPendingItem}
+              onOpenKitchen={openKitchen}
             />
           </Suspense>
           </ErrorBoundary>

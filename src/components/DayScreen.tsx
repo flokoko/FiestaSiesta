@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, ShieldAlert,
+  ChevronRight, ArrowRight, MapPin, StickyNote, ChefHat, ShieldAlert,
   CalendarPlus, Sunset, CloudRain, Bell,
 } from 'lucide-react'
 import type { TabView } from '../types'
@@ -145,13 +145,12 @@ export default function DayScreen({
       ? `${proposalCount} ${proposalCount === 1 ? 'Vorschlag wartet' : 'Vorschläge warten'} auf eine Entscheidung.`
       : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
-  // Fünf Tagesfunktionen in EINER Reihe. Bristol und „Offen jetzt" sind
-  // gelegentliche Wege und liegen im „Mehr"-Blatt; der Tag-Screen zeigt nur,
-  // was man am Tag selbst braucht. Notfall bleibt hier — im Ernstfall sind
-  // zwei Taps zu viel.
+  // Vier Tagesfunktionen in EINER Reihe. Bristol und „Offen jetzt" sind
+  // gelegentliche Wege und liegen im „Mehr"-Blatt; die Tageskarte sitzt als
+  // Karten-Knopf im Reiseplan-Kopf (dort gehört sie hin — sie zeigt den Plan
+  // des Tages). Notfall bleibt hier: im Ernstfall sind zwei Taps zu viel.
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
-    { label: 'Karte', icon: Map, onClick: () => onNavigate('karte') },
     { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
     { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
     { label: 'Notfall', icon: ShieldAlert, onClick: onEmergency },

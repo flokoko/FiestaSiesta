@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { Trash2, ShoppingBasket, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X } from 'lucide-react'
+import { Trash2, ShoppingBasket, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X, ChefHat } from 'lucide-react'
 import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { supabase } from '../lib/supabase'
@@ -30,6 +30,8 @@ interface ListScreenProps {
   onCategoriesChange?: () => void
   /** Offline-Pfad für AddItemForm — Temp-Zeile sofort im Elternteil sichtbar machen. */
   onOptimisticAdd?: (payload: Record<string, unknown>) => string | undefined
+  /** Öffnet die Küche — Rezepte füllen genau diese Liste. */
+  onOpenKitchen?: () => void
 }
 
 /** Stabile leere Liste — verhindert, dass useMemo im Kind bei jedem Render neu läuft. */
@@ -241,7 +243,7 @@ function DraggableCategorySection({
   )
 }
 
-export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, onOptimisticAdd }: ListScreenProps) {
+export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, onOptimisticAdd, onOpenKitchen }: ListScreenProps) {
   const { toast, confirm } = useToast()
   const [hideChecked, setHideChecked] = usePersistedState<boolean>('fiesta_hide_checked', false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -342,14 +344,27 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
                 : `${openCount} offen · ${checkedItems.length} erledigt`}
           </p>
         </div>
-        <button
-          type="button"
-          className="list-menu-btn"
-          onClick={() => setMenuOpen(true)}
-          aria-label="Optionen"
-        >
-          <MoreHorizontal size={20} strokeWidth={2.2} />
-        </button>
+        <div className="list-head-actions">
+          {onOpenKitchen && (
+            <button
+              type="button"
+              className="list-menu-btn"
+              onClick={onOpenKitchen}
+              aria-label="Küche öffnen"
+              title="Küche"
+            >
+              <ChefHat size={18} strokeWidth={2} />
+            </button>
+          )}
+          <button
+            type="button"
+            className="list-menu-btn"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Optionen"
+          >
+            <MoreHorizontal size={20} strokeWidth={2.2} />
+          </button>
+        </div>
       </header>
 
       <div className="list-progress" aria-hidden="true">

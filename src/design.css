@@ -1356,6 +1356,14 @@ body::before {
   padding: 12px 2px 10px;
 }
 
+/* Kopf-Aktionen rechts: Küche aus der Einkaufsliste, Einkauf aus der Küche —
+   die beiden Screens gehören zusammen, ohne dass einer den anderen verschachtelt. */
+#root .list-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #root .list-head-text h1 {
   font-size: 26px;
   font-weight: 700;

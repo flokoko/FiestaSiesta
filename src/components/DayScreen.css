@@ -55,10 +55,10 @@
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
 }
 
-/* ── Hub: Reiseplan, Karte, Küche, Notizen, Notfall ───────────────────
-   Fünf Kacheln in einer Reihe, Icon über dem Label. Nebeneinander (Icon +
-   Text) wird keine Fünfer-Reihe daraus — „Reiseplan" allein ist 90 px breit,
-   eine Spalte hat 66. Bristol und „Offen jetzt" liegen im „Mehr"-Blatt. */
+/* ── Hub: Reiseplan, Küche, Notizen, Notfall ──────────────────────────
+   Vier Kacheln in einer Reihe, Icon über dem Label. Nebeneinander (Icon +
+   Text) passt nicht — „Reiseplan" allein ist 90 px breit. Bristol und
+   „Offen jetzt" liegen im „Mehr"-Blatt, die Tageskarte im Reiseplan-Kopf. */
 #root .day-hub {
   display: flex;
   flex-wrap: wrap;
@@ -68,7 +68,7 @@
 }
 
 #root .day-hub-chip {
-  flex: 1 1 calc(20% - 5px);
+  flex: 1 1 calc(25% - 5px);
   display: inline-flex;
   flex-direction: column;
   align-items: center;

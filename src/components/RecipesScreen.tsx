@@ -15,9 +15,11 @@ import './RecipesScreen.css'
 interface Props {
   listId: string
   userName: string
+  /** Öffnet die Einkaufsliste — Zutaten und Rezepte sind ein Weg. */
+  onOpenShopping: () => void
 }
 
-export default function RecipesScreen({ listId, userName }: Props) {
+export default function RecipesScreen({ listId, userName, onOpenShopping }: Props) {
   const { toast, confirm } = useToast()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -195,14 +197,25 @@ export default function RecipesScreen({ listId, userName }: Props) {
                 : `${recipes.length === 1 ? '1 Rezept' : `${recipes.length} Rezepte`}${offline ? ' · offline' : ''}`}
           </p>
         </div>
-        <button
-          type="button"
-          className="rc-add"
-          onClick={() => { setAdding(true); setOpen(null) }}
-          aria-label="Rezept hinzufügen"
-        >
-          <Plus size={18} strokeWidth={2.2} />
-        </button>
+        <div className="rc-head-actions">
+          <button
+            type="button"
+            className="rc-icon-btn"
+            onClick={onOpenShopping}
+            aria-label="Einkaufsliste öffnen"
+            title="Einkaufsliste"
+          >
+            <ShoppingBasket size={17} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className="rc-add"
+            onClick={() => { setAdding(true); setOpen(null) }}
+            aria-label="Rezept hinzufügen"
+          >
+            <Plus size={18} strokeWidth={2.2} />
+          </button>
+        </div>
       </header>
 
       {!loading && recipes.length === 0 && !adding && (
