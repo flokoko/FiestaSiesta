@@ -1,7 +1,6 @@
 import type { ListItem } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { Trash2, GripVertical, Pencil } from 'lucide-react'
-import { useToast } from '../context/ToastContext'
 import './ItemRow.css'
 
 interface ItemRowProps {
@@ -20,18 +19,18 @@ interface ItemRowProps {
 }
 
 export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandleProps, isDragging, isDragOver, registerRef }: ItemRowProps) {
-  const { confirm } = useToast()
 
   const toggleChecked = () => {
     onToggle?.(item)
     navigator.vibrate?.(10)
   }
 
+  // Sofort löschen — „Rückgängig" liegt als Toast-Aktion darüber (useListData
+  // führt den Undo-Stack, App zeigt den Knopf). Ein Modal für jedes Item war
+  // der häufigste Klick im Screen.
   const deleteItem = () => {
-    confirm(`„${item.name}“ wirklich löschen?`, () => {
-      onDelete?.(item)
-      navigator.vibrate?.(15)
-    }, undefined, 'Löschen')
+    onDelete?.(item)
+    navigator.vibrate?.(15)
   }
 
   const rowClass = [

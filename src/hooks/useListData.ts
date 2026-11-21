@@ -895,6 +895,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [isOnline, enqueue])
 
   const deleteBringItem = useCallback((item: ListItem) => {
+    withUndo([item], 'bring', () => {
     setBringItems(prev => prev.filter(i => i.id !== item.id))
     if (isOnline) {
       supabase.from('items').delete().eq('id', item.id).then(({ error }) => {
@@ -907,7 +908,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     } else {
       enqueue({ type: 'delete', table: 'items', payload: {}, filterColumn: 'id', filterValue: item.id })
     }
-  }, [isOnline, enqueue])
+    })
+  }, [withUndo, isOnline, enqueue])
 
   const reorderItems = useCallback(async (listType: ListType, newOrder: string[]) => {
     if (!list) return

@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function RecipesScreen({ listId, userName, onOpenShopping }: Props) {
-  const { toast, confirm } = useToast()
+  const { toast } = useToast()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   // Ohne Empfang in den Bergen: Rezepte sollen trotzdem lesbar sein.
@@ -153,21 +153,38 @@ export default function RecipesScreen({ listId, userName, onOpenShopping }: Prop
 
   const remove = (recipe: Recipe) => {
     // Bestätigung wie in den anderen Screens: nichts löscht heimlich weg.
-    confirm(`„${recipe.title}“ löschen?`, async () => {
-      setBusy(true)
-      const { error } = await supabase.from('recipes').delete().eq('id', recipe.id)
-      setBusy(false)
-      if (error) {
-        toast('Löschen fehlgeschlagen', 'error')
-        return
-      }
+    // Sofort löschen, „Rückgängig" legt dasselbe Rezept (gleiche id) zurück —
+    // inklusive Cache, damit es offline sofort wieder da ist.
+    const drop = () => {
       setRecipes((current) => {
         const next = current.filter((entry) => entry.id !== recipe.id)
         writeCache<Recipe[]>(listId, 'recipes', next)
         return next
       })
       setOpen(null)
-      toast('Rezept gelöscht', 'success')
+    }
+    const restore = () => {
+      void supabase.from('recipes').insert(recipe).then(({ error }) => {
+        if (error) {
+          toast('Wiederherstellen fehlgeschlagen', 'error')
+          return
+        }
+        setRecipes((current) => {
+          const next = current.some((entry) => entry.id === recipe.id) ? current : [...current, recipe]
+          writeCache<Recipe[]>(listId, 'recipes', next)
+          return next
+        })
+      })
+    }
+
+    drop()
+    toast(`„${recipe.title}" gelöscht`, 'info', { label: 'Rückgängig', onClick: restore })
+
+    void supabase.from('recipes').delete().eq('id', recipe.id).then(({ error }) => {
+      if (error) {
+        toast('Löschen fehlgeschlagen', 'error')
+        restore()
+      }
     })
   }
 

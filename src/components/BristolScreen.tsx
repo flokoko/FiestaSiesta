@@ -48,7 +48,7 @@ function hasThreeConsecutive13(entries: BristolEntry[], userName: string): boole
 }
 
 export default function BristolScreen({ listId, userName, isAdmin }: BristolScreenProps) {
-  const { toast, confirm } = useToast()
+  const { toast } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
 
   // Bristol hängt im Read-Cache (readCache.ts führt 'bristol_entries'), damit
@@ -260,30 +260,37 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     fetchEntries()
   }, [toast, fetchEntries, isOnline, enqueue])
 
-  const handleDeleteEntry = useCallback((entryId: string, entry: BristolEntry) => {
+  const handleDeleteEntry = useCallback(async (entryId: string, entry: BristolEntry) => {
     const datum = new Date(entry.entry_date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
-    confirm(`„${entry.participant_name}“ vom ${datum} wirklich löschen?`, async () => {
-      if (isOnline) {
-        const { error } = await supabase.from('bristol_entries').delete().eq('id', entryId)
-        if (error) {
-          toast(`Fehler: ${error.message}`, 'error')
-          return
-        }
-      } else {
-        enqueue({
-          type: 'delete',
-          table: 'bristol_entries',
-          payload: {},
-          filterColumn: 'id',
-          filterValue: entryId,
-        })
+    const restore = () => {
+      void supabase.from('bristol_entries').insert(entry).then(({ error }) => {
+        if (error) toast(`Fehler: ${error.message}`, 'error')
+        fetchEntries()
+      })
+    }
+
+    toast(`„${entry.participant_name}" vom ${datum} gelöscht`, 'info', { label: 'Rückgängig', onClick: restore })
+    navigator.vibrate?.(10)
+    setEditingEntryId(null)
+
+    if (isOnline) {
+      const { error } = await supabase.from('bristol_entries').delete().eq('id', entryId)
+      if (error) {
+        toast(`Fehler: ${error.message}`, 'error')
+        restore()
+        return
       }
-      toast(`${spanishSuccess()} Eintrag gelöscht!`, 'success')
-      navigator.vibrate?.(10)
-      setEditingEntryId(null)
-      fetchEntries()
-    })
-  }, [confirm, toast, fetchEntries, isOnline, enqueue])
+    } else {
+      enqueue({
+        type: 'delete',
+        table: 'bristol_entries',
+        payload: {},
+        filterColumn: 'id',
+        filterValue: entryId,
+      })
+    }
+    fetchEntries()
+  }, [toast, fetchEntries, isOnline, enqueue])
 
   const myEntriesForSelectedDate = useMemo(
     () => entries

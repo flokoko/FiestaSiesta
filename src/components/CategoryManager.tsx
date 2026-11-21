@@ -6,6 +6,8 @@ import { useCategories } from '../hooks/useCategories'
 import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useToast } from '../context/ToastContext'
+import { supabase } from '../lib/supabase'
+import { friendlyError } from '../lib/friendlyError'
 
 import './CategoryManager.css'
 
@@ -17,10 +19,28 @@ interface CategoryManagerProps {
 }
 
 export default function CategoryManager({ categories, listId, listType, onCategoriesChange }: CategoryManagerProps) {
-  const { confirm } = useToast()
+  const { toast } = useToast()
   const [expanded, setExpanded] = useState(false)
   const [localNames, setLocalNames] = useState<Record<string, string>>({})
   const { updateCategory, deleteCategory, addCategory, reorderCategories } = useCategories(() => onCategoriesChange?.())
+
+  // Löschen ohne Modal, dafür mit „Rückgängig": die Kategorie kommt mit
+  // derselben id zurück (Items hängen am Namen, nicht an der id).
+  const handleDelete = (cat: ItemCategory) => {
+    deleteCategory(cat.id)
+    toast(`Kategorie „${cat.name}" gelöscht`, 'info', {
+      label: 'Rückgängig',
+      onClick: () => {
+        void supabase.from('categories').insert(cat).then(({ error }) => {
+          if (error) {
+            toast(friendlyError(error), 'error')
+            return
+          }
+          onCategoriesChange?.()
+        })
+      },
+    })
+  }
 
   const debouncedUpdate = useDebouncedCallback(updateCategory, 400)
 
@@ -89,7 +109,7 @@ export default function CategoryManager({ categories, listId, listType, onCatego
                 />
                 <button
                   className="cat-manager-delete-btn"
-                  onClick={() => confirm(`Kategorie „${cat.name}“ wirklich löschen?`, () => deleteCategory(cat.id))}
+                  onClick={() => handleDelete(cat)}
                   aria-label="Kategorie löschen"
                 >
                   <Trash2 size={16} strokeWidth={2} />

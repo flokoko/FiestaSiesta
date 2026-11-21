@@ -69,7 +69,7 @@ export default function NotesScreen({
   onReorderNotes,
   onToggleFavorite,
 }: NotesScreenProps) {
-  const { toast, confirm } = useToast()
+  const { toast } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
   const submitRef = useRef(false)
   const [formTitle, setFormTitle] = useState('')
@@ -238,28 +238,36 @@ export default function NotesScreen({
     onNotesChange()
   }
 
-  const handleDelete = (note: QuickNote) => {
+  const handleDelete = async (note: QuickNote) => {
     // Kurzer Auszug für den Bestätigungs-Toast: eine Zeile, max. ~40 Zeichen
     const kurz = note.content.replace(/\s+/g, ' ').trim().slice(0, 40)
-    confirm(`Notiz „${kurz}“ wirklich löschen?`, async () => {
-      if (isOnline) {
-        const { error } = await supabase.from('notes').delete().eq('id', note.id)
-        if (error) {
-          toast(friendlyError(error), 'error')
-          return
-        }
-      } else {
-        enqueue({
-          type: 'delete',
-          table: 'notes',
-          payload: {},
-          filterColumn: 'id',
-          filterValue: note.id,
-        })
+    const restore = () => {
+      void supabase.from('notes').insert(note).then(({ error }) => {
+        if (error) toast(friendlyError(error), 'error')
+        onNotesChange()
+      })
+    }
+
+    navigator.vibrate?.(15)
+    toast(`„${kurz}" gelöscht`, 'info', { label: 'Rückgängig', onClick: restore })
+
+    if (isOnline) {
+      const { error } = await supabase.from('notes').delete().eq('id', note.id)
+      if (error) {
+        toast(friendlyError(error), 'error')
+        restore()
+        return
       }
-      navigator.vibrate?.(15)
-      onNotesChange()
-    }, undefined, 'Löschen')
+    } else {
+      enqueue({
+        type: 'delete',
+        table: 'notes',
+        payload: {},
+        filterColumn: 'id',
+        filterValue: note.id,
+      })
+    }
+    onNotesChange()
   }
 
   const startEdit = (note: QuickNote) => {

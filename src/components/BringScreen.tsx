@@ -59,7 +59,6 @@ function DraggableBringGroup({
   onDelete: (item: ListItem) => void
   onReorder?: (newOrder: string[]) => void
 }) {
-  const { confirm } = useToast()
   const {
     dragState,
     handlePointerDown,
@@ -116,7 +115,7 @@ function DraggableBringGroup({
             <span className="bring-item-qty">{item.quantity}</span>
             <button
               className="bring-item-delete"
-              onClick={() => confirm(`„${item.name}“ wirklich löschen?`, () => onDelete(item), undefined, 'Löschen')}
+              onClick={() => { onDelete(item); navigator.vibrate?.(15) }}
               aria-label="Löschen"
             >
               <Trash2 size={16} strokeWidth={2} />
@@ -129,7 +128,7 @@ function DraggableBringGroup({
 }
 
 export default function BringScreen({ items, categories, listId, userName, onItemToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, persons }: BringScreenProps) {
-  const { toast, confirm } = useToast()
+  const { toast } = useToast()
   const { isOnline, enqueue } = useOfflineQueue()
 
   // ── Sub-tab toggle: shared bring list vs personal packing list ──
@@ -274,36 +273,44 @@ export default function BringScreen({ items, categories, listId, userName, onIte
   }, [isOnline, enqueue, toast])
 
   // ── Delete a packing item ──
+  // Sofort löschen, „Rückgängig" im Toast: die Zeile wird mit derselben id neu
+  // eingefügt — die Reihenfolge bleibt damit erhalten, kein Modal dazwischen.
   const handleDeletePackItem = useCallback((item: PacklistItem) => {
-    confirm(`Packlisten-Element „${item.name}“ wirklich löschen?`, async () => {
-      // Optimistic removal
-      setPackItems(prev => prev.filter(p => p.id !== item.id))
+    setPackItems(prev => prev.filter(p => p.id !== item.id))
+    navigator.vibrate?.(10)
 
-      if (isOnline) {
-        const { error } = await supabase
-          .from('packlist_items')
-          .delete()
-          .eq('id', item.id)
+    const restore = () => {
+      setPackItems(prev => (prev.some(p => p.id === item.id) ? prev : [...prev, item]))
+      void supabase.from('packlist_items').insert(item).then(({ error }) => {
         if (error) {
           toast(friendlyError(error), 'error')
-          // Re-fetch to restore correct state
           fetchPackItems()
-          // Kein Erfolgs-Toast nach einem Fehler (vorher kamen beide).
-          return
+        } else {
+          fetchPackItems()
         }
-      } else {
-        enqueue({
-          type: 'delete',
-          table: 'packlist_items',
-          payload: {},
-          filterColumn: 'id',
-          filterValue: item.id,
-        })
+      })
+    }
+
+    toast(`„${item.name}" gelöscht`, 'info', { label: 'Rückgängig', onClick: restore })
+
+    if (!isOnline) {
+      enqueue({
+        type: 'delete',
+        table: 'packlist_items',
+        payload: {},
+        filterColumn: 'id',
+        filterValue: item.id,
+      })
+      return
+    }
+
+    void supabase.from('packlist_items').delete().eq('id', item.id).then(({ error }) => {
+      if (error) {
+        toast(friendlyError(error), 'error')
+        fetchPackItems()
       }
-      toast('Element gelöscht!', 'success')
-      navigator.vibrate?.(10)
     })
-  }, [confirm, isOnline, enqueue, toast, fetchPackItems])
+  }, [isOnline, enqueue, toast, fetchPackItems])
 
   // ── Copy items from shared bring list (assigned to me) into packing list ──
   const handleCopyFromBring = useCallback(async () => {

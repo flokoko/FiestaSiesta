@@ -575,16 +575,33 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     })
   }
 
-  const handleDelete = (proposal: TripProposal) => {
-    confirm(`„${proposal.title}“ mit allen Stimmen löschen?`, async () => {
-      const { error } = await supabase.from('trip_proposals').delete().eq('id', proposal.id)
-      if (error) {
-        toast(friendlyError(error), 'error')
+  // Löschen mit „Rückgängig": Vorschlag UND seine Stimmen kehren mit denselben
+  // ids zurück (der FK würde sie sonst beim Löschen kaskadieren, der Undo-Insert
+  // des Vorschlags allein ließe einen Vorschlag ohne Stimmen stehen).
+  const handleDelete = async (proposal: TripProposal) => {
+    const proposalVotes = votes.filter((v) => v.proposal_id === proposal.id)
+    const restore = async () => {
+      const { error: pErr } = await supabase.from('trip_proposals').insert(proposal)
+      if (pErr) {
+        toast(friendlyError(pErr), 'error')
         return
       }
-      toast('Vorschlag gelöscht', 'success')
+      if (proposalVotes.length > 0) {
+        const { error: vErr } = await supabase.from('trip_votes').insert(proposalVotes)
+        if (vErr) toast(friendlyError(vErr), 'error')
+      }
       void load()
-    })
+    }
+
+    toast(`„${proposal.title}" gelöscht`, 'info', { label: 'Rückgängig', onClick: () => void restore() })
+
+    const { error } = await supabase.from('trip_proposals').delete().eq('id', proposal.id)
+    if (error) {
+      toast(friendlyError(error), 'error')
+      void restore()
+      return
+    }
+    void load()
   }
 
   const selectedDate = days.find((d) => isoDay(d) === selectedDay) ?? days[0]
