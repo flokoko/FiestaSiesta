@@ -5,6 +5,7 @@ import { supabase, getSupabaseUrl } from '../lib/supabase'
 import { readCache } from '../lib/readCache'
 import { friendlyError } from '../lib/friendlyError'
 import { useToast } from '../context/ToastContext'
+import { isNetworkFailure, useOfflineQueue } from '../hooks/useOfflineQueue'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SLOTS, isoDay, confirmedProposal, mapsUrl, planFor, proposalsFor, slotMeta, voteCount } from '../lib/tripPlan'
 import { tripDays, formatDayShort, tripDay, TRIP } from '../lib/trip'
@@ -37,6 +38,9 @@ function commentClock(iso: string): string {
 
 export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay, onNavigate, notesCount }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
+  // Offline-Queue: Stimmen abgeben/entfernen funktioniert offline — die Op wartet
+  // in localStorage und wird beim Reconnect geflusht (Muster aus Notes/Bring).
+  const { isOnline, enqueue, queueLength } = useOfflineQueue()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
   const [votes, setVotes] = useState<TripVote[]>([])
@@ -168,6 +172,17 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
   useEffect(() => {
     void load()
   }, [load])
+
+  // Nach dem Flush die Wahrheit nachziehen: das Realtime-Echo braucht Netz —
+  // beim Wechsel zurück online flusht die Queue zentral, aber der Screen hat
+  // die Votes noch als Optimismus im State. Einmal nachladen, sobald die
+  // Verbindung wiederkommt, sonst bliebe der Optimismus stehen, obwohl der
+  // Server längst etwas anderes weiß.
+  const wasOnlineRef = useRef(isOnline)
+  useEffect(() => {
+    if (isOnline && !wasOnlineRef.current) void load()
+    wasOnlineRef.current = isOnline
+  }, [isOnline, load])
 
   // ── Kommentare ─────────────────────────────────────────────────────
   const commentsFor = (proposalId: string) => comments.filter((c) => c.proposal_id === proposalId)
@@ -444,6 +459,50 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
       const own = votes.find((v) => v.proposal_id === proposal.id && v.voter === userName)
       navigator.vibrate?.(8)
       setBusyId(proposal.id)
+
+      // ── Optimismus zuerst: die Stimme erscheint sofort, im Votes-State UND
+      //    in der Zählung am Vorschlag. Der Serverstand zieht per load()-Echo
+      //    (Realtime/Reconnect-Effekt) nach.
+      const tempId = crypto.randomUUID()
+      if (own) {
+        setVotes((prev) => prev.filter((v) => v.id !== own.id))
+        setProposals((prev) =>
+          prev.map((p) =>
+            p.id === proposal.id ? { ...p, votes: (p.votes ?? []).filter((n) => n !== userName) } : p
+          )
+        )
+      } else {
+        setVotes((prev) => [
+          ...prev,
+          { id: tempId, list_id: listId, proposal_id: proposal.id, voter: userName, created_at: new Date().toISOString() },
+        ])
+        setProposals((prev) =>
+          prev.map((p) =>
+            p.id === proposal.id ? { ...p, votes: [...(p.votes ?? []), userName] } : p
+          )
+        )
+      }
+
+      // Op für die Offline-Queue. Der Insert trägt die FESTE Client-UUID als `id`
+      // (echte UUID, kein `temp-`-Präfix — die DB-Spalte ist vom Typ uuid):
+      // die spätere DB-Zeile heißt dann genauso wie der Eintrag im UI — egal ob
+      // die Response beim Flush verloren geht (doppelter Versuch läuft auf PK
+      // 23505 und gilt als Erfolg) oder ob der Vote wieder entfernt wird (Delete
+      // auf dieselbe id trifft die echte Zeile). Keine Temp-REAL-Spalte, keine
+      // doppelten Stimmen unter der unique-Index-Verletzung (proposal_id, voter).
+      const queueOp = own
+        ? { type: 'delete' as const, table: 'trip_votes', payload: {}, filterColumn: 'id', filterValue: own.id }
+        : { type: 'insert' as const, table: 'trip_votes', payload: { id: tempId, list_id: listId, proposal_id: proposal.id, voter: userName }, clientId: tempId }
+
+      if (!isOnline) {
+        // Offline: die Op wartet in der Queue — Info-Toast, KEIN Fehler-Toast.
+        // Der Flush passiert zentral beim Reconnect; der Screen zieht dann per
+        // Realtime-Echo bzw. Reconnect-Effekt die Server-Wahrheit nach.
+        enqueue(queueOp)
+        toast('Stimme gespeichert — wird gesendet, sobald du online bist.', 'info')
+        return
+      }
+
       const { error } = own
         ? await supabase.from('trip_votes').delete().eq('id', own.id)
         : await supabase.from('trip_votes').insert({
@@ -451,16 +510,25 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
             proposal_id: proposal.id,
             voter: userName,
           })
-      setBusyId(null)
       // 23505 = unique(proposal_id, voter): der eigene Vote war schon gesetzt
       // (verzögertes Realtime/Echo). Ergebnis stimmt, also keinen Fehler zeigen.
       if (error && error.code !== '23505') {
+        // Netz in der Online-Zone gebrochen (Timeout / Fetch failed): die Op in
+        // die Queue legen statt einen Fehler zu zeigen — der Optimismus oben
+        // bleibt, der Flush holt ihn nach.
+        if (isNetworkFailure(error)) {
+          enqueue(queueOp)
+          toast('Stimme gespeichert — wird gesendet, sobald du online bist.', 'info')
+          return
+        }
         toast(friendlyError(error), 'error')
+        void load() // Optimismus zurückrollen — der Serverstand ist die Wahrheit
         return
       }
       void load()
     } finally {
       votingRef.current.delete(proposal.id)
+      setBusyId(null)
     }
   }
 
@@ -644,9 +712,13 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
         </button>
       </header>
 
-      {offlineHint && (
+      {(offlineHint || !isOnline || queueLength > 0) && (
         <p className="plan-offline-hint" role="status">
-          Zeigt den letzten bekannten Stand — wird synchronisiert, sobald du wieder online bist.
+          {!isOnline
+            ? 'Offline — Änderungen werden gespeichert und synchronisiert, sobald du wieder online bist.'
+            : offlineHint
+              ? 'Zeigt den letzten bekannten Stand — wird synchronisiert, sobald du wieder online bist.'
+              : 'Änderungen werden noch synchronisiert.'}
         </p>
       )}
 
