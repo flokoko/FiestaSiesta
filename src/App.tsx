@@ -67,12 +67,14 @@ const SCREEN_CHUNKS_EAGER = [
   importExpenseScreen,
   importNotesScreen,
 ]
+// Bristol (~416 kB) und die Tageskarte (Leaflet, ~150 kB) bleiben bewusst draußen:
+// der Idle-Prefetch zog sie sonst in jeder Sitzung mit, obwohl Bristol eine
+// Spaß-Seite ist und die Karte erst auf Tippen gebraucht wird. Beide laden beim
+// ersten Öffnen (dann aus dem Cache).
 const SCREEN_CHUNKS_IDLE = [
   importWeatherScreen,
-  importBristolScreen,
   importOpeningHoursScreen,
   importRecipesScreen,
-  importDayMapScreen,
   importQuizScreen,
 ]
 import DayScreen from './components/DayScreen'
