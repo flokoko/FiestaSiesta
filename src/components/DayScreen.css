@@ -55,11 +55,10 @@
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
 }
 
-/* ── Hub: Reiseplan, Karte, Küche, Notizen, Offen, Bristol, Notfall ────
-   Zwei Reihen à vier statt eines Scrollbands: das Band zeigte bei 362 px
-   Sicht nur 4 von 7 Pillen und schnitt die fünfte mitten im Wort ab.
-   Ikone ÜBER dem Label, weil nebeneinander kein Vierer-Raster passt —
-   „Offen jetzt" allein ist 95 px breit, vier Spalten geben 85. */
+/* ── Hub: Reiseplan, Karte, Küche, Notizen, Notfall ───────────────────
+   Fünf Kacheln in einer Reihe, Icon über dem Label. Nebeneinander (Icon +
+   Text) wird keine Fünfer-Reihe daraus — „Reiseplan" allein ist 90 px breit,
+   eine Spalte hat 66. Bristol und „Offen jetzt" liegen im „Mehr"-Blatt. */
 #root .day-hub {
   display: flex;
   flex-wrap: wrap;
@@ -69,7 +68,7 @@
 }
 
 #root .day-hub-chip {
-  flex: 1 1 calc(25% - 5px);
+  flex: 1 1 calc(20% - 5px);
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -82,7 +81,7 @@
   background: var(--surface);
   color: var(--ink-2);
   font-family: inherit;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   line-height: 1.15;
   text-align: center;

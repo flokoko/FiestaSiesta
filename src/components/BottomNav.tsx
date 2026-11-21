@@ -35,8 +35,9 @@ interface BottomNavProps {
   moreOpen: boolean
 }
 
-// Bristol lebt im Cockpit (Schnellzugriff) und im „Mehr"-Blatt — die Leiste
-// bleibt damit bei vier Domänen plus „Mehr".
+// Vier Domänen plus „Mehr" — mehr trägt die Leiste nicht. Alles, was nicht
+// Tag/Listen/Geld ist (Wetter, Plan, Karte, Küche, Notizen, Offen, Bristol,
+// Quiz, Notfall, Einstellungen), hängt als Unterseite an einer Domäne.
 export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomNavProps) {
   const activeDomain = DOMAIN_OF[tab] ?? tab
   const items = ITEMS

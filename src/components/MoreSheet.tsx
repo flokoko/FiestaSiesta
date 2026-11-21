@@ -1,6 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity, Trophy } from 'lucide-react'
-import { APP_VERSION } from '../version'
+import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity, Trophy, Clock, ChevronRight } from 'lucide-react'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 
@@ -14,6 +13,19 @@ interface MoreSheetProps {
   userName: string
 }
 
+interface Entry {
+  label: string
+  hint: string
+  icon: typeof CloudSun
+  action: () => void
+}
+
+/**
+ * „Mehr" ist kein Sammelbecken mehr, sondern drei benannte Gruppen:
+ * „Vor Ort" (was man am Zielort braucht), „Spiel & Spaß" und „App". Zeilen
+ * statt Kacheln — sechs Kacheln in einem 2er-Raster sahen wie ein Menü aus
+ * Schaltflächen aus, das Blatt hatte keine Ordnung.
+ */
 export default function MoreSheet({
   open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
 }: MoreSheetProps) {
@@ -24,31 +36,27 @@ export default function MoreSheet({
 
   if (!open) return null
 
-  const entries: Array<{ label: string; hint: string; icon: typeof CloudSun; action: () => void }> = [
+  const go = (tab: TabView) => { onNavigate(tab); onClose() }
+
+  const groups: Array<{ title: string; entries: Entry[] }> = [
     {
-      label: 'Wetter',
-      hint: '7-Tage-Vorschau',
-      icon: CloudSun,
-      action: () => { onNavigate('weather'); onClose() },
+      title: 'Vor Ort',
+      entries: [
+        { label: 'Offen jetzt', hint: 'Öffnungszeiten, Pausen', icon: Clock, action: () => go('offen') },
+        { label: 'Wetter', hint: '7-Tage-Vorschau', icon: CloudSun, action: () => go('weather') },
+      ],
     },
     {
-      label: 'Quiz',
-      hint: '15 Stufen, Rangliste',
-      icon: Trophy,
-      action: () => { onNavigate('quiz'); onClose() },
+      title: 'Spiel & Spaß',
+      entries: [
+        { label: 'Quiz', hint: '15 Stufen, Rangliste', icon: Trophy, action: () => go('quiz') },
+        { label: 'Bristol', hint: 'Skala, Statistik, Gag', icon: Activity, action: () => go('bristol') },
+      ],
     },
-    {
-      label: 'Bristol',
-      hint: 'Skala, Statistik, Gag',
-      icon: Activity,
-      action: () => { onNavigate('bristol'); onClose() },
-    },
-    {
-      label: 'Einstellungen',
-      hint: 'Name, Passwort, Admin',
-      icon: Settings,
-      action: () => { onNavigate('settings'); onClose() },
-    },
+  ]
+
+  const appEntries: Entry[] = [
+    { label: 'Einstellungen', hint: 'Name, Passwort, Admin', icon: Settings, action: () => go('settings') },
     {
       label: isDark ? 'Hell' : 'Dunkel',
       hint: 'Darstellung wechseln',
@@ -56,6 +64,23 @@ export default function MoreSheet({
       action: () => { onToggleTheme(); onClose() },
     },
   ]
+
+  const renderRows = (entries: Entry[]) => (
+    <div className="more-rows">
+      {entries.map(({ label, hint, icon: Icon, action }) => (
+        <button key={label} type="button" className="more-row" onClick={action}>
+          <span className="more-row-icon">
+            <Icon size={16} strokeWidth={2} aria-hidden="true" />
+          </span>
+          <span className="more-row-body">
+            <span className="more-row-label">{label}</span>
+            <span className="more-row-hint">{hint}</span>
+          </span>
+          <ChevronRight size={15} strokeWidth={2.2} className="more-row-chevron" aria-hidden="true" />
+        </button>
+      ))}
+    </div>
+  )
 
   return (
     <div className="more-scrim" role="presentation" onClick={onClose}>
@@ -71,7 +96,9 @@ export default function MoreSheet({
         <div className="more-head">
           <h2>Mehr</h2>
           <div className="more-head-right">
-            <span className="more-user">{userName} · v{APP_VERSION}</span>
+            {/* Version steht in den Einstellungen („Über") — hier kürzte sie
+                nur den Namen ab. */}
+            <span className="more-user">{userName}</span>
             {/* Abmelden gehört in den Kopf: unten lag es direkt über der Bottom-Nav
                 und wurde beim Tippen auf die Leiste versehentlich getroffen. */}
             <button
@@ -88,15 +115,17 @@ export default function MoreSheet({
           </div>
         </div>
 
-        <div className="more-grid">
-          {entries.map(({ label, hint, icon: Icon, action }) => (
-            <button key={label} type="button" className="more-tile" onClick={action}>
-              <span className="more-tile-icon"><Icon size={16} strokeWidth={2} /></span>
-              <span className="more-tile-label">{label}</span>
-              <span className="more-tile-hint">{hint}</span>
-            </button>
-          ))}
-        </div>
+        {groups.map(({ title, entries }) => (
+          <section key={title} className="more-group">
+            <h3 className="more-group-title">{title}</h3>
+            {renderRows(entries)}
+          </section>
+        ))}
+
+        <section className="more-group">
+          <h3 className="more-group-title">App</h3>
+          {renderRows(appEntries)}
+        </section>
       </div>
     </div>
   )

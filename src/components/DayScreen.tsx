@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, Clock, ShieldAlert,
-  CalendarPlus, Sunset, CloudRain, Activity, Bell,
+  ChevronRight, ArrowRight, MapPin, Map, StickyNote, ChefHat, ShieldAlert,
+  CalendarPlus, Sunset, CloudRain, Bell,
 } from 'lucide-react'
 import type { TabView } from '../types'
 import type { TripPlanMap } from '../hooks/useTripPlan'
@@ -145,15 +145,15 @@ export default function DayScreen({
       ? `${proposalCount} ${proposalCount === 1 ? 'Vorschlag wartet' : 'Vorschläge warten'} auf eine Entscheidung.`
       : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
+  // Fünf Tagesfunktionen in EINER Reihe. Bristol und „Offen jetzt" sind
+  // gelegentliche Wege und liegen im „Mehr"-Blatt; der Tag-Screen zeigt nur,
+  // was man am Tag selbst braucht. Notfall bleibt hier — im Ernstfall sind
+  // zwei Taps zu viel.
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
     { label: 'Karte', icon: Map, onClick: () => onNavigate('karte') },
     { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
     { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
-    { label: 'Offen jetzt', icon: Clock, onClick: () => onNavigate('offen') },
-    // Bristol bleibt fester Bestandteil des Cockpits (Flo-Entscheid): ohne
-    // Modus zeigt der Bristol-Tab wie bisher das Gate.
-    { label: 'Bristol', icon: Activity, onClick: () => onNavigate('bristol') },
     { label: 'Notfall', icon: ShieldAlert, onClick: onEmergency },
   ]
 
