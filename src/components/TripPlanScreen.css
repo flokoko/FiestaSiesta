@@ -843,3 +843,46 @@
     min-height: 44px;
   }
 }
+
+/* Notizen hängen als Zeile am Reiseplan (vorher: eigene Kachel im Tag-Hub).
+   Flüge, Unterkunft und To-dos sind Nachschlagewerk zum Plan, keine eigene
+   Domäne. */
+#root .plan-notes-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 10px 0 0;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .plan-notes-link svg {
+  flex: none;
+}
+
+#root .plan-notes-label {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+#root .plan-notes-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .plan-notes-link:active {
+  background: var(--surface-2);
+}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChevronRight, ArrowRight, MapPin, StickyNote, ChefHat, ShieldAlert,
+  ChevronRight, ArrowRight, MapPin, ChefHat, ShieldAlert,
   CalendarPlus, Sunset, CloudRain, Bell,
 } from 'lucide-react'
 import type { TabView } from '../types'
@@ -24,7 +24,6 @@ interface DayScreenProps {
   bringCount: number
   expenseTotal: number
   userBalance: number
-  notesCount: number
   proposalCount: number
   /** gilt der Plan pro Tag (aus useTripPlan in App.tsx) */
   plan: TripPlanMap
@@ -50,7 +49,7 @@ function euro0(value: number): string {
  */
 export default function DayScreen({
   participantCount, shoppingCount, shoppingChecked, bringCount,
-  expenseTotal, userBalance, notesCount, proposalCount,
+  expenseTotal, userBalance, proposalCount,
   plan, weather, dayIso, onPickDay, onNavigate, onEmergency,
 }: DayScreenProps) {
   const today = new Date()
@@ -145,14 +144,13 @@ export default function DayScreen({
       ? `${proposalCount} ${proposalCount === 1 ? 'Vorschlag wartet' : 'Vorschläge warten'} auf eine Entscheidung.`
       : 'Im Reiseplan vorschlagen, alle stimmen ab — der Favorit wird übernommen.'
 
-  // Vier Tagesfunktionen in EINER Reihe. Bristol und „Offen jetzt" sind
-  // gelegentliche Wege und liegen im „Mehr"-Blatt; die Tageskarte sitzt als
-  // Karten-Knopf im Reiseplan-Kopf (dort gehört sie hin — sie zeigt den Plan
-  // des Tages). Notfall bleibt hier: im Ernstfall sind zwei Taps zu viel.
+  // Drei Tagesfunktionen in EINER Reihe. Alles Weitere hängt dort, wo es
+  // inhaltlich hingehört: Tageskarte und Öffnungszeiten im Reiseplan-Kopf,
+  // Notizen als Zeile am Reiseplan, Bristol/Quiz im „Mehr"-Blatt. Notfall
+  // bleibt hier — im Ernstfall sind zwei Taps zu viel.
   const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
     { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
     { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
-    { label: `Notizen${notesCount > 0 ? ` ${notesCount}` : ''}`, icon: StickyNote, onClick: () => onNavigate('notes') },
     { label: 'Notfall', icon: ShieldAlert, onClick: onEmergency },
   ]
 

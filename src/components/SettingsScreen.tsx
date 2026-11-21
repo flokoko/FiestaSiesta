@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, Palette, Sun, Moon, Pencil, Crown, Lock, KeyRound, Bell, BellOff, Loader2,
-  MoreHorizontal, X, Settings2, Info, LogOut, Copy, Activity, Plus, RotateCcw, Home,
+  MoreHorizontal, X, Info, LogOut, Copy, Activity, Plus, RotateCcw,
 } from 'lucide-react'
-import type { ItemCategory, ListType, Participant } from '../types'
+import type { Participant } from '../types'
 import type { ThemeMode } from '../lib/theme'
 import { getTheme, setTheme } from '../lib/theme'
 import { LEAD_OPTIONS, readDefaultLead, writeDefaultLead } from '../lib/wake'
 import { isIos, isStandalone } from '../lib/platform'
 import { supabase } from '../lib/supabase'
 import { friendlyError } from '../lib/friendlyError'
-import { defaultHomePlace, geocodeHomePlace, readHomePlace, writeHomePlace, type HomePlace } from '../lib/homeWeather'
 import {
   isPushSupported,
   isPushConfigured,
@@ -28,8 +27,6 @@ import {
   clearFailedOps,
   type DeadOp,
 } from '../hooks/useOfflineQueue'
-import { useCategories } from '../hooks/useCategories'
-import { useDebouncedCallback } from '../hooks/useDebouncedCallback'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { APP_VERSION } from '../version'
 import { spanishMotto } from '../lib/espanaFlair'
@@ -53,9 +50,7 @@ interface SettingsScreenProps {
   listName: string
   onLeave: () => void
   onRename: (newName: string) => Promise<string | null>
-  categories: ItemCategory[]
   listId: string
-  onCategoriesChange: () => void
   participants: Participant[]
   onParticipantsChange: () => void
   isAdmin: boolean
@@ -72,9 +67,7 @@ export default function SettingsScreen({
   listName,
   onLeave,
   onRename,
-  categories,
   listId,
-  onCategoriesChange,
   participants,
   onParticipantsChange,
   isAdmin,
@@ -120,27 +113,13 @@ export default function SettingsScreen({
   const [adminOldPw, setAdminOldPw] = useState('')
   const [adminNewPw, setAdminNewPw] = useState('')
   const [adminPwError, setAdminPwError] = useState('')
-  const [localCatNames, setLocalCatNames] = useState<Record<string, string>>({})
   const [bristolEnabled, setBristolEnabled] = useState(() => localStorage.getItem('bristol_modus_enabled') === 'true')
   // Vorlauf für neue Wecker — gilt für dieses Gerät, deshalb localStorage
   const [wakeLead, setWakeLead] = useState(() => readDefaultLead())
   const [menuOpen, setMenuOpen] = useState(false)
-  const [catsOpen, setCatsOpen] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
-  // Heimatort: Vergleichszeile „Zu Hause …°" auf dem Tag-Screen. Der Ort gilt
-  // für dieses Gerät, deshalb localStorage statt Supabase. Ohne eigene
-  // Einstellung greift der Standard des Namens (München/Landshut).
-  const [homePlace, setHomePlace] = useState<HomePlace | null>(() => readHomePlace())
-  const effectiveHomePlace = homePlace ?? defaultHomePlace(userName)
-  const [showHomePlaceForm, setShowHomePlaceForm] = useState(false)
-  const [homePlaceInput, setHomePlaceInput] = useState('')
-  const [homePlaceBusy, setHomePlaceBusy] = useState(false)
-
   const menuRef = useRef<HTMLDivElement | null>(null)
   useSheetFocus(menuRef, menuOpen, () => setMenuOpen(false))
-
-  const { updateCategory, deleteCategory, addCategory } = useCategories(onCategoriesChange)
-  const debouncedUpdateCategory = useDebouncedCallback(updateCategory, 400)
 
   useEffect(() => {
     setThemeState(getTheme())
@@ -211,37 +190,6 @@ export default function SettingsScreen({
     setEditingName(false)
   }
 
-  /** Heimatort per Ortsname suchen und speichern (Open-Meteo-Geocoding). */
-  const handleSearchHomePlace = async () => {
-    if (homePlaceBusy) return
-    const name = homePlaceInput.trim()
-    if (!name) return
-    setHomePlaceBusy(true)
-    try {
-      const coords = await geocodeHomePlace(name)
-      if (!coords) {
-        toast('Ort nicht gefunden.', 'error')
-        return
-      }
-      const next: HomePlace = { lat: coords.lat, lon: coords.lon, name: coords.name }
-      writeHomePlace(next)
-      setHomePlace(next)
-      navigator.vibrate?.(10)
-      toast('Heimatort gespeichert.', 'success')
-      setHomePlaceInput('')
-      setShowHomePlaceForm(false)
-    } finally {
-      setHomePlaceBusy(false)
-    }
-  }
-
-  const handleRemoveHomePlace = () => {
-    writeHomePlace(null)
-    setHomePlace(null)
-    setHomePlaceInput('')
-    setShowHomePlaceForm(false)
-    navigator.vibrate?.(6)
-  }
 
   // ── Nicht gesendetes: gescheiterte Änderungen erneut senden oder verwerfen ──
   const handleRetryFailedOp = (op: DeadOp) => {
@@ -401,53 +349,6 @@ export default function SettingsScreen({
     toast('Admin-Passwort gesetzt', 'success')
   }
 
-  const handleAddCategory = (listType: ListType) => {
-    const cats = categories.filter((c) => c.list_type === listType)
-    const maxOrder = cats.reduce((max, c) => Math.max(max, c.sort_order), 0)
-    addCategory(listId, listType, maxOrder + 1)
-  }
-
-  const renderCategoryEditor = (listType: ListType, title: string) => {
-    const cats = categories.filter((c) => c.list_type === listType)
-    return (
-      <div className="settings-cat-subsection" key={listType}>
-        <div className="settings-cat-subsection-header">
-          <span className="settings-cat-subsection-title">{title}</span>
-          <button
-            className="settings-cat-add-btn"
-            onClick={() => handleAddCategory(listType)}
-          >
-            + Kategorie
-          </button>
-        </div>
-        {cats.length === 0 && (
-          <p className="settings-cat-empty">Keine Kategorien</p>
-        )}
-        {cats.map((cat) => (
-          <div key={cat.id} className="settings-cat-item">
-            <input
-              className="settings-cat-name-input"
-              type="text"
-              value={localCatNames[cat.id] ?? cat.name}
-              aria-label={`Kategorie „${cat.name}“ umbenennen`}
-              onChange={(e) => {
-                setLocalCatNames(prev => ({ ...prev, [cat.id]: e.target.value }))
-                debouncedUpdateCategory(cat.id, { name: e.target.value })
-              }}
-            />
-            <button
-              className="settings-cat-delete-btn"
-              onClick={() => confirm(`Kategorie „${cat.name}“ wirklich löschen?`, () => deleteCategory(cat.id))}
-              aria-label="Kategorie löschen"
-            >
-              <Trash2 size={16} strokeWidth={2} />
-            </button>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
   const JOIN_CODE = import.meta.env.VITE_JOIN_CODE || 'SIESTA26'
 
   const handleCopyCode = async () => {
@@ -487,14 +388,6 @@ export default function SettingsScreen({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="more-grab" aria-hidden="true" />
-            <button
-              type="button"
-              className="list-menu-item"
-              onClick={() => { setCatsOpen(true); setMenuOpen(false) }}
-            >
-              <Settings2 size={17} strokeWidth={2} />
-              <span>Kategorien verwalten</span>
-            </button>
             <button
               type="button"
               className="list-menu-item"
@@ -617,66 +510,6 @@ export default function SettingsScreen({
               </button>
             </div>
           </div>
-          <div className="set-row">
-            <Home size={17} strokeWidth={2} className="set-icon" />
-            <span className="set-label">Heimatort</span>
-            <span className="set-value">
-              {effectiveHomePlace ? effectiveHomePlace.name : 'nicht gesetzt'}
-              {!homePlace && effectiveHomePlace && <span className="set-value-note"> · Standard</span>}
-            </span>
-            <button
-              type="button"
-              className="set-mini-btn"
-              onClick={() => { setHomePlaceInput(effectiveHomePlace?.name ?? ''); setShowHomePlaceForm((open) => !open) }}
-              aria-label="Heimatort ändern"
-            >
-              <Pencil size={15} strokeWidth={2} />
-            </button>
-          </div>
-          {showHomePlaceForm && (
-            <div className="set-inline">
-              <input
-                className="settings-inline-input"
-                type="text"
-                placeholder="Ort suchen, z. B. Bonn"
-                aria-label="Heimatort suchen"
-                value={homePlaceInput}
-                onChange={(e) => setHomePlaceInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearchHomePlace()}
-                maxLength={60}
-                autoFocus
-              />
-              <button
-                type="button"
-                className="set-btn set-btn-primary"
-                onClick={handleSearchHomePlace}
-                disabled={homePlaceBusy}
-              >
-                {homePlaceBusy ? <Loader2 size={15} className="spin" /> : 'Suchen'}
-              </button>
-              {homePlace && (
-                <button
-                  type="button"
-                  className="set-btn"
-                  onClick={handleRemoveHomePlace}
-                  disabled={homePlaceBusy}
-                >
-                  Entfernen
-                </button>
-              )}
-              <button
-                type="button"
-                className="set-btn"
-                onClick={() => { setShowHomePlaceForm(false); setHomePlaceInput('') }}
-              >
-                Abbrechen
-              </button>
-            </div>
-          )}
-          <p className="set-hint">
-            Für die Vergleichszeile „Zu Hause …“ auf dem Tag-Screen — Wetter am Heimatort statt nur vor Ort.
-            Ohne eigene Angabe gilt der Standard deines Namens (München bzw. Landshut).
-          </p>
         </div>
       </section>
 
@@ -981,20 +814,6 @@ export default function SettingsScreen({
           )}
         </div>
       </section>
-
-      {catsOpen && (
-        <section className="set-group">
-          <h2 className="set-group-title">
-            Kategorien
-            <button type="button" className="set-mini-btn" onClick={() => setCatsOpen(false)} aria-label="Schließen">
-              <X size={15} strokeWidth={2} />
-            </button>
-          </h2>
-          <p className="set-hint">Getrennt für Einkaufsliste und Mitbringen.</p>
-          {renderCategoryEditor('shopping', 'Einkaufsliste')}
-          {renderCategoryEditor('bring', 'Mitbringen')}
-        </section>
-      )}
 
       {infoOpen && (
         <section className="set-group">

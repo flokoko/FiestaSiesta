@@ -80,7 +80,6 @@ import EmergencySheet from './components/EmergencySheet'
 import { useTripPlan } from './hooks/useTripPlan'
 import { useWakeTimer } from './hooks/useWakeTimer'
 import { useTripWeather } from './hooks/useTripWeather'
-import ListsScreen from './components/ListsScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
 import { useBackNav } from './hooks/useBackNav'
@@ -574,15 +573,16 @@ export default function App() {
 
   // Wohin der Zurück-Pfeil zeigt: Unterseiten → Domäne, Blatt-Ziele → Heute
   const backTarget: TabView | null =
-    tab === 'list' || tab === 'bring'
-      ? 'lists'
-      : tab === 'notes' || tab === 'weather' || tab === 'settings'
-        ? 'home'
-        : tab === 'offen' || tab === 'recipes' || tab === 'quiz' || tab === 'plan' || tab === 'karte'
+    tab === 'list'
+      ? 'recipes'
+      : tab === 'notes'
+        ? 'plan'
+        : tab === 'weather' || tab === 'settings'
           ? 'home'
-          : null
+          : tab === 'offen' || tab === 'recipes' || tab === 'quiz' || tab === 'plan' || tab === 'karte'
+            ? 'home'
+            : null
 
-  const bringBrought = bringItems.filter(i => i.is_brought).length
 
 
   if (restoringSession) return <BootSplash />
@@ -652,7 +652,6 @@ export default function App() {
             bringCount={bringItems.length}
             expenseTotal={expenseTotal}
             userBalance={userBalance}
-            notesCount={notes.length}
             proposalCount={tripProposalCount}
             plan={tripPlan}
             weather={tripWeather}
@@ -668,6 +667,7 @@ export default function App() {
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
             <TripPlanScreen
+              notesCount={notes.length}
               listId={list.id}
               userName={userName}
               isAdmin={isAdmin}
@@ -713,17 +713,6 @@ export default function App() {
             <QuizScreen userName={userName} />
           </Suspense>
           </ErrorBoundary>
-            </ScreenPane>
-          )}
-          {visited.has('lists') && (
-            <ScreenPane id="lists" active={tab === 'lists'} direction={screenDir}>
-          <ListsScreen
-            shoppingCount={shoppingItems.length}
-            shoppingChecked={checkedCount}
-            bringCount={bringItems.length}
-            bringBrought={bringBrought}
-            onNavigate={setTab}
-          />
             </ScreenPane>
           )}
           {visited.has('notes') && (
@@ -851,9 +840,7 @@ export default function App() {
               listName={list.name}
               onLeave={handleLeave}
               onRename={handleRename}
-              categories={categories}
               listId={list.id}
-              onCategoriesChange={handleCategoriesChange}
               participants={participants}
               onParticipantsChange={handleParticipantsChange}
               isAdmin={isAdmin}

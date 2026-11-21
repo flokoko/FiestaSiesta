@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, CloudSun, Settings, LogOut, X, Activity, Trophy, Clock, ChevronRight } from 'lucide-react'
+import { Sun, Moon, Settings, LogOut, X, Activity, Trophy, ChevronRight } from 'lucide-react'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 
@@ -16,15 +16,14 @@ interface MoreSheetProps {
 interface Entry {
   label: string
   hint: string
-  icon: typeof CloudSun
+  icon: typeof Settings
   action: () => void
 }
 
 /**
- * „Mehr" ist kein Sammelbecken mehr, sondern drei benannte Gruppen:
- * „Vor Ort" (was man am Zielort braucht), „Spiel & Spaß" und „App". Zeilen
- * statt Kacheln — sechs Kacheln in einem 2er-Raster sahen wie ein Menü aus
- * Schaltflächen aus, das Blatt hatte keine Ordnung.
+ * „Mehr" trägt nur noch, was an keiner Domäne hängt: Spiel & Spaß und App.
+ * Wetter liegt auf der Wetterzeile der Tageskarte, Öffnungszeiten und Notizen
+ * am Reiseplan — jeder Weg führt dorthin, wo die Information gebraucht wird.
  */
 export default function MoreSheet({
   open, onClose, onNavigate, isDark, onToggleTheme, onLeave, userName,
@@ -39,13 +38,6 @@ export default function MoreSheet({
   const go = (tab: TabView) => { onNavigate(tab); onClose() }
 
   const groups: Array<{ title: string; entries: Entry[] }> = [
-    {
-      title: 'Vor Ort',
-      entries: [
-        { label: 'Offen jetzt', hint: 'Öffnungszeiten, Pausen', icon: Clock, action: () => go('offen') },
-        { label: 'Wetter', hint: '7-Tage-Vorschau', icon: CloudSun, action: () => go('weather') },
-      ],
-    },
     {
       title: 'Spiel & Spaß',
       entries: [

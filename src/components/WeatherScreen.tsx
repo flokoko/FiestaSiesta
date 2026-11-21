@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
-import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock } from 'lucide-react'
+import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock, Pencil, Loader2 } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName, dailyIndexFor } from '../lib/weather'
 import { fetchAirNow, cachedAirNow, dustLevel, type AirNow } from '../lib/airQuality'
 import { fetchSeaNow, cachedSeaNow, waveLevel, type SeaNow } from '../lib/sea'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { useHomeWeather } from '../hooks/useHomeWeather'
+import { useToast } from '../context/ToastContext'
+import { readHomePlace, writeHomePlace, geocodeHomePlace, type HomePlace } from '../lib/homeWeather'
 import { usePoiWeather } from '../hooks/usePoiWeather'
 import { SLOTS } from '../lib/tripPlan'
 import { pointKey } from '../lib/poiWeather'
@@ -456,7 +458,44 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
   // Alles hier MUSS vor dem frühen return („Ort festlegen") stehen: Rules
   // of Hooks — React kennt die Reihenfolge, kein Hook darf übersprungen
   // werden, sonst springt der Screen beim ersten Render aus der Taktik.
+  const { toast } = useToast()
   const { home, weather: homeWx } = useHomeWeather(userName)
+
+  // Heimatort bearbeiten — gehörte als „Heimatort" in die Einstellungen, wirkt
+  // aber genau hier (Vergleichszeile im Wetter). Der Standard kommt aus dem
+  // Namen, ein eigener Ort überschreibt ihn nur auf diesem Gerät.
+  const [homeForm, setHomeForm] = useState(false)
+  const [homeInput, setHomeInput] = useState('')
+  const [homeBusy, setHomeBusy] = useState(false)
+  const [homeOwn, setHomeOwn] = useState<HomePlace | null>(() => readHomePlace())
+  const saveHomePlace = async () => {
+    if (homeBusy) return
+    const name = homeInput.trim()
+    if (name.length < 3) return
+    setHomeBusy(true)
+    try {
+      const coords = await geocodeHomePlace(name)
+      if (!coords) {
+        toast('Ort nicht gefunden.', 'error')
+        return
+      }
+      const next: HomePlace = { lat: coords.lat, lon: coords.lon, name: coords.name }
+      writeHomePlace(next)
+      setHomeOwn(next)
+      setHomeForm(false)
+      setHomeInput('')
+      toast('Heimatort gespeichert.', 'success')
+      navigator.vibrate?.(10)
+    } finally {
+      setHomeBusy(false)
+    }
+  }
+  const clearHomePlace = () => {
+    writeHomePlace(null)
+    setHomeOwn(null)
+    setHomeForm(false)
+    setHomeInput('')
+  }
 
   // Ziele nur mit Koordinaten — ohne die gibt es kein Ziel-Wetter.
   const poiTargets = useMemo(() => {
@@ -629,17 +668,51 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
             <span className="wx-now-time">{fmtTime(weather.current.time)}</span>
           </div>
 
-          {home && homeWx && (
-            <section className="wx-group">
-              <h2 className="wx-group-title">Zu Hause</h2>
-              <div className="wx-rows">
-                <div className="wx-row">
-                  <span>{getWeatherInfo(homeWx.code).emoji} {home.name}</span>
-                  <b>{Math.round(homeWx.temp)}° · Regen {Math.round(homeWx.rain)} %</b>
-                </div>
+          <section className="wx-group">
+            <h2 className="wx-group-title">
+              Zu Hause
+              <button
+                type="button"
+                className="wx-group-btn"
+                aria-label="Heimatort ändern"
+                title="Heimatort ändern"
+                onClick={() => { setHomeInput(home?.name ?? ''); setHomeForm((open) => !open) }}
+              >
+                <Pencil size={13} strokeWidth={2} />
+              </button>
+            </h2>
+            <div className="wx-rows">
+              <div className="wx-row">
+                <span>
+                  {home ? `${homeWx ? getWeatherInfo(homeWx.code).emoji + ' ' : ''}${home.name}` : 'Kein Heimatort'}
+                </span>
+                <b>{homeWx ? `${Math.round(homeWx.temp)}° · Regen ${Math.round(homeWx.rain)} %` : '—'}</b>
               </div>
-            </section>
-          )}
+              {homeForm && (
+                <div className="wx-row wx-home-form">
+                  <input
+                    className="wx-home-input"
+                    type="text"
+                    placeholder="Ort suchen, z. B. Bonn"
+                    aria-label="Heimatort suchen"
+                    value={homeInput}
+                    onChange={(e) => setHomeInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && saveHomePlace()}
+                    maxLength={60}
+                    autoFocus
+                  />
+                  <button type="button" className="wx-home-btn" onClick={saveHomePlace} disabled={homeBusy}>
+                    {homeBusy ? <Loader2 size={14} className="spin" /> : 'Suchen'}
+                  </button>
+                  {homeOwn && (
+                    <button type="button" className="wx-home-btn" onClick={clearHomePlace} disabled={homeBusy}>
+                      Entfernen
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
 
           <section className="wx-group">
             <h2 className="wx-group-title">Stündlich</h2>

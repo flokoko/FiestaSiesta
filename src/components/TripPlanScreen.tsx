@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw } from 'lucide-react'
+import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw, Clock, StickyNote, ChevronRight } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase, getSupabaseUrl } from '../lib/supabase'
 import { readCache } from '../lib/readCache'
@@ -25,6 +25,8 @@ interface TripPlanScreenProps {
   dayIso?: string | null
   onPickDay?: (iso: string) => void
   onNavigate: (tab: TabView) => void
+  /** Anzahl Notizen — die Notizen hängen als Zeile am Reiseplan. */
+  notesCount: number
 }
 
 function commentClock(iso: string): string {
@@ -33,7 +35,7 @@ function commentClock(iso: string): string {
   return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay, onNavigate }: TripPlanScreenProps) {
+export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPickDay, onNavigate, notesCount }: TripPlanScreenProps) {
   const { toast, confirm } = useToast()
   const days = useMemo(() => tripDays(), [])
   const [proposals, setProposals] = useState<TripProposal[]>([])
@@ -527,7 +529,6 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     }
     return out
   }, [proposals])
-  const proposalTotal = proposals.length
 
   // Tagesexport: derselbe Plan, auf den ausgewählten Tag gefiltert.
   const exportSelectedDay = () => {
@@ -610,8 +611,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
         <div className="list-head-text">
           <h1>Reiseplan</h1>
           <p>
-            {fixedCount} von {days.length * SLOTS.length} Zeiten fest · {proposalTotal}{' '}
-            {proposalTotal === 1 ? 'Vorschlag' : 'Vorschläge'}
+            {fixedCount}/{days.length * SLOTS.length} Zeiten fest
           </p>
         </div>
         <button
@@ -622,6 +622,15 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           onClick={() => onNavigate('karte')}
         >
           <MapIcon size={17} strokeWidth={2} />
+        </button>
+        <button
+          type="button"
+          className="plan-ics-icon"
+          aria-label="Öffnungszeiten: was jetzt offen hat"
+          title="Offen jetzt"
+          onClick={() => onNavigate('offen')}
+        >
+          <Clock size={17} strokeWidth={2} />
         </button>
         <button
           type="button"
@@ -1069,6 +1078,17 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           )
         })
       )}
+
+      <button type="button" className="plan-notes-link" onClick={() => onNavigate('notes')}>
+        <StickyNote size={15} strokeWidth={2} aria-hidden="true" />
+        <span className="plan-notes-label">Notizen</span>
+        <span className="plan-notes-hint">
+          {notesCount > 0
+            ? `${notesCount} ${notesCount === 1 ? 'Eintrag' : 'Einträge'} · Flüge, Unterkunft, To-dos`
+            : 'Flüge, Unterkunft, To-dos'}
+        </span>
+        <ChevronRight size={15} strokeWidth={2.2} aria-hidden="true" />
+      </button>
 
       <p className="plan-footnote">
         <Crown size={12} strokeWidth={2} /> Die meisten Stimmen gewinnen — „Übernehmen“ macht daraus den festen Plan.

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { CalendarDays, ListChecks, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Backpack, Wallet, MoreHorizontal, type LucideIcon } from 'lucide-react'
 import type { TabView } from '../types'
 
 interface NavItem {
@@ -8,21 +8,23 @@ interface NavItem {
   icon: LucideIcon
 }
 
+// Packen statt „Listen": die Einkaufsliste hängt an der Küche (Tag-Hub), in
+// der Leiste bleibt der zweite Listen-Ort — Mitbringen + eigene Packliste.
 const ITEMS: NavItem[] = [
   { key: 'home', label: 'Tag', icon: CalendarDays },
-  { key: 'lists', label: 'Listen', icon: ListChecks },
+  { key: 'bring', label: 'Packen', icon: Backpack },
   { key: 'expenses', label: 'Geld', icon: Wallet },
 ]
 
 /** Tabs, die einer Navigations-Domäne zugeordnet sind */
 const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
-  list: 'lists',
-  bring: 'lists',
-  notes: 'home',
+  // Einkaufen und Küche hängen am Tag (Hub-Kachel), Packen ist eigene Domäne.
+  list: 'home',
+  notes: 'plan',
+  plan: 'home',
   weather: 'home',
   settings: 'home',
   bristol: 'home',
-  plan: 'home',
   offen: 'home',
   karte: 'home',
   recipes: 'home',

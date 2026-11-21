@@ -7,7 +7,7 @@ import type { TabView } from '../types'
  */
 const DEPTH: Record<TabView, number> = {
   home: 0,
-  lists: 0,
+  bring: 0,
   expenses: 0,
   plan: 1,
   offen: 1,
@@ -15,7 +15,6 @@ const DEPTH: Record<TabView, number> = {
   recipes: 1,
   quiz: 1,
   list: 1,
-  bring: 1,
   bristol: 1,
   notes: 1,
   weather: 1,
@@ -25,7 +24,7 @@ const DEPTH: Record<TabView, number> = {
 /** Reihenfolge der Domänen in der Bottom-Nav — entscheidet bei gleicher Tiefe. */
 const ORDER: Record<TabView, number> = {
   home: 0,
-  lists: 1,
+  bring: 1,
   expenses: 2,
   plan: 0.5,
   offen: 0.6,
@@ -33,7 +32,6 @@ const ORDER: Record<TabView, number> = {
   recipes: 0.7,
   quiz: 0.75,
   list: 1.5,
-  bring: 1.5,
   bristol: 0.4,
   notes: 0.4,
   weather: 0.4,

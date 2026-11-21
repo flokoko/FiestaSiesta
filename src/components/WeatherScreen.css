@@ -623,3 +623,55 @@
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
+
+/* Heimatort: Stift am Gruppentitel + Eingabezeile (gehört zum Wetter, nicht in
+   die Einstellungen). */
+#root .wx-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#root .wx-group-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+#root .wx-home-form {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#root .wx-home-input {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-3);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+
+#root .wx-home-btn {
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
