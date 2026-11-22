@@ -1,6 +1,7 @@
-import { Suspense, lazy, memo } from 'react'
+import { Suspense, lazy, memo, useRef } from 'react'
 import { ChefHat, ShoppingBasket } from 'lucide-react'
 import type { ItemCategory, ListItem, ListType } from '../types'
+import { useSegmentSwipe } from '../hooks/useSegmentSwipe'
 import './KuecheScreen.css'
 
 const ListScreen = lazy(() => import('./ListScreen'))
@@ -57,6 +58,19 @@ export default function KuecheScreen({
 }: Props) {
   const openCount = items.filter((item) => !item.is_checked).length
 
+  // Refs für das Segment-Wischen (Punkt 3): beide Panes und der wandernde
+  // Indikator. Alles vor jedem Return — Rules of Hooks.
+  const shoppingPanelRef = useRef<HTMLDivElement | null>(null)
+  const recipesPanelRef = useRef<HTMLDivElement | null>(null)
+  const segIndicatorRef = useRef<HTMLSpanElement | null>(null)
+  useSegmentSwipe({
+    shoppingRef: shoppingPanelRef,
+    recipesRef: recipesPanelRef,
+    indicatorRef: segIndicatorRef,
+    segment,
+    onSegment,
+  })
+
   return (
     <div className="kueche-screen">
       <header className="list-head">
@@ -69,7 +83,7 @@ export default function KuecheScreen({
         {/* Der helle Untergrund gleitet mit, statt zu springen — ein Element,
             das per transform wandert, ist billiger als zwei Flächen, die
             gleichzeitig faden. */}
-        <span className="kueche-seg-ind" aria-hidden="true" />
+        <span className="kueche-seg-ind" aria-hidden="true" ref={segIndicatorRef} />
         <button
           type="button"
           role="tab"
@@ -101,9 +115,11 @@ export default function KuecheScreen({
 
       <div
         id="kueche-panel-shopping"
+        className="kueche-panel"
         role="tabpanel"
         aria-labelledby="kueche-tab-shopping"
         hidden={segment !== 'shopping'}
+        ref={shoppingPanelRef}
       >
         <Suspense fallback={null}>
           <MemoList
@@ -126,9 +142,11 @@ export default function KuecheScreen({
 
       <div
         id="kueche-panel-recipes"
+        className="kueche-panel"
         role="tabpanel"
         aria-labelledby="kueche-tab-recipes"
         hidden={segment !== 'recipes'}
+        ref={recipesPanelRef}
       >
         <Suspense fallback={null}>
           <MemoRecipes embedded listId={listId} userName={userName} />

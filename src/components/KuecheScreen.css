@@ -119,7 +119,25 @@
   100% { transform: scale(1); }
 }
 
+/* ── Wischen zwischen den Segmenten (Punkt 3a) ─────────────────────────
+   pan-y: das vertikale Scrollen in der Liste bleibt beim Browser, das
+   horizontale Wischen übernimmt useSegmentSwipe per Pointer-Events — der
+   Browser darf die horizontale Geste nicht als Pan kapern. */
+#root .kueche-panel {
+  touch-action: pan-y;
+}
+
+/* Während eines Zugs (Maus wie Touch): keine Textauswahl unter den
+   mitziehenden Panes, der Zeiger zeigt den Grab-Zustand. */
+#root .kueche-screen.is-seg-dragging {
+  user-select: none;
+  cursor: grabbing;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* Das Mitziehen setzt Inline-Transforms — unter reduce tut der Hook das
+     nie; diese Regel garantiert zusätzlich, dass kein Rest-Übergang läuft. */
+  #root .kueche-panel { transition: none; }
   #root .kueche-seg-ind { transition: none; }
   #root .kueche-seg-count { animation: none; }
 }
