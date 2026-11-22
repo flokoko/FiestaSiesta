@@ -9,6 +9,7 @@ import type { TripForecast } from '../lib/tripWeather'
 import { SLOTS, isoDay } from '../lib/tripPlan'
 import { sunWarning } from '../lib/sunWarning'
 import { useLiveWeather } from '../hooks/useLiveWeather'
+import { useCountUp } from '../hooks/useCountUp'
 import { useCanaryClock } from '../hooks/useCanaryClock'
 import { hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
@@ -54,6 +55,11 @@ export default function DayScreen({
   expenseTotal, userBalance, proposalCount,
   plan, weather, dayIso, onPickDay, onNavigate, onOpenShopping, onEmergency,
 }: DayScreenProps) {
+  // Zähler statt springender Zahlen: die Kennzahlen zählen auf den neuen Wert.
+  const openAnim = useCountUp(Math.max(0, shoppingCount - shoppingChecked))
+  const bringAnim = useCountUp(bringCount)
+  const spendAnim = useCountUp(expenseTotal)
+  const balanceAnim = useCountUp(userBalance)
   const today = new Date()
   const phase = tripPhase(today)
   const day = tripDay(today)
@@ -104,7 +110,6 @@ export default function DayScreen({
   const wx = weather[selectedIso]
   const dayPlan = plan[selectedIso]
   const slots = dayPlan ? SLOTS.filter((slot) => dayPlan[slot.key]) : []
-  const open = Math.max(0, shoppingCount - shoppingChecked)
   const decidedSlots = Object.values(plan).reduce((n, d) => n + Object.keys(d).length, 0)
 
   // Rückweg im Dunkeln? Nur der letzte Punkt des Tages mit Koordinaten zählt,
@@ -261,21 +266,21 @@ export default function DayScreen({
           Geld-Screen, hier ist er Rauschen. */}
       <div className="today-chips">
         <button type="button" className="today-chip" onClick={onOpenShopping}>
-          <span className="today-chip-num">{open}</span>
+          <span className="today-chip-num">{Math.round(openAnim)}</span>
           <span className="today-chip-label">offen</span>
         </button>
         <button type="button" className="today-chip" onClick={() => onNavigate('bring')}>
-          <span className="today-chip-num">{bringCount}</span>
+          <span className="today-chip-num">{Math.round(bringAnim)}</span>
           <span className="today-chip-label">mitbringen</span>
         </button>
         <button type="button" className="today-chip is-warm" onClick={() => onNavigate('expenses')}>
-          <span className="today-chip-num">{euro0(expenseTotal)}</span>
+          <span className="today-chip-num">{euro0(spendAnim)}</span>
           <span className="today-chip-label">ausgaben</span>
         </button>
         {expenseTotal > 0 && (
           <button type="button" className="today-chip is-balance" onClick={() => onNavigate('expenses')}>
             <span className="today-chip-num">
-              {userBalance >= 0 ? '+' : '−'}{euro0(Math.abs(userBalance))}
+              {userBalance >= 0 ? '+' : '−'}{euro0(Math.abs(balanceAnim))}
             </span>
             <span className="today-chip-label">{userBalance >= 0 ? 'guthaben' : 'schulden'}</span>
           </button>
@@ -368,7 +373,9 @@ export default function DayScreen({
       <div className="day-hub">
         {hub.map(({ label, icon: Icon, onClick }) => (
           <button key={label} type="button" className="day-hub-chip" onClick={onClick}>
-            <Icon size={14} strokeWidth={2} aria-hidden="true" />
+            <span className="day-hub-icon" aria-hidden="true">
+              <Icon size={14} strokeWidth={2.2} />
+            </span>
             <span>{label}</span>
           </button>
         ))}

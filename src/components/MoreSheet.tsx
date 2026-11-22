@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Sun, Moon, Settings, LogOut, X, Activity, Trophy, ChevronRight } from 'lucide-react'
+import { Sun, Moon, Settings, LogOut, X, Activity, Trophy, ChevronRight, UserRound } from 'lucide-react'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 
@@ -90,7 +90,10 @@ export default function MoreSheet({
           <div className="more-head-right">
             {/* Version steht in den Einstellungen („Über") — hier kürzte sie
                 nur den Namen ab. */}
-            <span className="more-user">{userName}</span>
+            <span className="more-user">
+              <UserRound size={13} strokeWidth={2.2} aria-hidden="true" />
+              {userName}
+            </span>
             {/* Abmelden gehört in den Kopf: unten lag es direkt über der Bottom-Nav
                 und wurde beim Tippen auf die Leiste versehentlich getroffen. */}
             <button

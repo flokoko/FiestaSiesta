@@ -807,7 +807,10 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           const leader = planFor(list)
           const meta = slotMeta(slot.key)
           return (
-            <section className="plan-slot" key={`${selectedDay}-${slot.key}`}>
+            <section
+              className={`plan-slot${list.length === 0 && addSlot !== slot.key ? ' is-empty' : ''}`}
+              key={`${selectedDay}-${slot.key}`}
+            >
               <h2 className="plan-slot-title">
                 <SlotIcon slot={slot.key} size={12} className="plan-slot-emoji" />
                 {meta.label}
@@ -836,7 +839,22 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
               </h2>
 
               {list.length === 0 ? (
-                <p className="plan-empty">{meta.hint} — noch kein Vorschlag.</p>
+                addSlot === slot.key ? null : (
+                  /* Kompakt statt leerer Glaskarte: eine Zeile mit Hinweis und
+                     einem leisen Plus. Drei rote „Vorschlagen"-Buttons
+                     untereinander waren drei Primäraktionen auf einem Screen. */
+                  <button
+                    type="button"
+                    className="plan-empty-add"
+                    onClick={() => { navigator.vibrate?.(6); setAddSlot(slot.key); resetDraft(SLOT_START[slot.key]) }}
+                  >
+                    <span className="plan-empty-hint">{meta.hint}</span>
+                    <span className="plan-empty-plus">
+                      <Plus size={14} strokeWidth={2.4} aria-hidden="true" />
+                      Vorschlag
+                    </span>
+                  </button>
+                )
               ) : (
                 <div className="plan-rows">
                   {list.map((proposal) => {
@@ -1153,7 +1171,8 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : list.length > 0 ? (
+                /* Leere Slots tragen ihren eigenen Plus-Knopf in der Zeile. */
                 <button
                   type="button"
                   className="plan-add"
@@ -1162,7 +1181,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                   <Plus size={15} strokeWidth={2.2} />
                   Vorschlag
                 </button>
-              )}
+              ) : null}
             </section>
           )
         })

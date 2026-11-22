@@ -4791,12 +4791,152 @@ body::before {
 
 /* Chip-Leisten rasten beim Wischen an den Kanten ein, statt halb zu stehen. */
 #root .cat-strip,
+#root .day-strip,
 #root .today-days {
   scroll-snap-type: x proximity;
   scroll-padding-inline: 16px;
 }
 
 #root .cat-strip > *,
-#root .today-days > * {
+#root .day-strip > *,
+#root .plan-days > * {
   scroll-snap-align: start;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   v0.80 — Politur: Fortschritt „fertig", Chip-Pop, Tagesleisten-Fade
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wenn alles abgehakt ist, wird der Balken golden und leuchtet einmal auf —
+   das ist der einzige Moment, in dem der Screen „fertig" sagen darf. */
+#root .list-progress.is-done i {
+  background: linear-gradient(90deg, #d8a02a, #f1bf00 60%, #e8c76a);
+  box-shadow: 0 0 12px -2px rgba(241, 191, 0, 0.65);
+}
+
+#root .list-progress.is-done {
+  animation: progressDone 700ms var(--ease);
+}
+
+@keyframes progressDone {
+  0% { box-shadow: 0 0 0 0 rgba(241, 191, 0, 0.55); }
+  100% { box-shadow: 0 0 0 8px rgba(241, 191, 0, 0); }
+}
+
+/* Gewählter Chip „springt" kurz — der Farbwechsel allein war zu leise, und
+   ein gleitender Indikator würde mit den kategoriefarbigen Chips kollidieren. */
+#root .cat-chip.active {
+  animation: chipPick 260ms var(--ease);
+}
+
+@keyframes chipPick {
+  0% { scale: 0.94; }
+  60% { scale: 1.035; }
+  100% { scale: 1; }
+}
+
+/* Anschnitt am rechten Rand zeigt, dass die Tagesleiste weitergeht. Der Fade
+   liegt als Maske auf der Leiste, nicht als Overlay — sonst fängt er Klicks ab. */
+#root .day-strip,
+#root .plan-days,
+#root .cat-strip {
+  mask-image: linear-gradient(to right, #000 calc(100% - 26px), transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .list-progress.is-done,
+  #root .cat-chip.active {
+    animation: none;
+  }
+}
+
+/* Leere Zeitblöcke im Reiseplan: eine Zeile statt einer leeren Glaskarte. */
+#root .plan-slot.is-empty {
+  margin-top: 10px;
+  padding: 0 16px;
+}
+
+#root .plan-slot.is-empty .plan-slot-title {
+  padding-bottom: 4px;
+  border-bottom: none;
+}
+
+#root .plan-empty-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0 12px;
+  border: 0;
+  background: none;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  text-align: left;
+}
+
+#root .plan-empty-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .plan-empty-plus {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+#root .plan-empty-add:active .plan-empty-plus {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* Ausgeglichener Zustand im Geld-Screen: Zeile mit Häkchen. */
+#root .money-debts.is-clear {
+  margin-top: 12px;
+}
+
+#root .money-debts-clear {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+#root .money-debts-clear svg {
+  color: var(--accent);
+}
+
+/* Tag-Hub: getönte Icon-Kachel wie in den übrigen Bausteinen. */
+#root .day-hub-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  color: var(--accent);
+}
+
+/* Mehr-Blatt: Personenzeile mit Icon. */
+#root .more-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }

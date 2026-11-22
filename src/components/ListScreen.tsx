@@ -376,7 +376,10 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
         </div>
       </header>
 
-      <div className="list-progress" aria-hidden="true">
+      <div
+        className={`list-progress${progress >= 100 && items.length > 0 ? ' is-done' : ''}`}
+        aria-hidden="true"
+      >
         <i style={{ width: `${progress}%` }} />
       </div>
 

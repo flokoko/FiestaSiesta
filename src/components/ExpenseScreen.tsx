@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
-import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight } from 'lucide-react'
+import { Wallet, Receipt, Table2, Percent, MoreHorizontal, Search, X, ArrowRight, Check } from 'lucide-react'
 import type { Expense, ExpenseSplit, ExpenseQuota, ItemCategory, Settlement } from '../types'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
@@ -265,7 +265,11 @@ export default function ExpenseScreen({
           derselben Zahlen: der Hero nennt den eigenen Saldo, die Zeilen unter
           „Offen zwischen euch" den Weg dorthin. Raus. */}
 
-      <section className="money-debts">
+      <section
+        className={`money-debts${
+          proposals.length === 0 && expenses.length > 0 ? ' is-clear' : ''
+        }`}
+      >
         <div className="money-debts-head">
           <h2>Offen zwischen euch</h2>
           {proposals.length > 0 && (
@@ -279,9 +283,16 @@ export default function ExpenseScreen({
           )}
         </div>
         {proposals.length === 0 ? (
-          <p className="money-debts-empty">
-            {expenses.length === 0 ? 'Noch nichts zu verteilen.' : 'Alles ausgeglichen'}
-          </p>
+          expenses.length === 0 ? (
+            <p className="money-debts-empty">Noch nichts zu verteilen.</p>
+          ) : (
+            /* Ausgeglichen ist eine Zeile, keine Karte: der Zustand ist die
+               Nachricht, nicht ein leeres Fach. */
+            <p className="money-debts-clear">
+              <Check size={13} strokeWidth={2.6} aria-hidden="true" />
+              Alles ausgeglichen — niemand schuldet etwas.
+            </p>
+          )
         ) : (
           <div className="money-debts-list">
             {proposals.slice(0, 3).map((txn, i) => (
