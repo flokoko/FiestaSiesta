@@ -1,7 +1,7 @@
 {
   "name": "fiesta-siesta",
   "private": true,
-  "version": "0.81.0",
+  "version": "0.82.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,8 +22,7 @@
     "lucide-react": "^1.24.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-leaflet": "^5.0.0",
-    "recharts": "^3.10.1"
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
