@@ -776,8 +776,6 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
   const toggleShoppingItem = useCallback((item: ListItem) => {
     const nextChecked = !item.is_checked
-    // Haptik nur beim Abhaken (8 ms) — beim Zurücknehmen wäre es Lärm.
-    if (nextChecked) navigator.vibrate?.(8)
     setShoppingItems(prev => prev.map(i => i.id === item.id ? { ...i, is_checked: nextChecked } : i))
     // Temp-Zeilen spiegeln (siehe batchToggleShoppingItems).
     setPendingItems(prev => {
@@ -878,7 +876,6 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
 
   const toggleBringItem = useCallback((item: ListItem) => {
     const nextBrought = !item.is_brought
-    if (nextBrought) navigator.vibrate?.(8)
     setBringItems(prev => prev.map(i => i.id === item.id ? { ...i, is_brought: nextBrought } : i))
     // Aktivität: "als mitgebracht markiert" sofort lokal melden
     if (nextBrought) {

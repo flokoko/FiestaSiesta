@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Trash2, ShoppingBasket, GripVertical, ChevronDown, MoreHorizontal, Search, EyeOff, Eye, Settings2, X, ChefHat } from 'lucide-react'
 import type { ListItem, ItemCategory, ListType } from '../types'
 import type { PointerEvent as ReactPointerEvent } from 'react'
@@ -51,6 +51,7 @@ function DraggableCategorySection({
   onItemDelete,
   onEdit,
   onReorder,
+  freshIds,
 }: {
   catItems: ListItem[]
   cat: ItemCategory
@@ -59,6 +60,7 @@ function DraggableCategorySection({
   onItemDelete?: (item: ListItem) => void
   onEdit?: (item: ListItem) => void
   onReorder?: (newOrder: string[]) => void
+  freshIds?: Set<string>
 }) {
   const { confirm } = useToast()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -153,6 +155,7 @@ function DraggableCategorySection({
               isDragging={isDragging}
               isDragOver={isDragOver}
               registerRef={(el) => registerItem(agg.groupKey, el)}
+              isNew={freshIds?.has(item.id)}
             />
           )
         }
@@ -163,6 +166,7 @@ function DraggableCategorySection({
           agg.isChecked ? 'checked' : '',
           isDragging ? 'dragging' : '',
           isDragOver ? 'drag-over' : '',
+          agg.items.some((i) => freshIds?.has(i.id)) ? 'is-new' : '',
         ].filter(Boolean).join(' ')
 
         return (
@@ -317,6 +321,39 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
     [items, categories],
   )
 
+  // Frisch dazugekommene Zeilen (nicht der erste Aufbau): sie laufen kurz ein.
+  // Ohne diese Spur gäbe es online keine Entrance-Animation — dort entsteht
+  // keine Temp-Zeile, der Datensatz kommt erst per Realtime.
+  const [freshIds, setFreshIds] = useState<Set<string>>(() => new Set())
+  const seenIdsRef = useRef<Set<string> | null>(null)
+  const freshTimerRef = useRef<number | null>(null)
+  useEffect(() => {
+    const ids = new Set(items.map((i) => i.id))
+    if (seenIdsRef.current === null) {
+      seenIdsRef.current = ids
+      return
+    }
+    const added = [...ids].filter((id) => !seenIdsRef.current!.has(id))
+    seenIdsRef.current = ids
+    if (added.length === 0) return
+    setFreshIds(new Set(added))
+    // Der Timer darf NICHT im Effect-Cleanup hängen: der Realtime-Echo ändert
+    // `items` direkt danach, der Cleanup würde ihn sonst abbrechen und die
+    // Markierung bliebe für immer stehen.
+    if (freshTimerRef.current !== null) window.clearTimeout(freshTimerRef.current)
+    freshTimerRef.current = window.setTimeout(() => {
+      setFreshIds(new Set())
+      freshTimerRef.current = null
+    }, 700)
+  }, [items])
+
+  useEffect(
+    () => () => {
+      if (freshTimerRef.current !== null) window.clearTimeout(freshTimerRef.current)
+    },
+    [],
+  )
+
   // Skeleton loading state
   if (isLoading) {
     return (
@@ -466,6 +503,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
               onItemDelete={onItemDelete}
               onEdit={(item) => setEditingItem(item)}
               onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
+              freshIds={freshIds}
             />
           )
         })}
@@ -497,6 +535,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
               onItemDelete={onItemDelete}
               onEdit={(item) => setEditingItem(item)}
               onReorder={(newOrder) => onReorder?.('shopping', newOrder)}
+              freshIds={freshIds}
             />
           )
         })()}

@@ -40,6 +40,11 @@ interface BottomNavProps {
 // Tag/Listen/Geld ist (Wetter, Plan, Karte, Küche, Notizen, Offen, Bristol,
 // Quiz, Notfall, Einstellungen), hängt als Unterseite an einer Domäne.
 export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomNavProps) {
+  // Leichte Haptik beim Domänenwechsel — 4 ms, das ist fühlbar, aber kein Ruck.
+  const go = (target: TabView) => {
+    navigator.vibrate?.(4)
+    onNavigate(target)
+  }
   const activeDomain = DOMAIN_OF[tab] ?? tab
   const items = ITEMS
 
@@ -95,7 +100,7 @@ export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomN
             type="button"
             ref={(el) => { itemRefs.current[index] = el }}
             className={`bottom-nav-item${isActive ? ' active' : ''}`}
-            onClick={() => onNavigate(key)}
+            onClick={() => go(key)}
             aria-current={isActive ? 'page' : undefined}
           >
             <Icon size={21} strokeWidth={isActive ? 2.4 : 1.9} />
@@ -107,7 +112,7 @@ export default function BottomNav({ tab, onNavigate, onMore, moreOpen }: BottomN
         type="button"
         ref={(el) => { itemRefs.current[items.length] = el }}
         className={`bottom-nav-item${moreOpen ? ' active' : ''}`}
-        onClick={onMore}
+        onClick={() => { navigator.vibrate?.(4); onMore() }}
         aria-expanded={moreOpen}
       >
         <MoreHorizontal size={21} strokeWidth={moreOpen ? 2.4 : 1.9} />

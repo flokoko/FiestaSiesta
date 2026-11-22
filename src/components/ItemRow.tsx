@@ -16,9 +16,11 @@ interface ItemRowProps {
   isDragging?: boolean
   isDragOver?: boolean
   registerRef?: (el: HTMLDivElement | null) => void
+  /** Gerade dazugekommen (nicht beim ersten Aufbau des Screens). */
+  isNew?: boolean
 }
 
-export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandleProps, isDragging, isDragOver, registerRef }: ItemRowProps) {
+export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandleProps, isDragging, isDragOver, registerRef, isNew }: ItemRowProps) {
 
   const toggleChecked = () => {
     onToggle?.(item)
@@ -38,6 +40,8 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
     item.is_checked ? 'checked' : '',
     isDragging ? 'dragging' : '',
     isDragOver ? 'drag-over' : '',
+    // Frisch angelegt (online wie offline): läuft beim Erscheinen kurz ein.
+    isNew || item.id.startsWith('temp-') ? 'is-new' : '',
   ].filter(Boolean).join(' ')
 
   return (

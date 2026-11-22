@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Sun, Moon, Settings, LogOut, X, Activity, Trophy, ChevronRight, UserRound } from 'lucide-react'
 import type { TabView } from '../types'
 import { useSheetFocus } from '../hooks/useSheetFocus'
+import { useSheetDrag } from '../hooks/useSheetDrag'
 
 interface MoreSheetProps {
   open: boolean
@@ -32,6 +33,7 @@ export default function MoreSheet({
   const closeRef = useRef<HTMLButtonElement | null>(null)
   // Initialfokus auf den Schließen-Knopf — sonst landet er auf „Abmelden“.
   useSheetFocus(sheetRef, open, onClose, closeRef)
+  useSheetDrag(sheetRef, onClose, open)
 
   if (!open) return null
 
@@ -84,8 +86,8 @@ export default function MoreSheet({
         aria-label="Weitere Bereiche"
         onClick={e => e.stopPropagation()}
       >
-        <div className="more-grab" aria-hidden="true" />
-        <div className="more-head">
+        <div className="more-grab" data-sheet-drag aria-hidden="true" />
+        <div className="more-head" data-sheet-drag>
           <h2>Mehr</h2>
           <div className="more-head-right">
             {/* Version steht in den Einstellungen („Über") — hier kürzte sie

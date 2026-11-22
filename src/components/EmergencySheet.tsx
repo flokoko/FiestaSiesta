@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { X, Phone, HeartPulse, ShieldAlert, Navigation, MapPin, Copy, Check } from 'lucide-react'
 import { useSheetFocus } from '../hooks/useSheetFocus'
+import { useSheetDrag } from '../hooks/useSheetDrag'
 import {
   EMERGENCY_HEADLINE, EMERGENCY_SECTIONS, EMERGENCY_FOOTNOTE,
 } from '../lib/tripEmergency'
@@ -58,6 +59,7 @@ export default function EmergencySheet({ open, onClose }: EmergencySheetProps) {
   const sheetRef = useRef<HTMLDivElement | null>(null)
   const closeRef = useRef<HTMLButtonElement | null>(null)
   useSheetFocus(sheetRef, open, onClose, closeRef)
+  useSheetDrag(sheetRef, onClose, open)
 
   if (!open) return null
 
@@ -71,8 +73,8 @@ export default function EmergencySheet({ open, onClose }: EmergencySheetProps) {
         aria-label={EMERGENCY_HEADLINE}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="more-grab" aria-hidden="true" />
-        <header className="em-head">
+        <div className="more-grab" data-sheet-drag aria-hidden="true" />
+        <header className="em-head" data-sheet-drag>
           <div className="em-head-text">
             <h2>{EMERGENCY_HEADLINE}</h2>
             <p>Liegt offline in der App</p>

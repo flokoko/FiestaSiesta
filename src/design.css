@@ -4940,3 +4940,119 @@ body::before {
   align-items: center;
   gap: 6px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   v0.81 — Bewegung: Blätter ziehen, Einträge einlaufen, Druck spürbar
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Blätter kommen mit Auslauf statt mit gleichförmigem Ease; der Scrim blendet
+   ein, damit der Sprung von „nichts" zu „abgedunkelt" nicht hart ist. */
+#root .more-sheet,
+#root .list-menu-sheet,
+#root .em-sheet {
+  animation: sheetUpSpring 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+#root .more-scrim,
+#root .list-menu-scrim {
+  animation: scrimIn 0.26s var(--ease);
+}
+
+@keyframes scrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sheetUpSpring {
+  from { transform: translateY(34px); opacity: 0.7; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Der Griff lädt zum Ziehen ein: etwas breiter und mit eigener Fläche. */
+#root .more-grab {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  margin: 0 auto 10px;
+  touch-action: none;
+}
+
+/* Zeilen und Kacheln reagieren auf Druck — vorher sprangen nur Chips. */
+#root .more-row,
+#root .item-row,
+#root .plan-row,
+#root .rc-card {
+  transition: transform 140ms var(--ease), background-color 140ms var(--ease);
+}
+
+#root .more-row:active,
+#root .rc-card:active {
+  transform: scale(0.985);
+}
+
+/* Abgehakte Zeile: leichte Tönung fährt ein (Übergang statt Animation, damit
+   beim Zurückkehren in den Screen nichts erneut aufblitzt). */
+/* Zwei Klassen, weil `#root .list-screen .item-row` aus ListScreen.css sonst
+   die Kürzere Regel überstimmt (lazy Chunk lädt später). */
+#root .list-screen .item-row {
+  transition: transform 140ms var(--ease), background-color 220ms var(--ease);
+  background-color: transparent;
+}
+
+#root .list-screen .item-row.checked {
+  background-color: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+/* Frisch angelegte Zeile (Temp-ID aus der Offline-Queue) läuft kurz ein. */
+#root .item-row.is-new {
+  animation: rowIn 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes rowIn {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+/* Hero beim Scrollen: leicht schrumpfend, nur wo scroll-getriebene Animationen
+   laufen (Chromium). Ohne Support bleibt alles wie vorher. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    #root .screen-pane[data-state='active'] .today-hero,
+    #root .screen-pane[data-state='active'] .trip-hero,
+    #root .screen-pane[data-state='active'] .money-hero {
+      animation: heroSink linear both;
+      animation-timeline: scroll(nearest);
+      animation-range: 0 220px;
+    }
+  }
+}
+
+@keyframes heroSink {
+  to { scale: 0.975; opacity: 0.9; }
+}
+
+/* Toasts: kürzer und mit Auslauf statt linear aus dem Boden. */
+.toast {
+  animation: toast-slide-in 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .more-sheet,
+  #root .list-menu-sheet,
+  #root .em-sheet,
+  #root .more-scrim,
+  #root .list-menu-scrim,
+  #root .item-row.is-new,
+  .toast {
+    animation: none;
+  }
+
+  #root .more-row,
+  #root .item-row,
+  #root .plan-row,
+  #root .rc-card {
+    transition: none;
+  }
+}
