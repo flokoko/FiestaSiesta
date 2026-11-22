@@ -11,6 +11,7 @@ import { useOfflineQueue } from '../hooks/useOfflineQueue'
 import AddItemForm from './AddItemForm'
 import CategoryManager from './CategoryManager'
 import { useDragReorder } from '../hooks/useDragReorder'
+import { useSwipeDelete } from '../hooks/useSwipeDelete'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { SkeletonItemRow } from './Skeleton'
@@ -29,6 +30,166 @@ interface PacklistItem {
 }
 
 type SubTab = 'bring' | 'packlist'
+
+/**
+ * Mitbringen-Zeile: der Wisch-Hook braucht einen eigenen Komponentenkörper —
+ * Hooks dürfen nicht im .map-Kopf stehen. Markup wie zuvor, nur in einer
+ * Zelle mit roter Lösch-Unterlage.
+ */
+function BringRow({
+  item,
+  draggingId,
+  dragOverId,
+  registerItem,
+  onDragDown,
+  onDragMove,
+  onDragUp,
+  onToggle,
+  onDelete,
+}: {
+  item: ListItem
+  draggingId: string | null
+  dragOverId: string | null
+  registerItem: (id: string, el: HTMLElement | null) => void
+  onDragDown: (e: ReactPointerEvent) => void
+  onDragMove: (e: ReactPointerEvent) => void
+  onDragUp: (e: ReactPointerEvent) => void
+  onToggle: (item: ListItem) => void
+  onDelete: (item: ListItem) => void
+}) {
+  const swipe = useSwipeDelete(() => onDelete(item))
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    swipe.handlers.onPointerMove(e)
+    onDragMove(e)
+  }
+  const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    swipe.handlers.onPointerUp(e)
+    onDragUp(e)
+  }
+
+  const itemClass = [
+    'bring-item',
+    item.is_brought ? 'brought' : '',
+    draggingId === item.id ? 'dragging' : '',
+    dragOverId === item.id ? 'drag-over' : '',
+    swipe.dragging ? 'is-swiping' : '',
+    swipe.settling ? 'swipe-settle' : '',
+  ].filter(Boolean).join(' ')
+
+  const rowStyle =
+    swipe.dragging || swipe.settling || swipe.offset !== 0
+      ? { transform: `translateX(${swipe.offset}px)` }
+      : undefined
+
+  return (
+    <div className="swipe-cell">
+      <div className="swipe-under" aria-hidden="true">
+        <span>Löschen</span>
+        <Trash2 size={16} strokeWidth={2} />
+      </div>
+      <div
+        className={itemClass}
+        ref={(el) => registerItem(item.id, el)}
+        style={rowStyle}
+        onPointerDown={swipe.handlers.onPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={swipe.handlers.onPointerCancel}
+      >
+        <button
+          type="button"
+          className="bring-drag-handle"
+          onPointerDown={onDragDown}
+          aria-label={`${item.name} verschieben`}
+        >
+          <GripVertical size={16} strokeWidth={2} />
+        </button>
+        <label className="bring-checkbox-wrap">
+          <input
+            type="checkbox"
+            checked={item.is_brought}
+            onChange={() => { onToggle(item); navigator.vibrate?.(10) }}
+            aria-label={`${item.name} als mitgebracht markieren`}
+          />
+          <span className="bring-checkmark" />
+        </label>
+        <span className="bring-item-name">{item.name}</span>
+        <span className="bring-item-qty">{item.quantity}</span>
+        <button
+          className="bring-item-delete"
+          onClick={() => { onDelete(item); navigator.vibrate?.(15) }}
+          aria-label="Löschen"
+        >
+          <Trash2 size={16} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Packlisten-Zeile mit derselben Wisch-Zelle (ohne Drag-Handle). */
+function PacklistRow({
+  item,
+  onToggle,
+  onDelete,
+}: {
+  item: PacklistItem
+  onToggle: (item: PacklistItem) => void
+  onDelete: (item: PacklistItem) => void
+}) {
+  const swipe = useSwipeDelete(() => onDelete(item))
+
+  const className = [
+    'packlist-item',
+    item.is_checked ? 'checked' : '',
+    swipe.dragging ? 'is-swiping' : '',
+    swipe.settling ? 'swipe-settle' : '',
+  ].filter(Boolean).join(' ')
+
+  const rowStyle =
+    swipe.dragging || swipe.settling || swipe.offset !== 0
+      ? { transform: `translateX(${swipe.offset}px)` }
+      : undefined
+
+  return (
+    <div className="swipe-cell swipe-cell-flat">
+      <div className="swipe-under" aria-hidden="true">
+        <span>Löschen</span>
+        <Trash2 size={16} strokeWidth={2} />
+      </div>
+      <div
+        className={className}
+        style={rowStyle}
+        onPointerDown={swipe.handlers.onPointerDown}
+        onPointerMove={swipe.handlers.onPointerMove}
+        onPointerUp={swipe.handlers.onPointerUp}
+        onPointerCancel={swipe.handlers.onPointerCancel}
+      >
+        <label className="packlist-checkbox-wrap">
+          <input
+            type="checkbox"
+            checked={item.is_checked}
+            aria-label={`${item.name} abhaken`}
+            onChange={() => onToggle(item)}
+          />
+          <span className="packlist-checkmark" />
+        </label>
+        <span className="packlist-item-name">{item.name}</span>
+        {item.quantity && (
+          <span className="packlist-item-qty">{item.quantity}</span>
+        )}
+        <button
+          className="packlist-item-delete"
+          onClick={() => onDelete(item)}
+          aria-label="Löschen"
+        >
+          <Trash2 size={16} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  )
+}
 
 interface BringScreenProps {
   items: ListItem[]
@@ -78,51 +239,20 @@ function DraggableBringGroup({
         </span>
         <span className="bring-group-count">{broughtCount}/{personItems.length} mitgebracht</span>
       </div>
-      {personItems.map((item) => {
-        const itemClass = [
-          'bring-item',
-          item.is_brought ? 'brought' : '',
-          dragState.draggingId === item.id ? 'dragging' : '',
-          dragState.dragOverId === item.id ? 'drag-over' : '',
-        ].filter(Boolean).join(' ')
-
-        return (
-          <div
-            key={item.id}
-            className={itemClass}
-            ref={(el) => registerItem(item.id, el)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            <button
-              type="button"
-              className="bring-drag-handle"
-              onPointerDown={(e: ReactPointerEvent) => handlePointerDown(e, item.id)}
-              aria-label={`${item.name} verschieben`}
-            >
-              <GripVertical size={16} strokeWidth={2} />
-            </button>
-            <label className="bring-checkbox-wrap">
-              <input
-                type="checkbox"
-                checked={item.is_brought}
-                onChange={() => { onToggleBrought(item); navigator.vibrate?.(10) }}
-                aria-label={`${item.name} als mitgebracht markieren`}
-              />
-              <span className="bring-checkmark" />
-            </label>
-            <span className="bring-item-name">{item.name}</span>
-            <span className="bring-item-qty">{item.quantity}</span>
-            <button
-              className="bring-item-delete"
-              onClick={() => { onDelete(item); navigator.vibrate?.(15) }}
-              aria-label="Löschen"
-            >
-              <Trash2 size={16} strokeWidth={2} />
-            </button>
-          </div>
-        )
-      })}
+      {personItems.map((item) => (
+        <BringRow
+          key={item.id}
+          item={item}
+          draggingId={dragState.draggingId}
+          dragOverId={dragState.dragOverId}
+          registerItem={registerItem}
+          onDragDown={(e: ReactPointerEvent) => handlePointerDown(e, item.id)}
+          onDragMove={handlePointerMove}
+          onDragUp={handlePointerUp}
+          onToggle={onToggleBrought}
+          onDelete={onDelete}
+        />
+      ))}
     </div>
   )
 }
@@ -671,31 +801,12 @@ export default function BringScreen({ items, categories, listId, userName, onIte
           {packItems.length > 0 && (
             <div className="packlist-items">
               {packItems.map((item) => (
-                <div
+                <PacklistRow
                   key={item.id}
-                  className={`packlist-item ${item.is_checked ? 'checked' : ''}`}
-                >
-                  <label className="packlist-checkbox-wrap">
-                    <input
-                      type="checkbox"
-                      checked={item.is_checked}
-                      aria-label={`${item.name} abhaken`}
-                      onChange={() => handleTogglePackItem(item)}
-                    />
-                    <span className="packlist-checkmark" />
-                  </label>
-                  <span className="packlist-item-name">{item.name}</span>
-                  {item.quantity && (
-                    <span className="packlist-item-qty">{item.quantity}</span>
-                  )}
-                  <button
-                    className="packlist-item-delete"
-                    onClick={() => handleDeletePackItem(item)}
-                    aria-label="Löschen"
-                  >
-                    <Trash2 size={16} strokeWidth={2} />
-                  </button>
-                </div>
+                  item={item}
+                  onToggle={handleTogglePackItem}
+                  onDelete={handleDeletePackItem}
+                />
               ))}
             </div>
           )}

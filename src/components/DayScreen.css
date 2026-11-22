@@ -211,3 +211,41 @@
     transition: none;
   }
 }
+
+/* ── Pull-to-Refresh (usePullToRefresh + PullIndicator) ────────────────
+   Runder Indikator über dem Inhalt: wächst mit dem Gummiband-Zug, beim
+   Auslösen fester Parkplatz mit Spin, danach Ausblendung. Während des
+   Zugs (is-pulling) kein Übergang — der Finger gibt das Tempo vor.
+   Gleiche Regeln wie in ListScreen.css: der Indikator ist baugleich. */
+#root .ptr-host {
+  position: relative;
+}
+
+#root .ptr-indicator {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 10px rgba(18, 15, 22, 0.14);
+  color: var(--ink-2);
+  pointer-events: none;
+  transition: transform 280ms var(--ease), opacity 240ms var(--ease);
+}
+
+#root .ptr-indicator.is-pulling {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .ptr-indicator {
+    transition: none;
+  }
+}

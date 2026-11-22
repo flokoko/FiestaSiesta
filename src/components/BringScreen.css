@@ -279,6 +279,40 @@
   padding-top: calc(0.55rem - 3px);
 }
 
+/* ═══ Wischen zum Löschen (useSwipeDelete) ══════════════════════════════
+   Zelle mit roter Unterlage; die Zeile liegt darüber und gleitet nach
+   links. touch-action: pan-y hält den Browser aus der Geste — vertikales
+   Scrollen bleibt erlaubt (pointercancel bricht den Zug ab). Die
+   Unterlage erbt ihren 14-px-Radius von der Karte; flache Packlisten-
+   Zeilen nutzen swipe-cell-flat (Regel in ItemRow.css). */
+#root .swipe-cell { position: relative; }
+
+#root .swipe-cell > .bring-item,
+#root .swipe-cell > .packlist-item {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+}
+
+/* Beim Zug darf die Basis-Transition nicht nachziehen. */
+#root .bring-item.is-swiping,
+#root .packlist-item.is-swiping {
+  transition: none;
+}
+
+/* Loslassen unter der Schwelle: die Zeile federt zurück. */
+#root .bring-item.swipe-settle,
+#root .packlist-item.swipe-settle {
+  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .bring-item.swipe-settle,
+  #root .packlist-item.swipe-settle {
+    transition: none;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════ */
 /* Sub-tab toggle: Mitbringen vs Meine Packliste                       */
 /* ══════════════════════════════════════════════════════════════════ */

@@ -479,6 +479,14 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     }
   }, [list, fetchAll])
 
+  // ── Pull-to-Refresh ─────────────────────────────────────────────────
+  // Ein Handzug frischt alles auf: force=true umgeht den isFetching-Guard,
+  // damit ein gerade laufender (automatischer) Fetch den Zug nicht schluckt.
+  const refreshAll = useCallback(async () => {
+    if (!list) return
+    await fetchAll(list.id, true)
+  }, [list, fetchAll])
+
   // ── Realtime sync (replaces adaptive polling) ──────────────────────
   // ref keeps latest onActivity without re-creating handleRealtimeChange
   const onActivityRef = useRef(onActivity)
@@ -1230,6 +1238,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     setAdminUnlocked,
     // fetch
     fetchAll,
+    /** Pull-to-Refresh: alles frisch holen (force, kein isFetching-Guard). */
+    refreshAll,
     fetchItems,
     fetchCategories,
     fetchNotes,

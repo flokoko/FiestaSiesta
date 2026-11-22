@@ -277,3 +277,55 @@
   border-top: 3px solid var(--accent);
   padding-top: calc(0.65rem - 3px);
 }
+
+/* ═══ Wischen zum Löschen (useSwipeDelete) ══════════════════════════════
+   Die Zelle trägt eine rote Unterlage mit Papierkorb; die Zeile liegt
+   darüber (z-index) und gleitet nach links, sodass der Hintergrund
+   sichtbar wird. touch-action: pan-y hält den Browser aus der Geste —
+   vertikales Scrollen bleibt erlaubt, der Browser meldet Übernahme per
+   pointercancel und der Zug bricht ab. */
+#root .swipe-cell {
+  position: relative;
+}
+
+#root .swipe-under {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0 16px;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Flache Zeilen (Listen-/Packlisten-Phase): flache Unterlage. */
+#root .swipe-cell-flat .swipe-under {
+  border-radius: 0;
+}
+
+#root .swipe-cell > .item-row {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+}
+
+/* Beim Zug darf die Basis-Transition (all .3s) nicht nachziehen. */
+#root .item-row.is-swiping {
+  transition: none;
+}
+
+/* Loslassen unter der Schwelle: die Zeile federt zurück. */
+#root .item-row.swipe-settle {
+  transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .item-row.swipe-settle {
+    transition: none;
+  }
+}

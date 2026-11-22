@@ -202,6 +202,7 @@ export default function App() {
     expenseTotal, checkedCount, isLoading, isOnline, queueLength, failedCount, flushQueue, restoringSession,
     setList, setAdminUnlocked,
     fetchItems, fetchCategories, fetchNotes, fetchExpenses, fetchParticipants, fetchExpenseQuotas, fetchSettlements,
+    refreshAll,
     toggleShoppingItem, deleteShoppingItem, undoDelete, batchToggleShoppingItems, toggleBringItem, deleteBringItem, reorderItems, reorderNotes, toggleNoteFavorite,
     addPendingItem,
     addPendingExpense, removePendingExpense,
@@ -672,6 +673,7 @@ export default function App() {
             onNavigate={setTab}
             onOpenShopping={openShopping}
             onEmergency={handleOpenEmergency}
+            onRefresh={refreshAll}
           />
             </ScreenPane>
           )}
@@ -729,6 +731,7 @@ export default function App() {
               onReorder={reorderItems}
               onCategoriesChange={handleCategoriesChange}
               onOptimisticAdd={addPendingItem}
+              onRefresh={refreshAll}
             />
           </Suspense>
           </ErrorBoundary>

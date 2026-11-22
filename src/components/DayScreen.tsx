@@ -11,10 +11,12 @@ import { sunWarning } from '../lib/sunWarning'
 import { useLiveWeather } from '../hooks/useLiveWeather'
 import { useCountUp } from '../hooks/useCountUp'
 import { useCanaryClock } from '../hooks/useCanaryClock'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { hhmm, readDefaultLead, reminderClock } from '../lib/wake'
 import { buildIcs, downloadIcs, eventsFromPlan } from '../lib/ics'
 import SlotIcon from './SlotIcon'
 import TodayWeather from './TodayWeather'
+import PullIndicator from './PullIndicator'
 import './DayScreen.css'
 import { TRIP, TRIP_START, TRIP_LENGTH, formatDayLong, formatDayShort, formatRange, tripDay, tripDays, tripPhase, daysUntilTrip } from '../lib/trip'
 
@@ -37,6 +39,8 @@ interface DayScreenProps {
   /** Öffnet die Küche auf dem Einkaufslisten-Segment. */
   onOpenShopping: () => void
   onEmergency: () => void
+  /** Pull-to-Refresh am oberen Rand: alles frisch holen. */
+  onRefresh?: () => Promise<void>
 }
 
 /** Beträge in der Kennzahlen-Leiste: ganze Euro. Cents sind dort Rauschen. */
@@ -53,7 +57,7 @@ function euro0(value: number): string {
 export default function DayScreen({
   participantCount, shoppingCount, shoppingChecked, bringCount,
   expenseTotal, userBalance, proposalCount,
-  plan, weather, dayIso, onPickDay, onNavigate, onOpenShopping, onEmergency,
+  plan, weather, dayIso, onPickDay, onNavigate, onOpenShopping, onEmergency, onRefresh,
 }: DayScreenProps) {
   // Zähler statt springender Zahlen: die Kennzahlen zählen auf den neuen Wert.
   const openAnim = useCountUp(Math.max(0, shoppingCount - shoppingChecked))
@@ -66,6 +70,10 @@ export default function DayScreen({
   const localClock = useCanaryClock()
   const liveWeather = useLiveWeather()
   const days = useMemo(() => tripDays(), [])
+
+  // Pull-to-Refresh am oberen Rand: Indikator + Zustand, Listener hängen an
+  // der Screen-Wurzel (ptr.ref unten).
+  const ptr = usePullToRefresh(onRefresh)
 
   // Gewählter Tag: kommt aus App.tsx (dort auch persistiert), damit Tag-Screen
   // und Reiseplan nie auf verschiedenen Tagen stehen.
@@ -182,7 +190,9 @@ export default function DayScreen({
   }, [selectedIndex])
 
   return (
-    <div className="day-screen">
+    <div className="day-screen ptr-host" ref={ptr.ref}>
+      {/* Pull-to-Refresh-Indikator: wächst am oberen Rand mit, sonst unsichtbar. */}
+      <PullIndicator pull={ptr.pull} refreshing={ptr.refreshing} pulling={ptr.pulling} />
       <div className={`day-strip-wrap${stripStuck ? ' is-stuck' : ''}`} ref={stripRef}>
         {/* Tabs per WAI-ARIA: Pfeiltasten wandern UND wählen (Auswahl folgt dem
             Fokus), Home/End an die Ränder — den Chips außen ist mit roving

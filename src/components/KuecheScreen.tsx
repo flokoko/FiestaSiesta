@@ -26,6 +26,8 @@ interface Props {
   onReorder?: (listType: ListType, newOrder: string[]) => void
   onCategoriesChange?: () => void
   onOptimisticAdd?: (payload: Record<string, unknown>) => string | undefined
+  /** Pull-to-Refresh im Einkaufslisten-Segment. */
+  onRefresh?: () => Promise<void>
 }
 
 const MemoList = memo(ListScreen)
@@ -54,6 +56,7 @@ export default function KuecheScreen({
   onReorder,
   onCategoriesChange,
   onOptimisticAdd,
+  onRefresh,
 }: Props) {
   const openCount = items.filter((item) => !item.is_checked).length
 
@@ -120,6 +123,7 @@ export default function KuecheScreen({
             onReorder={onReorder}
             onCategoriesChange={onCategoriesChange}
             onOptimisticAdd={onOptimisticAdd}
+            onRefresh={onRefresh}
           />
         </Suspense>
       </div>
