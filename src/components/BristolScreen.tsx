@@ -9,9 +9,10 @@ import { useSheetFocus } from '../hooks/useSheetFocus'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import type { BristolEntry } from '../types'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid, Legend,
-} from 'recharts'
+  BarSeries, TrendLine, MultiLine,
+  type BarPoint, type TrendPoint, type MultiRow,
+} from './charts/MiniCharts'
+import './charts/MiniCharts.css'
 import {
   BRISTOL_ADJECTIVES,
   BRISTOL_COLORS,
@@ -329,35 +330,40 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     return { total, avg, min, max, mode }
   }, [entries])
 
-  const distributionData = useMemo(() => {
+  // Verteilung: Häufigkeit je Bristol-Wert — BarSeries zeichnet einen Balken pro
+  // Wert; der Tooltip nennt zusätzlich das Adjektiv (wie im alten Tooltip).
+  const distributionData = useMemo<BarPoint[]>(() => {
     const counts: Record<number, number> = {}
+    // Wert 14 nur mit aufnehmen, wenn Mega-Plasma freigeschaltet ist
     const values = unlocked14 ? [...BRISTOL_VALUES, 14] : BRISTOL_VALUES
     values.forEach(v => { counts[v] = 0 })
     entries.forEach(e => { counts[e.value] = (counts[e.value] ?? 0) + 1 })
     return values.map(v => ({
-      value: v,
       label: `${v}`,
-      count: counts[v],
-      adjective: BRISTOL_ADJECTIVES[v],
-      fill: BRISTOL_COLORS[v],
+      value: counts[v],
+      tooltip: `Wert ${v} (${BRISTOL_ADJECTIVES[v]}): ${counts[v]} ${counts[v] === 1 ? 'Eintrag' : 'Einträge'}`,
     }))
   }, [entries, unlocked14])
 
-  const trendData = useMemo(() => {
-    const days: { date: string; label: string; avg: number | null; count: number }[] = []
+  // Trend der letzten 14 Tage: Ø-Wert pro Tag. Tage ohne Eintrag bleiben null —
+  // TrendLine rendert daraus eine echte Lücke (kein connectNulls mehr).
+  const trendData = useMemo<TrendPoint[]>(() => {
+    const days: TrendPoint[] = []
     for (let i = 13; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
       const dateStr = isoDay(d)
+      const label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
       const dayEntries = entries.filter(e => e.entry_date === dateStr)
-      const avg = dayEntries.length > 0
-        ? dayEntries.reduce((s, e) => s + e.value, 0) / dayEntries.length
-        : null
+      if (dayEntries.length === 0) {
+        days.push({ label, value: null })
+        continue
+      }
+      const avg = Number((dayEntries.reduce((s, e) => s + e.value, 0) / dayEntries.length).toFixed(2))
       days.push({
-        date: dateStr,
-        label: d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
-        avg: avg !== null ? Number(avg.toFixed(2)) : null,
-        count: dayEntries.length,
+        label,
+        value: avg,
+        tooltip: `${label} · Ø ${String(avg).replace('.', ',')} · ${dayEntries.length} ${dayEntries.length === 1 ? 'Eintrag' : 'Einträge'}`,
       })
     }
     return days
@@ -466,12 +472,20 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
     return { positive: bestPos, negative: bestNeg }
   }, [entries])
 
-  // ── Intraday data: one line per participant for the selected intraday date ──
-  const intradayData = useMemo(() => {
+  // ── Intraday: Teilnehmer des gewählten Tages (sortiert = stabile Reihenfolge,
+  //    damit die Palette-Zuordnung von Linie zu Name nicht springt) ──
+  const intradayParticipants = useMemo(() => {
+    const dayEntries = entries.filter(e => e.entry_date === intradayDate)
+    return [...new Set(dayEntries.map(e => e.participant_name))].sort()
+  }, [entries, intradayDate])
+
+  // ── Tagesverlauf: eine Zeile je Uhrzeit; values indexiert wie intradayParticipants.
+  //    null = Teilnehmer fehlt zu dieser Uhrzeit → MultiLine bricht seine Linie dort. ──
+  const intradayData = useMemo<MultiRow[]>(() => {
     const dayEntries = entries.filter(e => e.entry_date === intradayDate)
     if (dayEntries.length === 0) return []
 
-    // Collect all unique time points (HH:MM) sorted ascending
+    // Alle eindeutigen Uhrzeitschlüssel (HH:MM) aufsteigend
     const byParticipant: Record<string, { time: string; value: number }[]> = {}
     dayEntries.forEach(e => {
       const timeKey = e.entry_time
@@ -480,33 +494,15 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
       if (!timeKey) return
       ;(byParticipant[e.participant_name] ??= []).push({ time: timeKey, value: e.value })
     })
-
-    // Sort each participant's entries by time
     Object.values(byParticipant).forEach(arr => arr.sort((a, b) => a.time.localeCompare(b.time)))
 
-    // Collect all unique time labels sorted ascending
     const allTimes = [...new Set(Object.values(byParticipant).flat().map(d => d.time))].sort()
 
-    // Build chart data: one row per time point, with a column per participant
-    return allTimes.map(time => {
-      const row: Record<string, string | number> = { time }
-      for (const [name, arr] of Object.entries(byParticipant)) {
-        const entry = arr.find(d => d.time === time)
-        if (entry) {
-          row[name] = entry.value
-        }
-      }
-      return row
-    })
-  }, [entries, intradayDate])
-
-  // ── Intraday line colors ──
-  const intradayParticipants = useMemo(() => {
-    const dayEntries = entries.filter(e => e.entry_date === intradayDate)
-    return [...new Set(dayEntries.map(e => e.participant_name))].sort()
-  }, [entries, intradayDate])
-
-  const intradayColors = ['#F1BF00', '#AA151B', '#1e90ff', '#ff8c00', '#9b59b6', '#e74c3c', '#2ecc71', '#f39c12']
+    return allTimes.map(time => ({
+      label: time,
+      values: intradayParticipants.map(name => byParticipant[name]?.find(d => d.time === time)?.value ?? null),
+    }))
+  }, [entries, intradayDate, intradayParticipants])
 
   // ── Day trend: per participant, first vs last entry of the intraday day ──
   const dayTrend = useMemo(() => {
@@ -880,58 +876,21 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
           {/* Distribution */}
           <div className="bristol-chart-box">
             <div className="bristol-chart-label">Verteilung</div>
-            <ResponsiveContainer width="100%" height={168}>
-              <BarChart data={distributionData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--card-bg-solid)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  }}
-                  formatter={(val) => [`${val} Einträge`, 'Anzahl']}
-                  labelFormatter={(label) => `Wert ${label}`}
-                />
-                <Bar dataKey="count" radius={[8, 8, 0, 0]} maxBarSize={24} fill="var(--accent)" />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarSeries points={distributionData} height={168} ariaLabel="Verteilung der Bristol-Werte" />
           </div>
 
           {/* Trend */}
           <div className="bristol-chart-box">
             <div className="bristol-chart-label">Trend (14 Tage)</div>
-            <ResponsiveContainer width="100%" height={168}>
-              <LineChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                <YAxis domain={[1, unlocked14 ? 14 : 13]} ticks={unlocked14 ? [1, 3, 5, 7, 9, 11, 13, 14] : [1, 3, 5, 7, 9, 11, 13]} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--card-bg-solid)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '10px',
-                    fontSize: '0.8rem',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  }}
-                  formatter={(val) => val !== null ? [`Ø ${val}`, 'Durchschnitt'] : ['—', '']}
-                  labelFormatter={(label) => label}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="avg"
-                  name="Durchschnitt"
-                  stroke="var(--accent)"
-                  strokeWidth={2.5}
-                  dot={{ fill: 'var(--accent)', r: 3, strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: 'var(--accent)' }}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <TrendLine
+              points={trendData}
+              height={168}
+              yMin={1}
+              yMax={unlocked14 ? 14 : 13}
+              // feste Ticks 1–13 bzw. bis 14 — wie die alte YAxis, aber ganzzahlig
+              yTicks={unlocked14 ? [1, 3, 5, 7, 9, 11, 13, 14] : [1, 3, 5, 7, 9, 11, 13]}
+              ariaLabel="Trend der letzten 14 Tage"
+            />
           </div>
 
           {/* Intraday-Verlauf (Tageskurve) */}
@@ -960,49 +919,13 @@ export default function BristolScreen({ listId, userName, isAdmin }: BristolScre
                 Für eine Tageskurve braucht es mindestens zwei Einträge.
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={150}>
-                <LineChart data={intradayData} margin={{ top: 6, right: 10, bottom: 0, left: -22 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
-                    axisLine={false}
-                    tickLine={false}
-                    padding={{ left: 14, right: 14 }}
-                  />
-                  <YAxis
-                    domain={[0, (dataMax: number) => Math.max(unlocked14 ? 14 : 8, Math.ceil(dataMax) + 1)]}
-                    allowDecimals={false}
-                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'var(--card-bg-solid)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '10px',
-                      fontSize: '0.8rem',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '0.7rem', paddingTop: 2 }} iconSize={8} />
-                  {intradayParticipants.map((name, i) => (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={intradayColors[i % intradayColors.length]}
-                      strokeWidth={2.4}
-                      /* gefüllte Punkte: bei einem Eintrag pro Person gibt es keine
-                         Linie, nur den Punkt — weiß gefüllt war er unsichtbar */
-                      dot={{ r: 4.5, strokeWidth: 0, fill: intradayColors[i % intradayColors.length] }}
-                      activeDot={{ r: 6.5 }}
-                      connectNulls
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
+              <MultiLine
+                rows={intradayData}
+                series={intradayParticipants.map(name => ({ name }))}
+                height={150}
+                yMaxFloor={unlocked14 ? 14 : 8}
+                ariaLabel="Tagesverlauf pro Teilnehmer"
+              />
             )}
           </div>
 
