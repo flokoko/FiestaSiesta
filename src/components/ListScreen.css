@@ -466,13 +466,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 2px 10px rgba(18, 15, 22, 0.14);
-  color: var(--ink-2);
+  /* Kräftigerer Schatten und Akzentfarbe: bei 28 px und --ink-2 war der
+     Indikator im Screenshot kaum als Kreis zu erkennen. */
+  box-shadow: 0 4px 14px rgba(18, 15, 22, 0.2);
+  color: var(--accent);
   pointer-events: none;
   transition: transform 280ms var(--ease), opacity 240ms var(--ease);
 }

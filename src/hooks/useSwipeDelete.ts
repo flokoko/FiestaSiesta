@@ -158,7 +158,14 @@ export function useSwipeDelete(onDelete: () => void) {
         // Fangen: ab jetzt gehört der Zug dieser Zeile, auch wenn der Finger
         // seitlich über den Rand hinausgleitet — pointerup/cancel kommen so
         // sicher an, und der Slot wird in jedem Fall wieder frei.
-        ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
+        // In try/catch: setPointerCapture wirft, wenn der Browser den Pointer
+        // nicht kennt (z. B. synthetische Events) — die Geste soll dann ohne
+        // Fangen weiterlaufen, statt halb aufgesetzt zu bleiben.
+        try {
+          ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
+        } catch {
+          /* ohne Fangen weiter */
+        }
       }
       // Nur nach links; ein Zurückwischen in der Geste legt die Zeile still.
       const next = Math.max(MAX_PULL, Math.min(0, Math.round(dx)))
@@ -178,7 +185,11 @@ export function useSwipeDelete(onDelete: () => void) {
   const onPointerUp = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
       if (pointerIdRef.current === null || e.pointerId !== pointerIdRef.current) return
-      ;(e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId)
+      try {
+        ;(e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId)
+      } catch {
+        /* Pointer war nie gefangen */
+      }
       if (!activeRef.current) {
         // Nur angetippt oder vertikal abgebrochen — nichts zu tun.
         endGesture(false)

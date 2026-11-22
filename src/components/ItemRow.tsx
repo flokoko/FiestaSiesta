@@ -1,5 +1,5 @@
 import type { ListItem } from '../types'
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { Trash2, GripVertical, Pencil } from 'lucide-react'
 import { useSwipeDelete } from '../hooks/useSwipeDelete'
 import './ItemRow.css'
@@ -67,7 +67,13 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
   ].filter(Boolean).join(' ')
 
   return (
-    <div className="swipe-cell swipe-cell-flat">
+    // Die Breite der roten Unterlage folgt dem Zug: nur der freigelegte
+    // Streifen wird rot. Vollbreite hinter einer halbtransparenten Zeile
+    // (--surface ist 74 % Weiß) schiene durch die ganze Zeile durch.
+    <div
+      className="swipe-cell swipe-cell-flat"
+      style={{ '--swipe-x': `${Math.max(0, -swipe.offset)}px` } as CSSProperties}
+    >
       {/* Rote Unterlage mit Papierkorb — sie zeigt sich in der Fläche, die die
           nach links gleitende Zeile freigibt. */}
       <div className="swipe-under" aria-hidden="true">

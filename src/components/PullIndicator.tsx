@@ -22,7 +22,9 @@ export default function PullIndicator({
       className={`ptr-indicator${pulling ? ' is-pulling' : ''}${refreshing ? ' is-refreshing' : ''}`}
       style={{
         opacity: refreshing ? 1 : Math.min(1, Math.max(0, pull / 44)),
-        transform: `translate(-50%, ${refreshing ? PULL_TRIGGER : pull}px) scale(${
+        /* Der Weg wird gedeckelt (48 px): der Indikator soll im Kopfbereich
+           bleiben, nicht über die Kategorie-Chips wandern. */
+        transform: `translate(-50%, ${refreshing ? PULL_TRIGGER : Math.min(pull, 48)}px) scale(${
           refreshing ? 1 : Math.min(1, 0.55 + pull / 116)
         })`,
       }}

@@ -290,7 +290,13 @@
 
 #root .swipe-under {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  /* Nur der freigelegte Streifen wird rot (Breite kommt aus dem Hook). */
+  width: var(--swipe-x, 0px);
+  overflow: hidden;
+  white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -312,6 +318,24 @@
   position: relative;
   z-index: 1;
   touch-action: pan-y;
+}
+
+/* Die rote Unterlage liegt hinter JEDER Zeile — sichtbar wird sie nur, während
+   genau diese Zeile gezogen wird. Ohne diese Bremse schiene das Rot durch die
+   Zeilen (var(--surface) ist im Glas-Theme nicht deckend). */
+#root .swipe-cell .swipe-under {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#root .swipe-cell:has(.item-row.is-swiping) .swipe-under,
+#root .swipe-cell:has(.item-row.swipe-settle) .swipe-under,
+#root .swipe-cell:has(.bring-item.is-swiping) .swipe-under,
+#root .swipe-cell:has(.bring-item.swipe-settle) .swipe-under,
+#root .swipe-cell:has(.packlist-item.is-swiping) .swipe-under,
+#root .swipe-cell:has(.packlist-item.swipe-settle) .swipe-under {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Beim Zug darf die Basis-Transition (all .3s) nicht nachziehen. */

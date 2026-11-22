@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { Trash2, GripVertical, Plus, Copy, MoreHorizontal, Search, X, Settings2, Backpack, Luggage } from 'lucide-react'
 import type { BringFilter, ListItem, ItemCategory, ListType } from '../types'
 import { supabase } from '../lib/supabase'
@@ -83,7 +83,10 @@ function BringRow({
       : undefined
 
   return (
-    <div className="swipe-cell">
+    <div
+      className="swipe-cell"
+      style={{ '--swipe-x': `${Math.max(0, -swipe.offset)}px` } as CSSProperties}
+    >
       <div className="swipe-under" aria-hidden="true">
         <span>Löschen</span>
         <Trash2 size={16} strokeWidth={2} />
@@ -153,7 +156,10 @@ function PacklistRow({
       : undefined
 
   return (
-    <div className="swipe-cell swipe-cell-flat">
+    <div
+      className="swipe-cell swipe-cell-flat"
+      style={{ '--swipe-x': `${Math.max(0, -swipe.offset)}px` } as CSSProperties}
+    >
       <div className="swipe-under" aria-hidden="true">
         <span>Löschen</span>
         <Trash2 size={16} strokeWidth={2} />

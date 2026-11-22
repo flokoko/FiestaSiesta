@@ -246,7 +246,10 @@ export function TrendLine({
 
   // max. 6 x-Ticks: bei 14 Tagen jeder dritte; das letzte Datum immer zeigen
   const stride = tickStride(n)
-  const showXAt = (i: number) => i % stride === 0 || i === n - 1
+  // Labels am NEUESTEN Punkt verankern (i = n-1), nicht am ältesten: sonst
+  // stehen die letzten beiden Beschriftungen nebeneinander und überlappen
+  // (bei 14 Tagen / Schritt 3 lagen i=12 und i=13 direkt aneinander).
+  const showXAt = (i: number) => (n - 1 - i) % stride === 0
 
   // Lückenwerte splitten den Pfad — keine Linie über einen Tag ohne Eintrag
   const runs = gapFreeRuns(points.map(p => p.value))
@@ -325,7 +328,9 @@ export function TrendLine({
               className="mini-tick"
               x={`${r2(xPos(i))}%`}
               y={height - 4}
-              textAnchor="middle"
+              /* Das neueste Label steht am rechten Rand — mittig verankert
+                 würde es abgeschnitten („22.1"). */
+              textAnchor={i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
             >
               {p.label}
             </text>
@@ -399,7 +404,8 @@ export function MultiLine({
 
   // max. 6 x-Ticks über die Uhrzeiten; die letzte Zeit immer zeigen
   const stride = tickStride(rows.length)
-  const showXAt = (i: number) => i % stride === 0 || i === rows.length - 1
+  // siehe TrendLine: am neuesten Punkt verankern, sonst überlappen die letzten Labels
+  const showXAt = (i: number) => (rows.length - 1 - i) % stride === 0
 
   return (
     <div className="mini-chart" role="img" aria-label={ariaLabel}>
@@ -487,7 +493,7 @@ export function MultiLine({
               className="mini-tick"
               x={`${r2(xPos(i))}%`}
               y={height - 4}
-              textAnchor="middle"
+              textAnchor={i === rows.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
             >
               {row.label}
             </text>
