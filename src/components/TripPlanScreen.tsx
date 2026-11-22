@@ -807,7 +807,7 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
           const leader = planFor(list)
           const meta = slotMeta(slot.key)
           return (
-            <section className="plan-slot" key={slot.key}>
+            <section className="plan-slot" key={`${selectedDay}-${slot.key}`}>
               <h2 className="plan-slot-title">
                 <SlotIcon slot={slot.key} size={12} className="plan-slot-emoji" />
                 {meta.label}

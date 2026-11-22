@@ -65,7 +65,11 @@ export default function KuecheScreen({
         </div>
       </header>
 
-      <div className="kueche-seg" role="tablist" aria-label="Küchenfunktionen">
+      <div className="kueche-seg" role="tablist" aria-label="Küchenfunktionen" data-seg={segment}>
+        {/* Der helle Untergrund gleitet mit, statt zu springen — ein Element,
+            das per transform wandert, ist billiger als zwei Flächen, die
+            gleichzeitig faden. */}
+        <span className="kueche-seg-ind" aria-hidden="true" />
         <button
           type="button"
           role="tab"
@@ -77,7 +81,9 @@ export default function KuecheScreen({
         >
           <ShoppingBasket size={15} strokeWidth={2} aria-hidden="true" />
           Einkaufsliste
-          {openCount > 0 && <span className="kueche-seg-count">{openCount}</span>}
+          {openCount > 0 && (
+            <span className="kueche-seg-count" key={openCount}>{openCount}</span>
+          )}
         </button>
         <button
           type="button"

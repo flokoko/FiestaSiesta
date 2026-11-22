@@ -4782,3 +4782,21 @@ body::before {
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
+
+/* Boden-Platz: die letzte Plan- oder Listenkarte lag unter der festen
+   "+ …"-Leiste und der Navigation (im 390-px-Test sichtbar abgeschnitten). */
+#root .plan-screen {
+  padding-bottom: 112px;
+}
+
+/* Chip-Leisten rasten beim Wischen an den Kanten ein, statt halb zu stehen. */
+#root .cat-strip,
+#root .today-days {
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+}
+
+#root .cat-strip > *,
+#root .today-days > * {
+  scroll-snap-align: start;
+}

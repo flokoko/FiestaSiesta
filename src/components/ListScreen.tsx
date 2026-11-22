@@ -341,12 +341,16 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
       <header className="list-head">
         <div className="list-head-text">
           {!embedded && <h1>Einkaufen</h1>}
+          {/* Eingebettet steht die Zahl der offenen Posten schon im Badge der
+              Küchen-Leiste — hier bleibt nur, was dort nicht steht. */}
           <p>
             {items.length === 0
               ? 'Noch nichts drauf'
               : openCount === 0
                 ? 'Alles erledigt 🎉'
-                : `${openCount} offen · ${checkedItems.length} erledigt`}
+                : embedded
+                  ? `${checkedItems.length} erledigt`
+                  : `${openCount} offen · ${checkedItems.length} erledigt`}
           </p>
         </div>
         <div className="list-head-actions">

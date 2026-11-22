@@ -26,10 +26,37 @@
   transform: scale(0.98);
 }
 
-.item-row.checked .item-name,
 .item-row.checked .item-qty {
   text-decoration: line-through;
   color: var(--text-muted);
+}
+
+/* Durchstreichen wächst von links (background-size) statt beim Umschalten
+   hart zu erscheinen — dieselbe Optik, aber als Übergang; beim Wieder-
+   betreten eines Panes startet dadurch nichts neu. */
+/* Die Linie liegt auf dem inneren Inline-Element: dort ist die Box genau so
+   breit wie der Text. Auf `.item-name` (Flex-Kind, volle Zeilenbreite) zog
+   sich der Strich bis zum Bearbeiten-Stift. */
+#root .item-row .item-name-text {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 58%;
+  background-size: 0% 1.5px;
+  transition: background-size 240ms var(--ease), color 200ms var(--ease);
+}
+
+#root .item-row.checked .item-name-text {
+  background-size: 100% 1.5px;
+}
+
+#root .item-row.checked .item-name {
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .item-row .item-name-text {
+    transition: none;
+  }
 }
 
 /* ── Custom Checkbox ── */

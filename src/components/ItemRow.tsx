@@ -74,7 +74,7 @@ export default function ItemRow({ item, onToggle, onDelete, onEdit, dragHandlePr
         </span>
       </label>
       <div className="item-content">
-        <span className="item-name">{item.name}</span>
+        <span className="item-name"><span className="item-name-text">{item.name}</span></span>
         <div className="item-meta">
           <span className="item-qty">{item.quantity}</span>
           {item.created_by && <span className="item-created-by">von {item.created_by}</span>}
