@@ -1,0 +1,114 @@
+/* View Transitions (Punkt 2): gemeinsamer Übergang Hub-Kachel → Screen-Kopf
+   plus kurzer, gerichteter Root-Wechsel für alle übrigen Navigationen.
+   Dieses File ist absichtlich inert, solange die App keine Marker setzt: alle
+   Regeln hängen an ::view-transition-* bzw. an data-vt / data-vt-dir am <html>
+   und gelten nur für die Dauer eines Übergangs. Ohne API-Unterstützung (Firefox,
+   ältere WebViews) lädt keines der Regeln (unbekannte Pseudo-Elemente machen
+   jede Regel ungültig) — die Pane-Animationen aus design.css laufen unverändert.
+   design.css bleibt unangetastet; nur die Token (--ease) werden hier gelesen. */
+
+/* ── Root-Wechsel: 220 ms, Auslaufkurve ─────────────────────────────── */
+
+:root::view-transition-old(root),
+:root::view-transition-new(root) {
+  animation-duration: 220ms;
+  /* Auslaufkurve wie --ease; der Fallback deckt das File für sich allein ab. */
+  animation-timing-function: var(--ease, cubic-bezier(0.2, 0.8, 0.2, 1));
+  animation-fill-mode: both;
+}
+
+/* Neutral (side): reines Überblenden, keine Verschiebung. */
+:root::view-transition-old(root) {
+  animation-name: vt-fade-out;
+}
+:root::view-transition-new(root) {
+  animation-name: vt-fade-in;
+}
+
+/* Vorwärts: der neue Inhalt schiebt leicht von rechts, der alte weicht als
+   Parallax ein Stück nach links aus. „Leicht“ — nur 24 px, kein harter Slide. */
+html[data-vt-dir='forward']::view-transition-old(root) {
+  animation-name: vt-out-forward;
+}
+html[data-vt-dir='forward']::view-transition-new(root) {
+  animation-name: vt-in-forward;
+}
+
+/* Zurück: spiegelbildlich aus links. */
+html[data-vt-dir='back']::view-transition-old(root) {
+  animation-name: vt-out-back;
+}
+html[data-vt-dir='back']::view-transition-new(root) {
+  animation-name: vt-in-back;
+}
+
+@keyframes vt-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes vt-in-forward {
+  from { opacity: 0; translate: 24px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes vt-out-forward {
+  from { opacity: 1; translate: 0 0; }
+  to { opacity: 0; translate: -14px 0; }
+}
+@keyframes vt-in-back {
+  from { opacity: 0; translate: -24px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes vt-out-back {
+  from { opacity: 1; translate: 0 0; }
+  to { opacity: 0; translate: 14px 0; }
+}
+
+/* ── Shared Element: Hub-Kachel morpht in den Ziel-Kopf ────────────────
+   Die Kupplung hängt an data-vt am <html>, das nur für die Dauer des
+   Übergangs gesetzt wird (viewTransition.ts) — view-transition-name darf im
+   DOM nie doppelt vorkommen. Die Ziel-Köpfe sind bewusst als direkte Kinder
+   gefasst: .list-head steckt auch in ListScreen (eingebettet in der Küche)
+   und in Quiz/Karte — ein loser Selektor gäbe doppelte Namen im Schnappschuss
+   und der Übergang würde hart abgebrochen. */
+html[data-vt='kueche'] .day-hub-chip[data-hub='kueche'] {
+  view-transition-name: vt-kueche;
+}
+html[data-vt='kueche'] .kueche-screen > .list-head {
+  view-transition-name: vt-kueche;
+}
+html[data-vt='plan'] .day-hub-chip[data-hub='plan'] {
+  view-transition-name: vt-plan;
+}
+html[data-vt='plan'] .plan-screen > .list-head {
+  view-transition-name: vt-plan;
+}
+
+/* Morph ausformulieren statt dem 220-ms-Root-Schnitt hinterherzulaufen;
+   mix-blend-mode: normal verhindert das plus-lighter-Auswaschen des Glasses,
+   das die Browser-Grundeinstellung für die Schnappschusspaare mitbringt. */
+:root::view-transition-group(vt-kueche),
+:root::view-transition-image-pair(vt-kueche),
+:root::view-transition-old(vt-kueche),
+:root::view-transition-new(vt-kueche),
+:root::view-transition-group(vt-plan),
+:root::view-transition-image-pair(vt-plan),
+:root::view-transition-old(vt-plan),
+:root::view-transition-new(vt-plan) {
+  animation-duration: 260ms;
+  mix-blend-mode: normal;
+}
+
+/* Umkehrung wie überall in der App: bei reduce bewegt sich nichts — und
+   viewTransition.ts startet den Übergang in dem Fall gar nicht erst. */
+@media (prefers-reduced-motion: reduce) {
+  :root::view-transition-old(*),
+  :root::view-transition-new(*),
+  :root::view-transition-group(*),
+  :root::view-transition-image-pair(*) {
+    animation: none !important;
+  }
+}

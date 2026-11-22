@@ -4,6 +4,7 @@ import type { TabView } from './types'
 import { getResolvedTheme, toggleTheme, applyTheme, initThemeListener } from './lib/theme'
 import { supabase, changeParticipantPassword } from './lib/supabase'
 import { screenDirection, type ScreenDirection } from './lib/navTransition'
+import { withViewTransition } from './lib/viewTransition'
 import { useToast } from './context/ToastContext'
 import JoinScreen from './components/JoinScreen'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -135,6 +136,9 @@ import './nav.css'
 import './design.css'
 import './design-expense.css'
 import './design-bristol.css'
+// View Transitions: Shared-Element-Kupplung Hub-Kachel → Screen-Kopf samt
+// Root-Keyframes (hier zusätzlich, damit design.css unangetastet bleibt).
+import './components/view-transitions.css'
 
 // ── Confetti helper: spanische Flagge (Rot-Gelb-Rot) ─────────────────
 async function fireConfetti() {
@@ -250,15 +254,56 @@ export default function App() {
   // Besuchte Screens bleiben gemountet (Pane-Ansatz) — nur der erste Besuch
   // mountet wirklich, danach wird nur noch ein- und ausgeblendet.
   const [visited, setVisited] = useState<ReadonlySet<TabView>>(() => new Set<TabView>(['home']))
+  // Spiegel für die Callbacks: navigate muss VOR dem Übergang wissen, ob der
+  // Ziel-Screen schon gemountet ist (den State im Callback zu lesen wäre
+  // veraltet); ein Ref ist dort der ehrliche Weg.
+  const visitedRef = useRef<ReadonlySet<TabView>>(new Set<TabView>(['home']))
 
   const setTab = useCallback((next: TabView) => {
     const prev = tabRef.current
     if (prev === next) return
     tabRef.current = next
     setScreenDir(screenDirection(prev, next))
-    setVisited((v) => (v.has(next) ? v : new Set(v).add(next)))
+    if (!visitedRef.current.has(next)) {
+      visitedRef.current = new Set(visitedRef.current).add(next)
+      setVisited(visitedRef.current)
+    }
     setTabState(next)
   }, [])
+
+  /**
+   * Navigation mit Übergang: JEDER Screen-Wechsel läuft über withViewTransition.
+   * `sharedName` morpht eine Hub-Kachel in den Ziel-Kopf (data-vt am <html>),
+   * `extra` bündelt Zusatz-Updates (z. B. das Küchen-Segment) in denselben
+   * Commit. Ohne API-Support, bei unbesuchtem Ziel-Screen (Suspense-Chunk evtl.
+   * nicht geladen — der Übergang dürfte auf dem Loader hängen) oder unter
+   * reduced-motion wechselt navigate direkt: altes Verhalten.
+   */
+  const navigate = useCallback(
+    (next: TabView, opts?: { sharedName?: string; extra?: () => void }) => {
+      const prev = tabRef.current
+      if (prev === next) {
+        // Derselbe Screen: kein Übergang, aber Extras trotzdem setzen.
+        opts?.extra?.()
+        return
+      }
+      const applyState = () => {
+        opts?.extra?.()
+        setTab(next)
+      }
+      if (!visitedRef.current.has(next)) {
+        // Erster Besuch: der Ziel-Baum wartet evtl. noch auf Suspense —
+        // ein View Transition würde dort für immer auf dem Loader stehen.
+        applyState()
+        return
+      }
+      withViewTransition(applyState, {
+        sharedName: opts?.sharedName,
+        direction: screenDirection(prev, next),
+      })
+    },
+    [setTab],
+  )
 
   // Lazy-Chunks im Idle vorladen: der erste Besuch eines Tabs zeigt sonst den
   // Loader und wirkt wie ein Neuaufbau. Wetter (Leaflet, ~167 kB) und Bristol
@@ -547,11 +592,11 @@ export default function App() {
   // Stabile Callbacks für memo(ListScreen)/Lazy-Screens: ein Inline-Lambda im
   // JSX würde die Memoisierung jedes Mal aushebeln.
   // Küche öffnet immer auf der Einkaufsliste (Alltagsfall). Rezepte sind ein
-  // Tipp weiter — der Zustand wird bei jedem Aufruf zurückgesetzt.
+  // Tipp weiter — der Zustand wird bei jedem Aufruf zurückgesetzt. Segment und
+  // Tab laufen gebündelt in denselben Übergangs-Commit („extra“).
   const openShopping = useCallback(() => {
-    setKuecheSegment('shopping')
-    setTab('recipes')
-  }, [setTab, setKuecheSegment])
+    navigate('recipes', { extra: () => setKuecheSegment('shopping') })
+  }, [navigate, setKuecheSegment])
   const handleCloseEmergency = useCallback(() => setEmergencyOpen(false), [])
   // ── Zurück-Taste (Android/Browser) ─────────────────────────────────
   // Statt die PWA zu schließen: einen Screen zurück, offene Blätter zuerst zu.
@@ -559,9 +604,9 @@ export default function App() {
     (state: { tab: TabView; sheet: 'more' | 'emergency' | null }) => {
       setMoreOpen(state.sheet === 'more')
       setEmergencyOpen(state.sheet === 'emergency')
-      setTab(state.tab)
+      navigate(state.tab)
     },
-    [setTab],
+    [navigate],
   )
   const navSheet = moreOpen ? 'more' : emergencyOpen ? 'emergency' : null
   useBackNav({
@@ -616,7 +661,7 @@ export default function App() {
             <button
               type="button"
               className={`header-back${backTarget ? ' is-on' : ''}`}
-              onClick={() => backTarget && setTab(backTarget)}
+              onClick={() => backTarget && navigate(backTarget)}
               aria-hidden={!backTarget}
               tabIndex={backTarget ? undefined : -1}
             >
@@ -670,7 +715,7 @@ export default function App() {
             weather={tripWeather}
             dayIso={dayIso}
             onPickDay={handlePickDay}
-            onNavigate={setTab}
+            onNavigate={navigate}
             onOpenShopping={openShopping}
             onEmergency={handleOpenEmergency}
             onRefresh={refreshAll}
@@ -688,7 +733,7 @@ export default function App() {
               isAdmin={isAdmin}
               dayIso={dayIso}
               onPickDay={handlePickDay}
-              onNavigate={setTab}
+              onNavigate={navigate}
             />
           </Suspense>
           </ErrorBoundary>
@@ -864,7 +909,7 @@ export default function App() {
 
       <BottomNav
         tab={tab}
-        onNavigate={setTab}
+        onNavigate={navigate}
         onMore={handleOpenMore}
         moreOpen={moreOpen}
       />
@@ -872,7 +917,7 @@ export default function App() {
       <MoreSheet
         open={moreOpen}
         onClose={handleCloseMore}
-        onNavigate={setTab}
+        onNavigate={navigate}
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         onLeave={handleLeave}

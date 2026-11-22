@@ -35,7 +35,11 @@ interface DayScreenProps {
   /** gewählter Tag (ISO), geteilt mit dem Reiseplan */
   dayIso: string
   onPickDay: (iso: string) => void
-  onNavigate: (tab: TabView) => void
+  /**
+   * Wechselt den Tab. `opts.sharedName` koppelt die Kachel an den Ziel-Kopf:
+   * der Browser morpht beides übereinander (view-transitions.css).
+   */
+  onNavigate: (tab: TabView, opts?: { sharedName?: string }) => void
   /** Öffnet die Küche auf dem Einkaufslisten-Segment. */
   onOpenShopping: () => void
   onEmergency: () => void
@@ -163,9 +167,12 @@ export default function DayScreen({
   // inhaltlich hingehört: Tageskarte und Öffnungszeiten im Reiseplan-Kopf,
   // Notizen als Zeile am Reiseplan, Bristol/Quiz im „Mehr"-Blatt. Notfall
   // bleibt hier — im Ernstfall sind zwei Taps zu viel.
-  const hub: Array<{ label: string; icon: typeof MapPin; onClick: () => void }> = [
-    { label: 'Reiseplan', icon: MapPin, onClick: () => onNavigate('plan') },
-    { label: 'Küche', icon: ChefHat, onClick: () => onNavigate('recipes') },
+  // hub: CSS-Anker für das Shared Element — data-hub am Button plus der
+  // sharedName im Navigate-Aufruf lassen die Kachel in den Ziel-Kopf morphen
+  // (view-transition-name steht in view-transitions.css, gekoppelt an data-vt).
+  const hub: Array<{ label: string; icon: typeof MapPin; hubId?: string; onClick: () => void }> = [
+    { label: 'Reiseplan', icon: MapPin, hubId: 'plan', onClick: () => onNavigate('plan', { sharedName: 'plan' }) },
+    { label: 'Küche', icon: ChefHat, hubId: 'kueche', onClick: () => onNavigate('recipes', { sharedName: 'kueche' }) },
     { label: 'Notfall', icon: ShieldAlert, onClick: onEmergency },
   ]
 
@@ -381,8 +388,14 @@ export default function DayScreen({
       {/* Werkzeuge unter dem Inhalt: früher standen sie über der Plan-Sektion
           und schoben den Tagesablauf aus dem ersten Blickfeld. */}
       <div className="day-hub">
-        {hub.map(({ label, icon: Icon, onClick }) => (
-          <button key={label} type="button" className="day-hub-chip" onClick={onClick}>
+        {hub.map(({ label, icon: Icon, hubId, onClick }) => (
+          <button
+            key={label}
+            type="button"
+            className="day-hub-chip"
+            data-hub={hubId}
+            onClick={onClick}
+          >
             <span className="day-hub-icon" aria-hidden="true">
               <Icon size={14} strokeWidth={2.2} />
             </span>
