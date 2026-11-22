@@ -9,17 +9,21 @@ import { useToast } from '../context/ToastContext'
 import {
   formatIngredient, parseIngredients, parseSteps, recipeMeta, unitLabel,
 } from '../lib/recipes'
-import type { Recipe, RecipeIngredient } from '../types'
+import type { ListItem, Recipe, RecipeIngredient } from '../types'
 import './RecipesScreen.css'
 
 interface Props {
   listId: string
   userName: string
-  /** Öffnet die Einkaufsliste — Zutaten und Rezepte sind ein Weg. */
+  /** Einkaufsliste als eigener Abschnitt — Zutaten und Rezepte sind ein Weg. */
+  shoppingItems: ListItem[]
+  /** Häkchen direkt in der Küche setzen (dieselbe Aktion wie in der Liste). */
+  onToggleItem: (item: ListItem) => void
+  /** Öffnet die vollständige Einkaufsliste. */
   onOpenShopping: () => void
 }
 
-export default function RecipesScreen({ listId, userName, onOpenShopping }: Props) {
+export default function RecipesScreen({ listId, userName, shoppingItems, onToggleItem, onOpenShopping }: Props) {
   const { toast } = useToast()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +38,12 @@ export default function RecipesScreen({ listId, userName, onOpenShopping }: Prop
   const busyRef = useRef(false)
   // Realtime-Debounce-Timer (400 ms) — Cleanup im Unmount-Effekt unten.
   const realtimeTimerRef = useRef<number | null>(null)
+
+  // Einkaufsliste: offene Posten zuerst, höchstens vier Zeilen — der Rest ist
+  // ein Link. Erledigte brauchen hier keine Zeile, nur ihre Zahl.
+  const openShopping = useMemo(() => shoppingItems.filter((item) => !item.is_checked), [shoppingItems])
+  const doneShopping = shoppingItems.length - openShopping.length
+  const shownShopping = openShopping.slice(0, 4)
 
   const load = useCallback(async () => {
     // Erst der letzte Stand aus dem Gerät — so steht die Küche sofort, auch offline.
@@ -217,15 +227,6 @@ export default function RecipesScreen({ listId, userName, onOpenShopping }: Prop
         <div className="rc-head-actions">
           <button
             type="button"
-            className="rc-icon-btn"
-            onClick={onOpenShopping}
-            aria-label="Einkaufsliste öffnen"
-            title="Einkaufsliste"
-          >
-            <ShoppingBasket size={17} strokeWidth={2} />
-          </button>
-          <button
-            type="button"
             className="rc-add"
             onClick={() => { setAdding(true); setOpen(null) }}
             aria-label="Rezept hinzufügen"
@@ -234,6 +235,56 @@ export default function RecipesScreen({ listId, userName, onOpenShopping }: Prop
           </button>
         </div>
       </header>
+
+      <section className={`rc-basket${openShopping.length === 0 ? ' is-clear' : ''}`}>
+        <div className="rc-basket-head">
+          <span className="rc-basket-title">
+            <ShoppingBasket size={15} strokeWidth={2} aria-hidden="true" />
+            Einkaufsliste
+          </span>
+          <button type="button" className="rc-basket-all" onClick={onOpenShopping} aria-label="Einkaufsliste öffnen">
+            alle <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <p className="rc-basket-meta">
+          {openShopping.length === 0
+            ? doneShopping > 0 ? 'Alles erledigt' : 'Noch nichts eingetragen'
+            : `${openShopping.length} offen${doneShopping > 0 ? ` · ${doneShopping} erledigt` : ''}`}
+        </p>
+
+        {openShopping.length === 0 ? (
+          <p className="rc-basket-empty">
+            {doneShopping > 0 ? 'Alles im Korb. ' : ''}
+            Zutaten aus einem Rezept landen mit einem Tipp hier.
+          </p>
+        ) : (
+          <ul className="rc-basket-list">
+            {shownShopping.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="rc-basket-row"
+                  onClick={() => onToggleItem(item)}
+                  aria-label={`${item.name} abhaken`}
+                >
+                  <span className="rc-basket-check" aria-hidden="true">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                  <span className="rc-basket-name">{item.name}</span>
+                  {item.quantity && <span className="rc-basket-qty">{item.quantity}</span>}
+                </button>
+              </li>
+            ))}
+            {openShopping.length > shownShopping.length && (
+              <li>
+                <button type="button" className="rc-basket-row is-more" onClick={onOpenShopping}>
+                  + {openShopping.length - shownShopping.length} weitere
+                </button>
+              </li>
+            )}
+          </ul>
+        )}
+      </section>
 
       {!loading && recipes.length === 0 && !adding && (
         <div className="rc-empty">

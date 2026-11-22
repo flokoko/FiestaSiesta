@@ -703,7 +703,13 @@ export default function App() {
             <ScreenPane id="recipes" active={tab === 'recipes'} direction={screenDir}>
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <RecipesScreen listId={list.id} userName={userName} onOpenShopping={openShopping} />
+            <RecipesScreen
+              listId={list.id}
+              userName={userName}
+              shoppingItems={shoppingItems}
+              onToggleItem={toggleShoppingItem}
+              onOpenShopping={openShopping}
+            />
           </Suspense>
           </ErrorBoundary>
             </ScreenPane>

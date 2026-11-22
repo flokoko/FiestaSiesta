@@ -301,3 +301,141 @@
     height: 44px;
   }
 }
+
+/* ── Einkaufsliste als Abschnitt (v0.76) ────────────────────────────────
+   Vorher nur ein Korb-Knopf im Kopf: man sah nicht, was zu kaufen ist, ohne
+   den Screen zu wechseln. Jetzt stehen die offenen Posten direkt in der Küche,
+   abhakbar, und „alle" führt in die volle Liste. */
+#root .rc-basket {
+  margin: 0 16px 14px;
+  padding: 12px 14px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  background: var(--surface);
+}
+
+#root .rc-basket.is-clear {
+  background: var(--surface-2);
+}
+
+#root .rc-basket-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#root .rc-basket-title {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+#root .rc-basket-meta {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+#root .rc-basket-all {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#root .rc-basket-empty {
+  margin: 8px 0 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+#root .rc-basket-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+#root .rc-basket-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .rc-basket-list li:first-child .rc-shop-row {
+  border-top: 0;
+}
+
+#root .rc-basket-check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--line-2, var(--line));
+  border-radius: 7px;
+  color: transparent;
+  background: var(--surface-3);
+}
+
+#root .rc-basket-row:active .rc-shop-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+#root .rc-basket-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .rc-basket-qty {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+#root .rc-basket-row.is-more {
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+@media (hover: none), (pointer: coarse) {
+  #root .rc-basket-all {
+    min-height: 32px;
+    padding: 0 12px;
+  }
+
+  #root .rc-basket-row {
+    min-height: 44px;
+  }
+}

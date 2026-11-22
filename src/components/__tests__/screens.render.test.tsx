@@ -271,7 +271,13 @@ describe('Screens — Render-Smoke (P7)', () => {
   it('RecipesScreen rendert (Küche-Kopf sichtbar)', async () => {
     render(
       <ToastProvider>
-        <RecipesScreen listId="smoke-list" userName="Flo" onOpenShopping={noop} />
+        <RecipesScreen
+          listId="smoke-list"
+          userName="Flo"
+          shoppingItems={[]}
+          onToggleItem={noop}
+          onOpenShopping={noop}
+        />
       </ToastProvider>,
     )
     await waitFor(() => {
