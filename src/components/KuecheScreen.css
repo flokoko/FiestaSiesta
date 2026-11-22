@@ -1,0 +1,94 @@
+/* ── Küche: Rahmen mit Funktionsleiste ───────────────────────────────────
+   Flo: „obere Leiste, die die Funktionen anzeigt; ganz links die Einkaufsliste,
+   und die soll beim Aufruf der Küche immer dran sein." Die Leiste sitzt unter
+   dem Seitentitel, beide Segmente sind Pillen — die aktive trägt Fläche und
+   Akzentkante, die andere bleibt ruhig. */
+
+#root .kueche-screen {
+  padding-bottom: 96px;
+}
+
+#root .kueche-seg {
+  display: flex;
+  gap: 6px;
+  margin: 2px 16px 12px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+#root .kueche-seg-btn {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-3);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+#root .kueche-seg-btn.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+#root .kueche-seg-count {
+  min-width: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 19px;
+  text-align: center;
+}
+
+/* Eingebettete Screens: der Rahmen liefert Kopf und Abstände. */
+#root .list-screen.is-embedded {
+  padding-top: 0;
+}
+
+#root .list-screen.is-embedded > .list-head {
+  padding-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root .kueche-seg-btn {
+    transition: none;
+  }
+}
+
+/* Rezept hinzufügen als Karte am Listenende (der Rezepte-Kopf entfällt). */
+#root .rc-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 13px;
+  border: 1px dashed var(--line-2, var(--line));
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--ink-3);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#root .rc-add-row:active {
+  background: var(--surface-2);
+}

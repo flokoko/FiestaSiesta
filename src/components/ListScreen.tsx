@@ -32,6 +32,11 @@ interface ListScreenProps {
   onOptimisticAdd?: (payload: Record<string, unknown>) => string | undefined
   /** Öffnet die Küche — Rezepte füllen genau diese Liste. */
   onOpenKitchen?: () => void
+  /**
+   * Eingebettet in der Küche (Segment „Einkaufsliste"): kein eigener Seitentitel,
+   * kein Küche-Knopf — der Rahmen (Kopf + Leiste) gehört dann dem KuecheScreen.
+   */
+  embedded?: boolean
 }
 
 /** Stabile leere Liste — verhindert, dass useMemo im Kind bei jedem Render neu läuft. */
@@ -243,7 +248,7 @@ function DraggableCategorySection({
   )
 }
 
-export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, onOptimisticAdd, onOpenKitchen }: ListScreenProps) {
+export default function ListScreen({ items, categories, listId, userName, isLoading, onItemToggle, onBatchToggle, onItemDelete, onItemChange, onReorder, onCategoriesChange, onOptimisticAdd, onOpenKitchen, embedded }: ListScreenProps) {
   const { toast, confirm } = useToast()
   const [hideChecked, setHideChecked] = usePersistedState<boolean>('fiesta_hide_checked', false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -332,10 +337,10 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
   }
 
   return (
-    <div className="list-screen">
+    <div className={`list-screen${embedded ? ' is-embedded' : ''}`}>
       <header className="list-head">
         <div className="list-head-text">
-          <h1>Einkaufen</h1>
+          {!embedded && <h1>Einkaufen</h1>}
           <p>
             {items.length === 0
               ? 'Noch nichts drauf'
@@ -345,7 +350,7 @@ export default function ListScreen({ items, categories, listId, userName, isLoad
           </p>
         </div>
         <div className="list-head-actions">
-          {onOpenKitchen && (
+          {!embedded && onOpenKitchen && (
             <button
               type="button"
               className="list-menu-btn"

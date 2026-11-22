@@ -14,7 +14,6 @@ export const NAV_DEPTH: Record<TabView, 0 | 1> = {
   home: 0,
   bring: 0,
   expenses: 0,
-  list: 1,
   plan: 1,
   offen: 1,
   karte: 1,

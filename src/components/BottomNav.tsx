@@ -18,8 +18,7 @@ const ITEMS: NavItem[] = [
 
 /** Tabs, die einer Navigations-Domäne zugeordnet sind */
 const DOMAIN_OF: Partial<Record<TabView, TabView>> = {
-  // Einkaufen und Küche hängen am Tag (Hub-Kachel), Packen ist eigene Domäne.
-  list: 'home',
+  // Küche (mit der Einkaufsliste) hängt am Tag, Packen ist eigene Domäne.
   notes: 'plan',
   plan: 'home',
   weather: 'home',

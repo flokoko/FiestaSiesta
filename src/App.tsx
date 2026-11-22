@@ -19,7 +19,6 @@ import { syncRotatedSubscription } from './lib/push'
 // Die Import-Funktionen liegen separat, damit sie sich nach dem Login im
 // Idle vorladen lassen (sonst zeigt der erste Besuch eines Tabs kurz den
 // 🏖️-Loader — genau das wirkt wie „die Seite baut neu“).
-const importListScreen = () => import('./components/ListScreen')
 const importBringScreen = () => import('./components/BringScreen')
 const importExpenseScreen = () => import('./components/ExpenseScreen')
 const importSettingsScreen = () => import('./components/SettingsScreen')
@@ -31,7 +30,6 @@ const importDayMapScreen = () => import('./components/DayMapScreen')
 const importRecipesScreen = () => import('./components/RecipesScreen')
 const importQuizScreen = () => import('./components/QuizScreen')
 
-const ListScreen = lazy(importListScreen)
 const BringScreen = lazy(importBringScreen)
 const ExpenseScreen = lazy(importExpenseScreen)
 const SettingsScreen = lazy(importSettingsScreen)
@@ -40,7 +38,6 @@ const WeatherScreen = lazy(importWeatherScreen)
 const TripPlanScreen = lazy(importTripPlanScreen)
 const OpeningHoursScreen = lazy(importOpeningHoursScreen)
 const DayMapScreen = lazy(importDayMapScreen)
-const RecipesScreen = lazy(importRecipesScreen)
 const QuizScreen = lazy(importQuizScreen)
 
 // Besuchte Panes bleiben gemountet (idle = display:none). Ohne memo rendert
@@ -49,7 +46,6 @@ const QuizScreen = lazy(importQuizScreen)
 // memo um die lazy-Komponente ist unproblematisch: Chunk-Auflösung und die
 // Suspense-Fallbacks laufen unverändert weiter.
 const MemoNotes = memo(NotesScreen)
-const MemoList = memo(ListScreen)
 const MemoBring = memo(BringScreen)
 const MemoExpense = memo(ExpenseScreen)
 const MemoSettings = memo(SettingsScreen)
@@ -60,7 +56,6 @@ const MemoDay = memo(DayScreen)
 // Leichte Screens direkt nach dem Login, schwere (Bristol ~416 kB, Wetter
 // ~167 kB) erst im Idle — sie liegen sonst unnötig im Mobilfunk-Datenvolumen.
 const SCREEN_CHUNKS_EAGER = [
-  importListScreen,
   importBringScreen,
   importTripPlanScreen,
   importSettingsScreen,
@@ -72,6 +67,8 @@ const SCREEN_CHUNKS_EAGER = [
 // Spaß-Seite ist und die Karte erst auf Tippen gebraucht wird. Beide laden beim
 // ersten Öffnen (dann aus dem Cache).
 const SCREEN_CHUNKS_IDLE = [
+  // Die Küche öffnet auf der Einkaufsliste — deren Chunk ist der häufigste.
+  () => import('./components/ListScreen'),
   importWeatherScreen,
   importOpeningHoursScreen,
   importRecipesScreen,
@@ -82,6 +79,7 @@ import EmergencySheet from './components/EmergencySheet'
 import { useTripPlan } from './hooks/useTripPlan'
 import { useWakeTimer } from './hooks/useWakeTimer'
 import { useTripWeather } from './hooks/useTripWeather'
+import KuecheScreen, { type KuecheSegment } from './components/KuecheScreen'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
 import { useBackNav } from './hooks/useBackNav'
@@ -216,6 +214,16 @@ export default function App() {
   const [tab, setTabState] = useState<TabView>('home')
   const [moreOpen, setMoreOpen] = useState(false)
   const [emergencyOpen, setEmergencyOpen] = useState(false)
+  // Küche-Segment: Einkaufsliste links und immer der Einstieg (v0.78).
+  const [kuecheSegment, setKuecheSegment] = useState<KuecheSegment>('shopping')
+  // Beim Betreten der Küche steht immer die Einkaufsliste vorn (Flo: „per Default
+  // immer angezeigt"). Der Wechsel INNERHALB der Küche lässt das Segment stehen.
+  const wasKuecheRef = useRef(false)
+  useEffect(() => {
+    const isKueche = tab === 'recipes'
+    if (isKueche && !wasKuecheRef.current) setKuecheSegment('shopping')
+    wasKuecheRef.current = isKueche
+  }, [tab])
 
   // Reiseplan + Wetter-Vorschau: EIN Aufruf für Heute und Reise. Zwei Hook-
   // Instanzen würden denselben Realtime-Kanal doppelt abonnieren (wirft beim
@@ -537,8 +545,12 @@ export default function App() {
   const handleOpenEmergency = useCallback(() => setEmergencyOpen(true), [])
   // Stabile Callbacks für memo(ListScreen)/Lazy-Screens: ein Inline-Lambda im
   // JSX würde die Memoisierung jedes Mal aushebeln.
-  const openKitchen = useCallback(() => setTab('recipes'), [setTab])
-  const openShopping = useCallback(() => setTab('list'), [setTab])
+  // Küche öffnet immer auf der Einkaufsliste (Alltagsfall). Rezepte sind ein
+  // Tipp weiter — der Zustand wird bei jedem Aufruf zurückgesetzt.
+  const openShopping = useCallback(() => {
+    setKuecheSegment('shopping')
+    setTab('recipes')
+  }, [setTab, setKuecheSegment])
   const handleCloseEmergency = useCallback(() => setEmergencyOpen(false), [])
   // ── Zurück-Taste (Android/Browser) ─────────────────────────────────
   // Statt die PWA zu schließen: einen Screen zurück, offene Blätter zuerst zu.
@@ -575,9 +587,7 @@ export default function App() {
 
   // Wohin der Zurück-Pfeil zeigt: Unterseiten → Domäne, Blatt-Ziele → Heute
   const backTarget: TabView | null =
-    tab === 'list'
-      ? 'recipes'
-      : tab === 'notes'
+    tab === 'notes'
         ? 'plan'
         : tab === 'weather' || tab === 'settings'
           ? 'home'
@@ -660,6 +670,7 @@ export default function App() {
             dayIso={dayIso}
             onPickDay={handlePickDay}
             onNavigate={setTab}
+            onOpenShopping={openShopping}
             onEmergency={handleOpenEmergency}
           />
             </ScreenPane>
@@ -703,12 +714,21 @@ export default function App() {
             <ScreenPane id="recipes" active={tab === 'recipes'} direction={screenDir}>
           <ErrorBoundary compact>
           <Suspense fallback={<TabLoader />}>
-            <RecipesScreen
+            <KuecheScreen
+              segment={kuecheSegment}
+              onSegment={setKuecheSegment}
+              items={shoppingItems}
+              categories={shoppingCategories}
               listId={list.id}
               userName={userName}
-              shoppingItems={shoppingItems}
-              onToggleItem={toggleShoppingItem}
-              onOpenShopping={openShopping}
+              isLoading={isLoading}
+              onItemToggle={toggleShoppingItem}
+              onBatchToggle={batchToggleShoppingItems}
+              onItemDelete={deleteShoppingItem}
+              onItemChange={handleShoppingItemsChange}
+              onReorder={reorderItems}
+              onCategoriesChange={handleCategoriesChange}
+              onOptimisticAdd={addPendingItem}
             />
           </Suspense>
           </ErrorBoundary>
@@ -734,33 +754,6 @@ export default function App() {
             onReorderNotes={reorderNotes}
             onToggleFavorite={toggleNoteFavorite}
           />
-            </ScreenPane>
-          )}
-          {visited.has('list') && (
-            <ScreenPane id="list" active={tab === 'list'} direction={screenDir}>
-          <ErrorBoundary compact>
-          <Suspense fallback={<TabLoader />}>
-            <MemoList
-              items={shoppingItems}
-              categories={shoppingCategories}
-              listId={list.id}
-              userName={userName}
-              isLoading={isLoading}
-              onItemToggle={toggleShoppingItem}
-              onBatchToggle={batchToggleShoppingItems}
-              onItemDelete={deleteShoppingItem}
-              onItemChange={handleShoppingItemsChange}
-              onReorder={reorderItems}
-              onCategoriesChange={handleCategoriesChange}
-              // Offline angelegte Artikel sofort zeigen (Temp-Zeile statt
-              // Refetch, der offline ohne den neuen Artikel fällt). Der
-              // Callback ist ein useCallback mit stabilen Deps — MemoList
-              // rendert dadurch nicht öfter neu.
-              onOptimisticAdd={addPendingItem}
-              onOpenKitchen={openKitchen}
-            />
-          </Suspense>
-          </ErrorBoundary>
             </ScreenPane>
           )}
           {visited.has('bring') && (

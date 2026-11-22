@@ -33,6 +33,8 @@ interface DayScreenProps {
   dayIso: string
   onPickDay: (iso: string) => void
   onNavigate: (tab: TabView) => void
+  /** Öffnet die Küche auf dem Einkaufslisten-Segment. */
+  onOpenShopping: () => void
   onEmergency: () => void
 }
 
@@ -50,7 +52,7 @@ function euro0(value: number): string {
 export default function DayScreen({
   participantCount, shoppingCount, shoppingChecked, bringCount,
   expenseTotal, userBalance, proposalCount,
-  plan, weather, dayIso, onPickDay, onNavigate, onEmergency,
+  plan, weather, dayIso, onPickDay, onNavigate, onOpenShopping, onEmergency,
 }: DayScreenProps) {
   const today = new Date()
   const phase = tripPhase(today)
@@ -258,7 +260,7 @@ export default function DayScreen({
           Aussage auf doppelter Fläche. Beträge gerundet — der Cent steht im
           Geld-Screen, hier ist er Rauschen. */}
       <div className="today-chips">
-        <button type="button" className="today-chip" onClick={() => onNavigate('list')}>
+        <button type="button" className="today-chip" onClick={onOpenShopping}>
           <span className="today-chip-num">{open}</span>
           <span className="today-chip-label">offen</span>
         </button>

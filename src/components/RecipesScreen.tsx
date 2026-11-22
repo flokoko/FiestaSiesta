@@ -1,39 +1,34 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ChefHat, ChevronDown, Clock, Loader2, Plus, Trash2, Users, ShoppingBasket, Check, X,
+  ChefHat, Clock, Loader2, Plus, Trash2, Users, ShoppingBasket, Check, X,
 } from 'lucide-react'
 import { readCache, writeCache } from '../lib/readCache'
 import { supabase } from '../lib/supabase'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
-import { usePersistedState } from '../hooks/usePersistedState'
 import { useToast } from '../context/ToastContext'
 import {
   formatIngredient, parseIngredients, parseSteps, recipeMeta, unitLabel,
 } from '../lib/recipes'
-import type { ListItem, Recipe, RecipeIngredient } from '../types'
+import type { Recipe, RecipeIngredient } from '../types'
 import './RecipesScreen.css'
 
 interface Props {
   listId: string
   userName: string
-  /** Einkaufsliste als eigener Abschnitt — Zutaten und Rezepte sind ein Weg. */
-  shoppingItems: ListItem[]
-  /** Häkchen direkt in der Küche setzen (dieselbe Aktion wie in der Liste). */
-  onToggleItem: (item: ListItem) => void
-  /** Öffnet die vollständige Einkaufsliste. */
-  onOpenShopping: () => void
+  /**
+   * Eingebettet im KuecheScreen: Kopf und Segmentleiste gehören dem Rahmen —
+   * dieser Screen liefert nur die Rezeptliste (immer offen, kein Einklappen).
+   */
+  embedded?: boolean
 }
 
-export default function RecipesScreen({ listId, userName, shoppingItems, onToggleItem, onOpenShopping }: Props) {
+export default function RecipesScreen({ listId, userName, embedded }: Props) {
   const { toast } = useToast()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   // Ohne Empfang in den Bergen: Rezepte sollen trotzdem lesbar sein.
   const [offline, setOffline] = useState(false)
   const [open, setOpen] = useState<string | null>(null)
-  // Rezepte sind der zweite Weg (Ideen), die Einkaufsliste der erste: sie steht
-  // oben und offen, die Rezepte klappen erst auf Tipp auf.
-  const [recipesOpen, setRecipesOpen] = usePersistedState('fiesta_kitchen_recipes_open', false)
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
   // Synchroner Doppeltap-Schutz: `busy` (State) kommt zu spät — zwei Taps im
@@ -42,12 +37,6 @@ export default function RecipesScreen({ listId, userName, shoppingItems, onToggl
   const busyRef = useRef(false)
   // Realtime-Debounce-Timer (400 ms) — Cleanup im Unmount-Effekt unten.
   const realtimeTimerRef = useRef<number | null>(null)
-
-  // Einkaufsliste: offene Posten zuerst, höchstens vier Zeilen — der Rest ist
-  // ein Link. Erledigte brauchen hier keine Zeile, nur ihre Zahl.
-  const openShopping = useMemo(() => shoppingItems.filter((item) => !item.is_checked), [shoppingItems])
-  const doneShopping = shoppingItems.length - openShopping.length
-  const shownShopping = openShopping.slice(0, 6)
 
   const load = useCallback(async () => {
     // Erst der letzte Stand aus dem Gerät — so steht die Küche sofort, auch offline.
@@ -216,66 +205,14 @@ export default function RecipesScreen({ listId, userName, shoppingItems, onToggl
 
   return (
     <div className="rc-screen list-screen">
-      <header className="list-head">
-        <div className="list-head-text">
-          <h1>Küche</h1>
-          {/* Die Zahlen stehen unten an ihrer Sektion — hier nur der Zustand. */}
-          <p>{loading ? 'Lädt …' : offline ? 'offline' : ''}</p>
-        </div>
-      </header>
-
-      <section className={`rc-basket${openShopping.length === 0 ? ' is-clear' : ''}`}>
-        <div className="rc-basket-head">
-          <span className="rc-basket-title">
-            <ShoppingBasket size={15} strokeWidth={2} aria-hidden="true" />
-            Einkaufsliste
-          </span>
-        </div>
-        <p className="rc-basket-meta">
-          {openShopping.length === 0
-            ? doneShopping > 0 ? 'Alles erledigt' : 'Noch nichts eingetragen'
-            : `${openShopping.length} offen${doneShopping > 0 ? ` · ${doneShopping} erledigt` : ''}`}
-        </p>
-
-        {openShopping.length === 0 ? (
-          <p className="rc-basket-empty">
-            {doneShopping > 0 ? 'Alles im Korb. ' : ''}
-            Zutaten aus einem Rezept landen mit einem Tipp hier.
-          </p>
-        ) : (
-          <ul className="rc-basket-list">
-            {shownShopping.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="rc-basket-row"
-                  onClick={() => onToggleItem(item)}
-                  aria-label={`${item.name} abhaken`}
-                >
-                  <span className="rc-basket-check" aria-hidden="true">
-                    <Check size={12} strokeWidth={3} />
-                  </span>
-                  <span className="rc-basket-name">{item.name}</span>
-                  {item.quantity && <span className="rc-basket-qty">{item.quantity}</span>}
-                </button>
-              </li>
-            ))}
-            {openShopping.length > shownShopping.length && (
-              <li>
-                <button type="button" className="rc-basket-row is-more" onClick={onOpenShopping}>
-                  + {openShopping.length - shownShopping.length} weitere
-                </button>
-              </li>
-            )}
-          </ul>
-        )}
-
-        <button type="button" className="rc-basket-open" onClick={onOpenShopping}>
-          <ShoppingBasket size={15} strokeWidth={2} aria-hidden="true" />
-          Einkaufsliste öffnen
-          <span aria-hidden="true">→</span>
-        </button>
-      </section>
+      {!embedded && (
+        <header className="list-head">
+          <div className="list-head-text">
+            <h1>Küche</h1>
+            <p>{loading ? 'Lädt …' : offline ? 'offline' : ''}</p>
+          </div>
+        </header>
+      )}
 
       {!loading && recipes.length === 0 && !adding && (
         <div className="rc-empty">
@@ -288,37 +225,7 @@ export default function RecipesScreen({ listId, userName, shoppingItems, onToggl
         </div>
       )}
 
-      <div className="rc-recipes-bar">
-      {recipes.length > 0 && (
-      <button
-        type="button"
-        className={`rc-recipes-head${recipesOpen ? ' is-open' : ''}`}
-        onClick={() => setRecipesOpen((value) => {
-          // Zuklappen schließt auch ein offenes Rezept — sonst bliebe das Detail
-          // stehen, obwohl der Pfeil „zu" zeigt.
-          if (value) { setOpen(null); setAdding(false) }
-          return !value
-        })}
-        aria-expanded={recipesOpen}
-        aria-controls="kitchen-recipes"
-      >
-        <ChefHat size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="rc-recipes-title">Rezepte</span>
-        <span className="rc-recipes-count">{recipes.length}</span>
-        <ChevronDown size={16} strokeWidth={2.2} className="rc-recipes-chev" aria-hidden="true" />
-      </button>
-      )}
-        <button
-          type="button"
-          className="rc-add rc-add-inline"
-          onClick={() => { setAdding(true); setOpen(null); setRecipesOpen(true) }}
-          aria-label="Rezept hinzufügen"
-        >
-          <Plus size={18} strokeWidth={2.2} />
-        </button>
-      </div>
-
-      <div className="rc-list" id="kitchen-recipes" hidden={!(recipesOpen || adding || !!current)}>
+      <div className="rc-list">
         {recipes.map((recipe) => (
           <button
             key={recipe.id}
@@ -333,6 +240,16 @@ export default function RecipesScreen({ listId, userName, shoppingItems, onToggl
             <ChefHat size={16} strokeWidth={1.9} className="rc-card-icon" />
           </button>
         ))}
+        {!adding && (
+          <button
+            type="button"
+            className="rc-add-row"
+            onClick={() => { setAdding(true); setOpen(null) }}
+          >
+            <Plus size={16} strokeWidth={2.2} aria-hidden="true" />
+            Rezept hinzufügen
+          </button>
+        )}
       </div>
 
       {current && (
