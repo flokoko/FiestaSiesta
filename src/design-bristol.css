@@ -456,15 +456,8 @@
   margin-bottom: 6px;
 }
 
-#root .bristol-chart-box .recharts-cartesian-axis-tick-value {
-  font-size: 10px;
-  fill: var(--ink-3);
-}
-
-#root .bristol-chart-box .recharts-legend-item-text {
-  color: var(--ink-3) !important;
-  font-size: 11px;
-}
+/* Diagramme zeichnen eigenes SVG (charts/MiniCharts) — die früheren Regeln
+   für Tick- und Legende-Schrift sind dorthin gewandert. */
 
 /* ── Tagestrend-Zeilen ────────────────────────────────────────────── */
 #root .bristol-daytrend-row {

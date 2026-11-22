@@ -1,0 +1,101 @@
+/* ═══════════════════════════════════════════════════════════════════
+   MiniCharts — Diagramm-Trio ohne Diagrammbibliothek (v0.82)
+
+   Die drei Diagramme (BarSeries, TrendLine, MultiLine) zeichnen als
+   reines SVG. Stacking: das .mini-stretch-SVG (Pfadgeometrie, gestreckt)
+   liegt absolut unter dem Overlay-SVG (Punkte + Schrift in echten px).
+   Alle Regeln mit #root-Präfix: Screen-CSS wird lazy nach design.css geladen.
+   ═══════════════════════════════════════════════════════════════════ */
+
+#root .mini-chart {
+  position: relative;
+  width: 100%;
+}
+
+#root .mini-chart > svg {
+  display: block;
+  width: 100%;
+}
+
+/* Pfadfläche: absolute unter dem Overlay, das die Höhe bestimmt.
+   viewBox + preserveAspectRatio="none" streckt nur die Fläche. */
+#root .mini-chart > svg.mini-stretch {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+/* dezentes horizontales Gitter wie das alte CartesianGrid (3-3-Gestrichelt) */
+#root .mini-grid {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+/* Tick-Schrift in fester Größe — nie in der gestreckten Fläche (Schrift bleibt lesbar) */
+#root .mini-tick {
+  font-size: 10px;
+  fill: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wert-Label über den Balken */
+#root .mini-value {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* kleine Legende unter dem Tagesverlauf: farbige Punkte + Name */
+#root .mini-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+#root .mini-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+#root .mini-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Einlaufen ───────────────────────────────────────────────────────
+   Nur außerhalb von prefers-reduced-motion: reduce. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Balken wachsen beim ersten Rendern kurz von unten (400 ms, gestaffelt 20 ms) */
+  #root .mini-bar {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: mini-bar-in 400ms var(--ease, ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 20ms);
+  }
+
+  /* Linien und Punkte faden sanft ein */
+  #root .mini-line {
+    animation: mini-line-in 400ms ease-out backwards;
+  }
+}
+
+@keyframes mini-bar-in {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes mini-line-in {
+  from {
+    opacity: 0;
+  }
+}
