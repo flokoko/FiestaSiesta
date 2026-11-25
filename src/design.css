@@ -4044,29 +4044,34 @@ body::before {
   display: none;
 }
 
-#root .screen-pane[data-state='active'] {
+#root .screen-pane[data-state='active'][data-fresh] {
   position: relative;
   /* Nur opacity auf dem Pane (kein transform!): ein transform hier macht den
      Pane zum Containing-Block für die schwebenden „+“-Pillen. Start bei 72 %,
-     nicht bei 0 — sonst blitzt der Aurora-Hintergrund durch. */
+     nicht bei 0 — sonst blitzt der Aurora-Hintergrund durch.
+     `data-fresh` nur beim ersten Einblenden: bei späteren Wechseln animiert der
+     View Transition. Eine Pane-Animation, die bei jedem Tab-Wechsel neu startet,
+     wird sonst in den neuen Schnappschuss eingebacken (Browser fotografiert
+     direkt nach dem Commit) — der ganze Screen steht dann für die Dauer des
+     Übergangs halb durchsichtig da und blitzt blass auf. */
   animation: paneSettle 0.34s var(--ease) backwards;
 }
 
 /* Der Inhalt setzt sich mit: die direkten Kinder steigen 8 px auf und kommen
    aus 55 % Deckkraft. Kurz und klein gehalten (0.26 s, max. 50 ms Versatz) —
    das wirkt als „einlaufen“, nicht als Neuaufbau. */
-#root .screen-pane[data-state='active'] > * > * {
+#root .screen-pane[data-state='active'][data-fresh] > * > * {
   animation: paneItemIn 0.44s var(--ease) backwards;
   animation-delay: 0.09s;
 }
 
-#root .screen-pane[data-dir='back'] > * > * {
+#root .screen-pane[data-state='active'][data-fresh][data-dir='back'] > * > * {
   animation-name: paneItemBack;
 }
 
-#root .screen-pane[data-state='active'] > * > *:nth-child(1) { animation-delay: 0s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(2) { animation-delay: 0.045s; }
-#root .screen-pane[data-state='active'] > * > *:nth-child(3) { animation-delay: 0.09s; }
+#root .screen-pane[data-state='active'][data-fresh] > * > *:nth-child(1) { animation-delay: 0s; }
+#root .screen-pane[data-state='active'][data-fresh] > * > *:nth-child(2) { animation-delay: 0.045s; }
+#root .screen-pane[data-state='active'][data-fresh] > * > *:nth-child(3) { animation-delay: 0.09s; }
 
 @keyframes paneSettle {
   from { opacity: 0.78; }

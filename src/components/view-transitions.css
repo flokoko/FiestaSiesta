@@ -7,9 +7,22 @@
    jede Regel ungültig) — die Pane-Animationen aus design.css laufen unverändert.
    design.css bleibt unangetastet; nur die Token (--ease) werden hier gelesen. */
 
-/* ── Root-Wechsel: 220 ms, Auslaufkurve ─────────────────────────────── */
+/* ── Root-Wechsel: 220 ms, Auslaufkurve ───────────────────────────────
+   Prinzip: der alte Schnappschuss BLEIBT voll deckend liegen, der neue blendet
+   darüber ein. Zusammen mit `mix-blend-mode: normal` ergibt das einen echten
+   Kreuzblender (neu·α + alt·(1−α)) — der Seitenhintergrund kann an keiner Stelle
+   durchscheinen. Vorher blendete der alte Screen aus UND der neue ein, und weil
+   der alte schon bei 55 % auf 0 stand, fehlten dort 45 % Deckkraft: der warme
+   Aurora-Hintergrund schien durch und der Wechsel blitzte weiß auf.
+   `mix-blend-mode` ist Pflicht, nicht Kosmetik: die Browser-Grundeinstellung
+   `plus-lighter` ADDIERT die beiden Bilder — mit einem voll deckenden alten
+   Screen darunter würde die Fläche überstrahlen. */
 
 :root::view-transition-old(root),
+:root::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
 :root::view-transition-new(root) {
   animation-duration: 220ms;
   /* Auslaufkurve wie --ease; der Fallback deckt das File für sich allein ab. */
@@ -17,36 +30,28 @@
   animation-fill-mode: both;
 }
 
-/* Neutral (side): reines Überblenden, keine Verschiebung. */
+/* Der alte Screen animiert nicht — er ist die deckende Unterlage. */
 :root::view-transition-old(root) {
-  animation-name: vt-fade-out;
+  animation: none;
 }
+
+/* Neutral (side): reines Überblenden, keine Verschiebung. */
 :root::view-transition-new(root) {
   animation-name: vt-fade-in;
 }
 
-/* Vorwärts: der neue Inhalt schiebt leicht von rechts, der alte weicht als
-   Parallax ein Stück nach links aus. „Leicht“ — nur 24 px, kein harter Slide. */
-html[data-vt-dir='forward']::view-transition-old(root) {
-  animation-name: vt-out-forward;
-}
+/* Vorwärts: der neue Inhalt schiebt leicht von rechts herein. Der alte Screen
+   bleibt stehen — würde er mitschieben, entstünde an seinem Rand eine Lücke, in
+   der der Hintergrund aufblitzt. „Leicht“ — nur 24 px, kein harter Slide. */
 html[data-vt-dir='forward']::view-transition-new(root) {
   animation-name: vt-in-forward;
 }
 
 /* Zurück: spiegelbildlich aus links. */
-html[data-vt-dir='back']::view-transition-old(root) {
-  animation-name: vt-out-back;
-}
 html[data-vt-dir='back']::view-transition-new(root) {
   animation-name: vt-in-back;
 }
 
-@keyframes vt-fade-out {
-  from { opacity: 1; }
-  55% { opacity: 0; }
-  to { opacity: 0; }
-}
 @keyframes vt-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -55,21 +60,9 @@ html[data-vt-dir='back']::view-transition-new(root) {
   from { opacity: 0; translate: 24px 0; }
   to { opacity: 1; translate: 0 0; }
 }
-/* Der alte Screen ist schon zur Hälfte weg, wenn der neue ankommt: sonst
-   stehen zwei voll deckende Screens übereinander („Doppelbild"). */
-@keyframes vt-out-forward {
-  from { opacity: 1; translate: 0 0; }
-  55% { opacity: 0; }
-  to { opacity: 0; translate: -14px 0; }
-}
 @keyframes vt-in-back {
   from { opacity: 0; translate: -24px 0; }
   to { opacity: 1; translate: 0 0; }
-}
-@keyframes vt-out-back {
-  from { opacity: 1; translate: 0 0; }
-  55% { opacity: 0; }
-  to { opacity: 0; translate: 14px 0; }
 }
 
 /* ── Shared Element: Hub-Kachel morpht in den Ziel-Kopf ────────────────

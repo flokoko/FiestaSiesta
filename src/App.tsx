@@ -118,12 +118,26 @@ function ScreenPane({
   direction: ScreenDirection
   children: ReactNode
 }) {
+  // Einlauf-Animation nur beim ersten Einblenden (`data-fresh`). Bei jedem
+  // späteren Wechsel animiert der View Transition; eine Pane-Animation, die
+  // dabei neu startet, wird in den neuen Schnappschuss eingebacken und lässt
+  // den Screen für die Dauer des Übergangs blass aufleuchten.
+  const [fresh, setFresh] = useState(true)
+  useEffect(() => {
+    if (!fresh) return
+    // Nach dem Ende der Kinder-Animation (0.44 s + 0.09 s Versatz) fällt der
+    // Marker weg — danach darf `display:none`/`block` nichts mehr auslösen.
+    const timer = window.setTimeout(() => setFresh(false), 700)
+    return () => window.clearTimeout(timer)
+  }, [fresh])
+
   return (
     <div
       className="screen-pane"
       data-tab={id}
       data-state={active ? 'active' : 'idle'}
       data-dir={direction}
+      data-fresh={fresh ? '' : undefined}
       aria-hidden={active ? undefined : true}
     >
       {children}
