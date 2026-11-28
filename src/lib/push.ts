@@ -5,6 +5,7 @@
 // gracefully disabled (no crash).
 
 import { supabase } from './supabase'
+import { LS } from './storage'
 
 // VAPID public key from build env (may be empty/undefined on builds
 // that haven't configured it yet).
@@ -143,7 +144,7 @@ export async function subscribeToPush(
   }
 
   // Persist a local flag so the UI can show "active" state quickly
-  localStorage.setItem('push_notifications_enabled', 'true')
+  localStorage.setItem(LS.pushEnabled, 'true')
 
   return { ok: true }
 }
@@ -177,7 +178,7 @@ export async function unsubscribeFromPush(
   // Ohne bekannten Endpoint wird NICHTS gelöscht: sonst reißt der Fall
   // „Browser hat gerade kein Abo mehr" alle Geräte mit.
   if (!endpoint) {
-    localStorage.removeItem('push_notifications_enabled')
+    localStorage.removeItem(LS.pushEnabled)
     return
   }
 
@@ -188,7 +189,7 @@ export async function unsubscribeFromPush(
     .eq('participant_name', participantName)
     .eq('endpoint', endpoint)
 
-  localStorage.removeItem('push_notifications_enabled')
+  localStorage.removeItem(LS.pushEnabled)
 }
 
 /**
@@ -222,7 +223,7 @@ export async function syncRotatedSubscription(
 
     if (error) return false
     await cache.delete('/__push_subscription')
-    localStorage.setItem('push_notifications_enabled', 'true')
+    localStorage.setItem(LS.pushEnabled, 'true')
     return true
   } catch {
     return false

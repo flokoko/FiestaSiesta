@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy } from 'react'
-import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock, Pencil, Loader2 } from 'lucide-react'
+import { MoreHorizontal, MapPin, Radar, Wind, Waves, Droplets, Clock, Pencil, Loader2, Pause, Play } from 'lucide-react'
 import { getWeatherInfo, fmtDay } from '../lib/weatherCodes'
 import { getStoredLocation, setStoredLocation, geocodeCity, formatLocationName, dailyIndexFor } from '../lib/weather'
 import { fetchAirNow, cachedAirNow, dustLevel, type AirNow } from '../lib/airQuality'
@@ -868,7 +868,7 @@ export default function WeatherScreen({ userName, dayIso, plan }: WeatherScreenP
                     onClick={toggleRadar}
                     aria-label={radarPlaying ? 'Pause' : 'Play'}
                   >
-                    {radarPlaying ? '⏸' : '▶️'}
+                    {radarPlaying ? <Pause size={15} strokeWidth={2.4} /> : <Play size={15} strokeWidth={2.4} />}
                   </button>
                 </span>
               </h2>

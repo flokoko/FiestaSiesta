@@ -30,6 +30,7 @@ import {
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { APP_VERSION, BUILD_ID } from '../version'
 import { spanishMotto } from '../lib/espanaFlair'
+import { LS } from '../lib/storage'
 
 import './SettingsScreen.css'
 
@@ -113,7 +114,7 @@ export default function SettingsScreen({
   const [adminOldPw, setAdminOldPw] = useState('')
   const [adminNewPw, setAdminNewPw] = useState('')
   const [adminPwError, setAdminPwError] = useState('')
-  const [bristolEnabled, setBristolEnabled] = useState(() => localStorage.getItem('bristol_modus_enabled') === 'true')
+  const [bristolEnabled, setBristolEnabled] = useState(() => localStorage.getItem(LS.bristolEnabled) === 'true')
   // Vorlauf für neue Wecker — gilt für dieses Gerät, deshalb localStorage
   const [wakeLead, setWakeLead] = useState(() => readDefaultLead())
   const [menuOpen, setMenuOpen] = useState(false)
@@ -135,15 +136,15 @@ export default function SettingsScreen({
       setPushEnabled(active)
       // Keep localStorage flag in sync
       if (active) {
-        localStorage.setItem('push_notifications_enabled', 'true')
+        localStorage.setItem(LS.pushEnabled, 'true')
       } else {
-        localStorage.removeItem('push_notifications_enabled')
+        localStorage.removeItem(LS.pushEnabled)
       }
     })
   }, [listId, userName])
 
   useEffect(() => {
-    localStorage.setItem('bristol_modus_enabled', bristolEnabled ? 'true' : 'false')
+    localStorage.setItem(LS.bristolEnabled, bristolEnabled ? 'true' : 'false')
     window.dispatchEvent(new CustomEvent('bristol-modus-change'))
   }, [bristolEnabled])
 

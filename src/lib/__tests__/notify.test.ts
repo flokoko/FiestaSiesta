@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LS } from '../storage'
 
 // jsdom-Testumgebung: Node versteckt sein experimentelles localStorage ohne
 // --localstorage-file — In-Memory-Web-Storage nachlegen (Muster wie im
@@ -49,7 +50,7 @@ describe('lib/notify — Sammeln, Mergen, Ausliefern', () => {
   beforeEach(() => {
     invoke.mockClear()
     resetNotifyBuffer()
-    localStorage.setItem('push_notifications_enabled', 'true')
+    localStorage.setItem(LS.pushEnabled, 'true')
     setNotifyListId('list-1')
     setNotifyUserName('Flo')
     // Der Tab ist in jsdom sichtbar — notify liefert dann nie aus. Für die

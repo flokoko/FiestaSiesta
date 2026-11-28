@@ -15,6 +15,7 @@ import { friendlyError } from './lib/friendlyError'
 import { useListData } from './hooks/useListData'
 import { clearFailedOps } from './hooks/useOfflineQueue'
 import { syncRotatedSubscription } from './lib/push'
+import { LS } from './lib/storage'
 
 // Code splitting: lazy-load screens that aren't needed on first paint.
 // Die Import-Funktionen liegen separat, damit sie sich nach dem Login im
@@ -433,14 +434,14 @@ export default function App() {
   )
 
   // ── Bristol Modus (read-only via Event-Listener; SettingsScreen is the
-  //    single writer for 'bristol_modus_enabled') ──────────────────────
+  //    single writer for LS.bristolEnabled) ────────────────────────────
   const [bristolEnabled, setBristolEnabled] = useState(
-    () => localStorage.getItem('bristol_modus_enabled') === 'true'
+    () => localStorage.getItem(LS.bristolEnabled) === 'true'
   )
 
   // Listen for bristol modus changes from SettingsScreen
   useEffect(() => {
-    const handler = () => setBristolEnabled(localStorage.getItem('bristol_modus_enabled') === 'true')
+    const handler = () => setBristolEnabled(localStorage.getItem(LS.bristolEnabled) === 'true')
     window.addEventListener('bristol-modus-change', handler)
     return () => window.removeEventListener('bristol-modus-change', handler)
   }, [])
@@ -631,7 +632,7 @@ export default function App() {
   })
 
   const handleEnableBristol = useCallback(() => {
-    localStorage.setItem('bristol_modus_enabled', 'true')
+    localStorage.setItem(LS.bristolEnabled, 'true')
     window.dispatchEvent(new CustomEvent('bristol-modus-change'))
     setBristolEnabled(true)
   }, [])

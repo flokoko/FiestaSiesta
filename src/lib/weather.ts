@@ -3,6 +3,7 @@
 // duplication of handleGeocode + localStorage location read/write.
 
 import { TRIP_LAT, TRIP_LON } from './trip'
+import { LS } from './storage'
 
 export interface GeoResult {
   lat: number
@@ -23,18 +24,18 @@ export const DEFAULT_LOCATION: { lat: number; lon: number; name: string } = {
 /** Read the stored location from localStorage. Falls back to the default
  *  storage point (Temisas) when nothing is stored. */
 export function getStoredLocation(): { lat: number; lon: number; name: string } {
-  const lat = localStorage.getItem('weather_lat')
-  const lon = localStorage.getItem('weather_lon')
-  const name = localStorage.getItem('weather_name')
+  const lat = localStorage.getItem(LS.weatherLat)
+  const lon = localStorage.getItem(LS.weatherLon)
+  const name = localStorage.getItem(LS.weatherName)
   if (lat && lon && name) return { lat: parseFloat(lat), lon: parseFloat(lon), name }
   return DEFAULT_LOCATION
 }
 
 /** Persist location coordinates + display name to localStorage. */
 export function setStoredLocation(lat: number, lon: number, name: string): void {
-  localStorage.setItem('weather_lat', String(lat))
-  localStorage.setItem('weather_lon', String(lon))
-  localStorage.setItem('weather_name', name)
+  localStorage.setItem(LS.weatherLat, String(lat))
+  localStorage.setItem(LS.weatherLon, String(lon))
+  localStorage.setItem(LS.weatherName, name)
 }
 
 /**

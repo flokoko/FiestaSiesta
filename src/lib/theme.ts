@@ -1,6 +1,8 @@
+import { LS } from './storage'
+
 export type ThemeMode = 'light' | 'dark' | 'auto'
 
-const STORAGE_KEY = 'theme'
+const STORAGE_KEY = LS.theme
 
 /** Read the stored theme preference (default: 'auto') */
 export function getTheme(): ThemeMode {

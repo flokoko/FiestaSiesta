@@ -35,6 +35,7 @@ import {
 } from '../lib/notify'
 import { spanishPhrase } from '../lib/espanaFlair'
 import { publishActivity, markOwnAction, consumeOwnAction } from '../lib/activityBus'
+import { LS } from '../lib/storage'
 
 /** Undo-Stufe: gelöschte Items + Listentyp + Ablauf-Timer */
 interface UndoEntry {
@@ -96,7 +97,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   // bei jedem Start kurz den Anmelde-Screen, obwohl er angemeldet ist.
   const [restoringSession, setRestoringSession] = useState(() => {
     if (typeof localStorage === 'undefined') return false
-    return !!localStorage.getItem('participant_id') && !!localStorage.getItem('user_name')
+    return !!localStorage.getItem(LS.participantId) && !!localStorage.getItem(LS.userName)
   })
 
   // ── Fetch guard for realtime sync debounce ─────────────────────────
@@ -171,7 +172,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     writeCache(listId, listType === 'shopping' ? 'shopping_items' : 'bring_items', items)
     if (listType === 'shopping') {
       // ── Batched push notifications for shopping items ──────────────
-      const pushEnabled = localStorage.getItem('push_notifications_enabled') === 'true'
+      const pushEnabled = localStorage.getItem(LS.pushEnabled) === 'true'
 
       if (pushEnabled) {
         const prevItems = prevShoppingItemsRef.current
@@ -217,7 +218,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
       setShoppingItems(items)
     } else {
       // ── Batched push notifications for bring items ────────────────
-      const pushEnabled = localStorage.getItem('push_notifications_enabled') === 'true'
+      const pushEnabled = localStorage.getItem(LS.pushEnabled) === 'true'
 
       if (pushEnabled) {
         const prevItems = prevBringItemsRef.current
@@ -626,7 +627,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   // starten kann (siehe Offline-Zweig unten).
   useEffect(() => {
     try {
-      if (list) localStorage.setItem('fs_current_list', JSON.stringify(list))
+      if (list) localStorage.setItem(LS.currentList, JSON.stringify(list))
     } catch {
       // localStorage voll — der Offline-Start fällt dann auf den Login zurück
     }
@@ -655,8 +656,8 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
   }, [])
 
   useEffect(() => {
-    const savedName = localStorage.getItem('user_name')
-    const savedParticipantId = localStorage.getItem('participant_id')
+    const savedName = localStorage.getItem(LS.userName)
+    const savedParticipantId = localStorage.getItem(LS.participantId)
     if (!savedName || !savedParticipantId) {
       setRestoringSession(false)
       return
@@ -674,7 +675,7 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     const startOffline = (): boolean => {
       let cachedList: ShoppingList | null = null
       try {
-        const raw = localStorage.getItem('fs_current_list')
+        const raw = localStorage.getItem(LS.currentList)
         if (raw) cachedList = JSON.parse(raw) as ShoppingList
       } catch {
         cachedList = null
@@ -723,9 +724,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
               setIsLoading(false)
               // Liste wirklich gelöscht (kein Netzfehler) → Sitzung verwerfen
               if (!error) {
-                localStorage.removeItem('user_name')
-                localStorage.removeItem('participant_id')
-                localStorage.removeItem('fs_current_list')
+                localStorage.removeItem(LS.userName)
+                localStorage.removeItem(LS.participantId)
+                localStorage.removeItem(LS.currentList)
               }
               return
             }
@@ -1142,9 +1143,9 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     // Sitzung weiter mit und hält eine WebSocket-Verbindung offen.
     closeAllRealtimeChannels()
     if (list) clearCacheForList(list.id)
-    localStorage.removeItem('user_name')
-    localStorage.removeItem('participant_id')
-    localStorage.removeItem('fs_current_list')
+    localStorage.removeItem(LS.userName)
+    localStorage.removeItem(LS.participantId)
+    localStorage.removeItem(LS.currentList)
     setUserName(null)
     setList(null)
     setParticipantId(null)
@@ -1189,11 +1190,11 @@ export function useListData({ onActivity }: { onActivity?: (msg: string) => void
     // beim nächsten Reload und change_participant_password danach.
     const newParticipantId = (data as { participant_id?: string } | null)?.participant_id
     if (newParticipantId) {
-      localStorage.setItem('participant_id', newParticipantId)
+      localStorage.setItem(LS.participantId, newParticipantId)
       setParticipantId(newParticipantId)
     }
 
-    localStorage.setItem('user_name', trimmed)
+    localStorage.setItem(LS.userName, trimmed)
     setUserName(trimmed)
     fetchAll(list.id, true)
     return null

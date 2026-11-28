@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import type { ShoppingList } from '../types'
 import { supabase, loginParticipant } from '../lib/supabase'
 import { ESPANOLA_QUOTES } from '../lib/espanaFlair'
+import { LS } from '../lib/storage'
 
 import './JoinScreen.css'
 
@@ -10,7 +11,7 @@ interface JoinScreenProps {
 }
 
 export default function JoinScreen({ onJoin }: JoinScreenProps) {
-  const [name, setName] = useState(() => localStorage.getItem('user_name') || '')
+  const [name, setName] = useState(() => localStorage.getItem(LS.userName) || '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -54,8 +55,8 @@ export default function JoinScreen({ onJoin }: JoinScreenProps) {
         return
       }
 
-      localStorage.setItem('user_name', result.participant_name)
-      localStorage.setItem('participant_id', result.participant_id)
+      localStorage.setItem(LS.userName, result.participant_name)
+      localStorage.setItem(LS.participantId, result.participant_id)
 
       onJoin(result.participant_name, fullList as ShoppingList, result.participant_id)
     } catch {

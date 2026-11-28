@@ -4,8 +4,14 @@ import './index.css'
 import App from './App.tsx'
 import { initGlassMotion } from './lib/glassMotion'
 import { applyTheme } from './lib/theme'
+import { migrateLegacyKeys } from './lib/storage'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './context/ToastContext'
+
+// Einmalige Migration der alten unpräfixten Keys auf den siesta_-Namespace —
+// VOR applyTheme(), damit die Theme-Präferenz schon migriert ist, wenn sie
+// gelesen wird.
+migrateLegacyKeys()
 
 // vor dem ersten Render, damit kein heller Zwischenzustand entsteht
 applyTheme()

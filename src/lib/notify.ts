@@ -14,6 +14,7 @@
 
 import { supabase, getJoinCode } from './supabase'
 import { isPushConfigured } from './push'
+import { LS } from './storage'
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -159,7 +160,7 @@ export function flushNotifications(): void {
   // ── Delivery ──────────────────────────────────────────────────
 
   const pushEnabled =
-    localStorage.getItem('push_notifications_enabled') === 'true'
+    localStorage.getItem(LS.pushEnabled) === 'true'
   const pushConfigured = isPushConfigured()
 
   if (pushEnabled && pushConfigured && notifyListId) {
