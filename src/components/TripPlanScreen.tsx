@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw, Clock, StickyNote, ChevronRight } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Plus, ThumbsUp, Trash2, Loader2, Crown, MapPin, Map as MapIcon, Check, RotateCcw, CalendarPlus, Bell, BellOff, Car, MessageSquare, Send, RefreshCw, Clock, StickyNote, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import SlotIcon from './SlotIcon'
 import { supabase, getSupabaseUrl } from '../lib/supabase'
 import { readCache } from '../lib/readCache'
@@ -377,6 +377,132 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
     document.addEventListener('keydown', onEscape)
     return () => document.removeEventListener('keydown', onEscape)
   }, [alarmFor, closeAlarm])
+
+  // ── Mehr/Weniger: Notizen ganz lesbar machen ─────────────────────────
+  // Notizen sind bis ~130 Zeichen lang und enthalten echte Zeilenumbrüche —
+  // der 2-Zeilen-Clamp kappt sie mitten im Satz. Der Umschalter erscheint
+  // nur, wenn die Notiz im zugeklappten Zustand WIRKLICH geklemmt ist
+  // (gemessen, nicht geschätzt): kurze Notizen und Notiz-lose Zeilen bleiben
+  // ohne Knopf. expandedIds leben nur im State, nichts wird persistiert.
+  const noteRefs = useRef(new Map<string, HTMLElement>())
+  const rowRefs = useRef(new Map<string, HTMLElement>())
+  const rowMainRefs = useRef(new Map<string, HTMLElement>())
+  // Starthöhen für die Auf-/Zuklapp-Animation — gemessen VOR dem
+  // Zustandswechsel (Muster „Mehr anzeigen" aus NotesScreen).
+  const heightsBefore = useRef(new Map<string, number>())
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set<string>())
+  const [clippedIds, setClippedIds] = useState<Set<string>>(() => new Set<string>())
+  // Zählt die beendeten Auf-/Zuklapp-Animationen: danach wird neu gemessen,
+  // weil sich die Notiz erst dann wieder auf zwei Zeilen klemmt.
+  const [measureTick, setMeasureTick] = useState(0)
+
+  const registerRow = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowRefs.current.set(id, el)
+    else rowRefs.current.delete(id)
+  }, [])
+  const registerRowMain = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowMainRefs.current.set(id, el)
+    else rowMainRefs.current.delete(id)
+  }, [])
+  const registerNote = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) noteRefs.current.set(id, el)
+    else noteRefs.current.delete(id)
+  }, [])
+
+  const toggleExpand = useCallback((proposalId: string) => {
+    navigator.vibrate?.(6)
+    // Starthöhe vor dem Zustandswechsel merken — daraus wird die Animation gebaut.
+    const el = rowMainRefs.current.get(proposalId)
+    if (el) heightsBefore.current.set(proposalId, el.getBoundingClientRect().height)
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(proposalId)) next.delete(proposalId)
+      else next.add(proposalId)
+      return next
+    })
+  }, [])
+
+  // Welche Notizen sind geklemmt? scrollHeight (ganzer Inhalt) gegen
+  // clientHeight (nur die zwei sichtbaren Zeilen), +1 px Toleranz. Gemessen
+  // wird nach dem Mount, nach dem Laden der Webfonts (Zeilenhöhen ändern
+  // sich) und beim Fenster-Resize; ein Tagwechsel (dayIso → selectedDay)
+  // rendert die Zeilen neu und misst mit. Aufgeklappte Notizen haben den
+  // Clamp nicht mehr — für sie bleibt der letzte gemessene Stand, sonst
+  // verschwände der Umschalter mitten im Aufklappen.
+  useLayoutEffect(() => {
+    const measure = () => {
+      setClippedIds((prev) => {
+        const next = new Set<string>()
+        for (const slot of SLOTS) {
+          for (const row of proposalsFor(proposals, selectedDay, slot.key)) {
+            if (!row.note) continue
+            const el = noteRefs.current.get(row.id)
+            if (!el) continue
+            // Aufgeklappt ODER mitten in der Zuklapp-Animation: das Layout ist
+            // noch das aufgeklappte, die Messung wäre falsch (sie meldete
+            // „nicht geklemmt" und der Umschalter verschwände nach dem
+            // Zuklappen für immer). Deshalb den letzten Stand behalten und
+            // nach dem Animationsende neu messen (measureTick).
+            const animating = rowRefs.current.get(row.id)?.classList.contains('is-animating')
+            if (expandedIds.has(row.id) || animating) {
+              if (prev.has(row.id)) next.add(row.id)
+              continue
+            }
+            if (el.scrollHeight > el.clientHeight + 1) next.add(row.id)
+          }
+        }
+        const same = next.size === prev.size && [...next].every((key) => prev.has(key))
+        return same ? prev : next
+      })
+    }
+    measure()
+    // Nach einem Tageswechsel stehen Ref und Layout erst im nächsten Frame
+    // fest — die sofortige Messung sieht dort ggf. noch die alten Zeilen.
+    // Zwei Nachzügler (nächster Frame + 120 ms) sind idempotent und decken
+    // auch den Webfont-Nachlauf ab.
+    const raf = requestAnimationFrame(measure)
+    const late = setTimeout(measure, 120)
+    document.fonts?.ready.then(measure).catch(() => {})
+    window.addEventListener('resize', measure)
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(late)
+      window.removeEventListener('resize', measure)
+    }
+  }, [proposals, selectedDay, expandedIds, measureTick])
+
+  // Höhe animieren statt springen lassen — wie in NotesScreen: die Starthöhe
+  // kommt aus toggleExpand (vor dem Zustandswechsel), die Endhöhe wird nach
+  // dem Commit gemessen; prefers-reduced-motion überspringt die Animation.
+  // Beim Zuklappen spränge der Inhalt sonst sofort auf zwei geklemmte Zeilen
+  // und die Höhe würde nur Leerraum schließen — is-animating hält deshalb das
+  // aufgeklappte Layout bis zum Animationsende fest (nur die Höhe schrumpft).
+  useLayoutEffect(() => {
+    if (heightsBefore.current.size === 0) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    for (const [id, h0] of heightsBefore.current) {
+      const el = rowMainRefs.current.get(id)
+      if (!el) continue
+      const h1 = el.getBoundingClientRect().height
+      if (reduce || Math.abs(h1 - h0) < 2) continue
+      // expandedIds ist der Stand NACH dem Commit: fehlt die Zeile, klappt sie zu.
+      const closing = !expandedIds.has(id)
+      const row = rowRefs.current.get(id)
+      if (closing) row?.classList.add('is-animating')
+      el.style.overflow = 'hidden'
+      const anim = el.animate(
+        [{ height: `${h0}px` }, { height: `${h1}px` }],
+        { duration: 240, easing: 'cubic-bezier(.22,.9,.28,1)' },
+      )
+      anim.onfinish = () => {
+        if (closing) row?.classList.remove('is-animating')
+        el.style.overflow = ''
+        // Jetzt ist die Notiz wieder geklemmt (oder eben nicht) — neu messen.
+        setMeasureTick((t) => t + 1)
+      }
+    }
+    heightsBefore.current.clear()
+  }, [expandedIds])
 
   const openAlarm = (proposal: TripProposal) => {
     if (alarmFor === proposal.id) {
@@ -861,12 +987,14 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                     const mine = proposal.created_by === userName
                     const voted = (proposal.votes ?? []).includes(userName)
                     const isLeader = leader?.id === proposal.id
+                    const expanded = expandedIds.has(proposal.id)
                     return (
                       <div
-                        className={`plan-row${isLeader ? ' is-plan' : ''}${commentFor === proposal.id ? ' has-comments' : ''}`}
+                        className={`plan-row${isLeader ? ' is-plan' : ''}${commentFor === proposal.id ? ' has-comments' : ''}${expanded ? ' is-expanded' : ''}`}
                         key={proposal.id}
+                        ref={(el) => registerRow(proposal.id, el)}
                       >
-                        <div className="plan-row-main">
+                        <div className="plan-row-main" ref={(el) => registerRowMain(proposal.id, el)}>
                           <span className="plan-row-title">{proposal.title}</span>
                           <span className="plan-row-meta">
                             <span className="plan-row-author">von {proposal.created_by}</span>
@@ -907,7 +1035,33 @@ export default function TripPlanScreen({ listId, userName, isAdmin, dayIso, onPi
                               {proposal.place}
                             </a>
                           )}
-                          {proposal.note && <span className="plan-row-note">{proposal.note}</span>}
+                          {proposal.note && (
+                            <span
+                              className="plan-row-note"
+                              id={`plan-note-${proposal.id}`}
+                              ref={(el) => registerNote(proposal.id, el)}
+                            >
+                              {proposal.note}
+                            </span>
+                          )}
+                          {proposal.note && (clippedIds.has(proposal.id) || expanded) && (
+                            /* Nur bei wirklich geklemmten Notizen — kurz gemessen,
+                               nicht per Zeichenlänge geschätzt. Steuert die Zeile
+                               nicht selbst, damit Stimme/Kommentar/Link unberührt
+                               bleiben und die Notiz kopierbar bleibt. */
+                            <button
+                              type="button"
+                              className="plan-row-more"
+                              aria-expanded={expanded}
+                              aria-controls={`plan-note-${proposal.id}`}
+                              onClick={() => toggleExpand(proposal.id)}
+                            >
+                              {expanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                              {expanded
+                                ? <ChevronUp size={12} strokeWidth={2.4} />
+                                : <ChevronDown size={12} strokeWidth={2.4} />}
+                            </button>
+                          )}
                         </div>
                         {(mine || isAdmin) && (
                           <button

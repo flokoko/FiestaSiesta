@@ -913,3 +913,61 @@
 @media (prefers-reduced-motion: reduce) {
   #root .plan-screen .plan-slot { animation: none; }
 }
+
+
+/* ── Mehr/Weniger an der Notiz ─────────────────────────────────────────
+   Notizen sind bis ~130 Zeichen lang und enthalten echte Zeilenumbrüche —
+   der 2-Zeilen-Clamp kappt sie mitten im Satz. Der Umschalter kommt nur
+   dazu, wenn die Notiz im zugeklappten Zustand wirklich geklemmt ist
+   (per Messung in TripPlanScreen.tsx, nicht per Zeichenlänge geschätzt),
+   damit kurze Notizen und Notiz-lose Zeilen keinen toten Knopf zeigen. */
+#root .plan-row-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 2px 2px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+#root .plan-row-more:active {
+  color: var(--accent);
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* 44 px Daumenziel wie beim Wecker-Knopf: die negativen Margins geben das
+     Höhenplus oben/unten wieder zurück, die Schrift bleibt klein. */
+  #root .plan-row-more {
+    min-height: 44px;
+    margin-top: -12px;
+    margin-bottom: -12px;
+  }
+}
+
+/* Aufgeklappt (is-expanded): die Notiz verliert den Clamp — display:block
+   schaltet -webkit-box ab — und pre-wrap bewahrt echte Zeilenumbrüche. Der
+   Ortsname bricht um, statt hinten abgeschnitten zu werden. Der Titel
+   behält bewusst seinen 2-Zeilen-Clamp. is-animating hält dasselbe Layout
+   während der Zuklapp-Animation fest: sonst springt der Inhalt sofort auf
+   zwei Zeilen und die schrumpfende Höhe würde nur Leerraum zugehen. */
+#root .plan-row.is-expanded .plan-row-note,
+#root .plan-row.is-animating .plan-row-note {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: visible;
+}
+
+#root .plan-row.is-expanded .plan-row-place,
+#root .plan-row.is-animating .plan-row-place {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+}
