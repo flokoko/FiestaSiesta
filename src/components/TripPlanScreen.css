@@ -115,9 +115,13 @@
 .plan-row-title {
   font-size: 13.5px;
   color: var(--text-primary);
+  /* Zwei Zeilen statt Abschneiden: mit mehreren Vorschlägen pro Zeit sind
+     Titel wie „Dünen von Maspalomas“ sonst schon nach „Dünen von Mas…“ zu Ende. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .plan-row.is-plan .plan-row-title {
@@ -302,9 +306,13 @@
   margin-top: 1px;
   font-size: 10.5px;
   color: var(--text-muted);
+  /* Zwei Zeilen: die Notiz trägt Abfahrtszeit und Fahrzeit, eine Zeile reichte
+     nur für den halben Satz. Karten bleiben kompakt, weil der Rest geklemmt wird. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
 /* Slot-Aktion (übernehmen / ändern) */
